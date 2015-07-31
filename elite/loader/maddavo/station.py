@@ -7,8 +7,13 @@ Created on 23.07.2015
 import or update db with system data from http://www.davek.com.au/td/station.asp
 
 '''
+import os
 import csv
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
+
+from StringIO import StringIO
+import gzip
+import urllib2
 
 class loader(object):
     '''
@@ -25,9 +30,11 @@ class loader(object):
 
     def importData(self,filename=None):
         if not filename: filename = 'db/station.csv'
+
+        print("update stations from %s" % filename)
         
         with open(filename) as csvfile:
-#            reader = csv.DictReader(csvfile, quotechar="'",quoting=csv.QUOTE_NONE)
+
             simpelreader = csv.reader(csvfile, delimiter=',', quotechar="'")
 
             cur = self.mydb.cursor()
@@ -49,7 +56,7 @@ class loader(object):
             for row in mylist[1:]:
  
                 system = row[fields.index("unq:name@System.system_id")].lower()
-                station = row[fields.index("unq:name")].lower()
+                station = row[fields.index("unq:name")]
                 starDist = int(row[fields.index("ls_from_star")])
                 blackmarket = False
                 if row[fields.index("blackmarket")].upper() == "Y": blackmarket = True
@@ -101,3 +108,59 @@ class loader(object):
 
             self.mydb.con.commit()
             cur.close()
+
+    def filenameFromUrl(self, url):
+
+        filename = url.split("/").pop()
+
+        return filename
+    
+    def update(self):
+        systems_url = "http://www.davek.com.au/td/station.asp"
+        storageDir = "db"
+
+        filename = "station.csv"
+        filename = os.path.join(storageDir, filename)
+
+        if os.path.isfile(filename):
+
+            cDate = datetime.fromtimestamp(os.path.getmtime(filename))
+
+            if cDate < datetime.now() - timedelta(hours=24):
+                self.updateFromUrl(filename, systems_url)
+            else:
+                self.importData(filename)
+
+        else:  # download file not exists
+            self.updateFromUrl(filename, systems_url)
+
+#        self.importData(filename)
+#        self.updateFromUrl(filename, eddbUrl_systems)
+
+    def updateFromUrl(self, filename, url):
+        if not url: return
+
+        print("download %s" % url)
+
+        request = urllib2.Request(url)
+        request.add_header('Accept-encoding', 'gzip')
+        response = urllib2.urlopen(request)
+        if response.info().get('Content-Encoding') == 'gzip':
+            # print("gzip ok")
+            buf = StringIO(response.read())
+            f = gzip.GzipFile(fileobj=buf)
+        else:
+            # print("none")
+            f = response
+
+        wfp = open(filename, "wb")
+        wfp.write(f.read())
+        wfp.close()
+            
+
+        if response.info().get('content-type').split("; ")[0] == "application/octet-stream":
+            pass
+            self.importData(filename)
+        else:
+            print("download error?")
+            print(response.info().items())
