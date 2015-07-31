@@ -48,10 +48,10 @@ class db(object):
 
         if new_db:
             self.initNewDB()
-            self.importData()
+            #self.importData()
         #else:
             # test import
-        #self.initNewDB()
+        self.initNewDB()
         self.fillCache()
             #self.importData()
             
@@ -116,9 +116,15 @@ class db(object):
 
         eddb_systems = eddb_loader.systems.loader(self)
         eddb_systems.update()
-        return
+
+        eddb_stations = eddb_loader.stations.loader(self)
+        eddb_stations.update()
+
         edMarked =  EDMarakedConnector_loader.loader(self)
         edMarked.update()
+
+        maddavo_station = maddavo_loader.station.loader(self)
+        maddavo_station.update()
 
         maddavo_prices = maddavo_loader.prices.loader(self)
         maddavo_prices.update()
@@ -148,7 +154,7 @@ class db(object):
         self.con.execute( "CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )" )
 
         #price
-        self.con.execute( "CREATE TABLE IF NOT EXISTS price (SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS price (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS price_unique_System_Station_Item on price (SystemID,StationID,ItemID)" )
         self.con.execute( "create index  IF NOT EXISTS price_modified on price (modified)" )
 
@@ -193,7 +199,7 @@ class db(object):
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from systems where System is ? limit 1", ( system, ) )
+        cur.execute( "select id from systems where LOWER(System) is ? limit 1", ( system, ) )
 
         result = cur.fetchone()
         cur.close()
@@ -212,7 +218,7 @@ class db(object):
             return result
 
         cur = self.cursor()
-        cur.execute( "select id from stations where systemID is ? and Station is ? limit 1", (systemID, station, ) )
+        cur.execute( "select id from stations where systemID is ? and LOWER(Station) is ? limit 1", (systemID, station, ) )
         result = cur.fetchone()
 
         cur.close()
@@ -227,7 +233,7 @@ class db(object):
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from items where name is ?  limit 1", (itemname, ) )
+        cur.execute( "select id from items where LOWER(name) is ?  limit 1", (itemname.lower(), ) )
         result = cur.fetchone()
 
         cur.close()
