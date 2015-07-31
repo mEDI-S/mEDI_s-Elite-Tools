@@ -78,11 +78,12 @@ class loader(object):
                 modifydate = datetime.strptime(row[fields.index("Date")].lower(), "%Y-%m-%dT%H:%M:%SZ")
 
                 systemID = self.mydb.getSystemIDbyName(system)
+
                 # add new systems
                 if not systemID:
                     print("add new system: %s" % system)
                     cur.execute("insert or IGNORE into systems (System) values (?) ",
-                                                               (row[fields.index("System")]))
+                                                               (row[fields.index("System")],))
 
                     systemID = self.mydb.getSystemIDbyName(system)
 
