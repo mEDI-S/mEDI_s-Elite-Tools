@@ -33,12 +33,12 @@ class loader(object):
         self.__itemCache = {}
         #get all items and build a cache (extrem faster as single querys) 
         mycur = self.mydb.cursor()
-        mycur.execute( "select SystemID, StationID, ItemID, modified from price" )
+        mycur.execute( "select id, StationID, ItemID, modified from price" )
         result = mycur.fetchall()
 
         for item in result:
-            cacheKey = "%d_%d_%d" % (item["SystemID"], item["StationID"], item["ItemID"])
-            self.__itemCache[cacheKey] = item["modified"]
+            cacheKey = "%d_%d" % (item["StationID"], item["ItemID"])
+            self.__itemCache[cacheKey] = [item["id"], item["modified"]]
         result= None
 
     def cleanCache(self):
@@ -109,25 +109,24 @@ class loader(object):
                 '''
                 main import
                 '''
-                cacheKey = "%d_%d_%d" % (systemID, stationID, itemID)
+                cacheKey = "%d_%d" % (stationID, itemID)
 
-                if not  self.__itemCache.get(cacheKey):
+                if cacheKey not in  self.__itemCache:
                     insertCount += 1
                     print("insert")
-                    self.__itemCache[cacheKey] = modifydate
                     #add new price
                     cur.execute( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand,Stock, modified, source) values (?,?,?,?,?,?,?,?,3) ",
                         ( systemID, stationID, itemID, StationBuy, StationSell  , Demand , Stock, modifydate) )
                 
-                elif self.__itemCache[cacheKey] < modifydate:
+                elif self.__itemCache[cacheKey][1] < modifydate:
                     # update price
                     updateCount +=1
-                    self.__itemCache[cacheKey] = modifydate
+                    self.__itemCache[cacheKey][1] = modifydate
                     #print("update")
-                    updateItems.append( [StationBuy, StationSell  , Demand , Stock, modifydate, systemID, stationID, itemID] )
+                    updateItems.append( [StationBuy, StationSell  , Demand , Stock, modifydate, self.__itemCache[cacheKey][0] ] )
                     
             if updateItems:
-                cur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Dammand=?,Stock=?, modified=? ,source=3 where SystemID is ? AND StationID is ? AND ItemID is ?", updateItems)
+                cur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Dammand=?,Stock=?, modified=? ,source=3 where id is ?", updateItems)
 
             if insertCount or updateCount:
                 print("insert", insertCount,"update", updateCount)
