@@ -158,22 +158,25 @@ class loader(object):
                     
                     updateItems.append( [ item["sell_price"] , item["buy_price"], item["demand"], item["supply"], modified,  itemPriceCache[itemPriceCacheKey][0] ] ) 
                     
+
+
         if updateStation:
-            cur.executemany("UPDATE stations SET Station=?, StarDist=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id is ?", updateStation)
+            cur.executemany("UPDATE stations SET Station=?, StarDist=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id = ?", updateStation)
 
         if insertItems:
             cur.executemany( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand, Stock, modified, source) values (?,?,?,?,?,?,?,?,4) ", insertItems)
         self.mydb.con.commit()
 
+
         if updateItems:
-            cur.executemany( "UPDATE price SET StationBuy=?, StationSell=?, Dammand=?, Stock=?, modified=?, source=4 where id is ?", updateItems)
+            cur.executemany( "UPDATE price SET StationBuy=?, StationSell=?, Dammand=?, Stock=?, modified=?, source=4 where id = ?", updateItems)
 
             
             
         if updateCount or insertCount or insertItemCount or updateItemCount:
             print("update stations", updateCount, "insert stations", insertCount, "from", totalCount, "systems","insert items",insertItemCount,"update items",updateItemCount,"from items",itemCount)
 
-        #self.mydb.con.commit()
+        self.mydb.con.commit()
         cur.close()
 
 

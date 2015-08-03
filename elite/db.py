@@ -182,7 +182,7 @@ class db(object):
 
     def getConfig( self, var ):
         cur = self.cursor()
-        cur.execute( "select val from config where var is ? limit 1", ( var, ) )
+        cur.execute( "select val from config where var = ? limit 1", ( var, ) )
         result = cur.fetchone()
         cur.close()
         if result:
@@ -199,7 +199,7 @@ class db(object):
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from systems where LOWER(System) is ? limit 1", ( system, ) )
+        cur.execute( "select id from systems where LOWER(System) = ? limit 1", ( system, ) )
 
         result = cur.fetchone()
         cur.close()
@@ -218,7 +218,7 @@ class db(object):
             return result
 
         cur = self.cursor()
-        cur.execute( "select id from stations where systemID is ? and LOWER(Station) is ? limit 1", (systemID, station, ) )
+        cur.execute( "select id from stations where systemID = ? and LOWER(Station) = ? limit 1", (systemID, station, ) )
         result = cur.fetchone()
 
         cur.close()
@@ -233,7 +233,7 @@ class db(object):
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from items where LOWER(name) is ?  limit 1", (itemname.lower(), ) )
+        cur.execute( "select id from items where LOWER(name) = ?  limit 1", (itemname.lower(), ) )
         result = cur.fetchone()
 
         cur.close()
@@ -243,28 +243,28 @@ class db(object):
 
     def getSystemData(self,systemID):
         cur = self.cursor()
-        cur.execute( "select * from systems where id is ? limit 1", ( systemID, ) )
+        cur.execute( "select * from systems where id = ? limit 1", ( systemID, ) )
         result = cur.fetchone()
         cur.close()
         return result
         
     def getStationData(self,stationID):
         cur = self.cursor()
-        cur.execute( "select * from stations where id is ? limit 1", ( stationID, ) )
+        cur.execute( "select * from stations where id = ? limit 1", ( stationID, ) )
         result = cur.fetchone()
         cur.close()
         return result
 
     def getItemPriceDataByID(self,systemID,stationID,itemID):
         cur = self.cursor()
-        cur.execute( "select * from price where SystemID is ? and StationID is ? AND ItemID is ? limit 1", ( systemID,stationID,itemID, ) )
+        cur.execute( "select * from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", ( systemID,stationID,itemID, ) )
         result = cur.fetchone()
         cur.close()
         return result
 
     def getItemPriceModifiedDate(self,systemID,stationID,itemID):
         cur = self.cursor()
-        cur.execute( "select modified from price where SystemID is ? and StationID is ? AND ItemID is ? limit 1", ( systemID,stationID,itemID, ) )
+        cur.execute( "select modified from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", ( systemID,stationID,itemID, ) )
         result = cur.fetchone()
         cur.close()
         if result: return result[0]
@@ -281,11 +281,11 @@ class db(object):
         cur = self.cursor()
 
         #get pos data from systemA
-        cur.execute( "select * from systems  where id is ?  limit 1", ( systemID, ) )
+        cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
 #        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where id != ? AND dist < ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],systemID,distance, ) )
-        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist < ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],distance, ) )
+        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],distance, ) )
         result = cur.fetchall()
 
         cur.close()
@@ -305,7 +305,7 @@ class db(object):
 
         cur.execute("""select calcDistance(a.posX, a.posY, a.posZ, b.posX, b.posY, b.posZ ) As dist FROM systems AS a
                     left JOIN systems AS b on b.id = ?
-                    where a.id is ? """  , ( systemA, systemB, )  )
+                    where a.id = ? """  , ( systemA, systemB, )  )
         
         result = cur.fetchone()
         cur.close()
@@ -324,7 +324,7 @@ class db(object):
         cur = self.cursor()
 
         #get pos data from systemA
-        cur.execute( "select * from systems  where id is ?  limit 1", ( systemID, ) )
+        cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
         #cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where id != ? AND dist < ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],systemID,distance, ) )

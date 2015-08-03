@@ -126,7 +126,7 @@ class loader(object):
                     updateItems.append( [StationBuy, StationSell  , Demand , Stock, modifydate, self.__itemCache[cacheKey][0] ] )
                     
             if updateItems:
-                cur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Dammand=?,Stock=?, modified=? ,source=3 where id is ?", updateItems)
+                cur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Dammand=?,Stock=?, modified=? ,source=3 where id = ?", updateItems)
 
             if insertCount or updateCount:
                 print("insert", insertCount,"update", updateCount)

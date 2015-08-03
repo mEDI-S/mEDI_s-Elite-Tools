@@ -104,7 +104,7 @@ class loader(object):
 
 
             if updateStations:
-                cur.executemany( "UPDATE stations SET  StarDist=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id is ?",updateStations)
+                cur.executemany( "UPDATE stations SET  StarDist=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id = ?",updateStations)
 
             self.mydb.con.commit()
             cur.close()
@@ -129,7 +129,8 @@ class loader(object):
             if cDate < datetime.now() - timedelta(hours=24):
                 self.updateFromUrl(filename, systems_url)
             else:
-                self.importData(filename)
+                pass
+                #self.importData(filename)
 
         else:  # download file not exists
             self.updateFromUrl(filename, systems_url)
