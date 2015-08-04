@@ -27,7 +27,6 @@ class loader(object):
         if not filename: filename = 'db/System.csv'
         
         with open(filename) as csvfile:
-#            reader = csv.DictReader(csvfile, quotechar="'",quoting=csv.QUOTE_NONE)
             simpelreader = csv.reader(csvfile, delimiter=',', quotechar="'")
 
             cur = self.mydb.cursor()
@@ -48,7 +47,6 @@ class loader(object):
                 posY = float(row[2])
                 posZ = float(row[3])
                 modifydate = datetime.strptime(row[5],"%Y-%m-%d %H:%M:%S")
-                #modifydate = None
 
                 systemID = self.mydb.getSystemIDbyName(name)
 
@@ -57,11 +55,9 @@ class loader(object):
                                                                 ( name, posX, posY, posZ, modifydate) )
                 else:
                     # update
-#                    systemData = self.mydb.getSystemData(systemID)
-#                    if not systemData["modified"] or  systemData["modified"] < modifydate:
                     if systemCache[systemID] < modifydate:
 
-                        cur.execute( "update systems SET posX=?, posY=?, posZ=?, modified=? where id is ?" ,
+                        cur.execute( "update systems SET posX=?, posY=?, posZ=?, modified=? where id = ?" ,
                                                     (  posX, posY, posZ, modifydate, systemID) )
 
             self.mydb.con.commit()
