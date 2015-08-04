@@ -129,7 +129,7 @@ calculate a rating "only profit is not the best option on long ways"
 for deal in bestProfitList:
     startDist = (deal[1]["StarDist"] + deal[3]["StarDist"])
    # rating = deal[0] - startDist/1.1
-    rating = deal[0] + minLoopProfit / (startDist * 0.03)
+    rating = deal[0] #+ minLoopProfit / (startDist * 0.03)
 #    print(rating, deal[0], startDist)
     deal.append(rating)
 
@@ -158,9 +158,15 @@ for deal in bestProfitList:
     item = deal[1]
     profit = deal[2]["StationBuy"] - deal[1]["StationSell"]
     print("\t%s -> %d ls %s buy: %s %d cr (sell for: %d profit: %d cr) " % (item["System"], item["StarDist"], item["Station"], item["name"], deal[1]["StationSell"], deal[2]["StationBuy"], profit))
+    if item["refuel"] != 1:
+        print("Warning: %s have no refuel!?" % item["Station"])
+
+
     item = deal[3]
     profit = deal[4]["StationBuy"] - deal[3]["StationSell"]
     print("\t%s -> %d ls %s buy: %s %d cr (sell for: %d profit: %d cr) " % (item["System"], item["StarDist"], item["Station"], item["name"], deal[3]["StationSell"], deal[4]["StationBuy"], profit))
+    if item["refuel"] != 1:
+        print("Warning: %s have no refuel!?" % item["Station"])
 
 
 
