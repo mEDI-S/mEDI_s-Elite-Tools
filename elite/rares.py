@@ -4,36 +4,36 @@ Created on 13.07.2015
 
 @author: mEDI
 '''
-from elite.system import system as elitesystem
 
 class rares(object):
     '''
     classdocs
     '''
-    con = None
-    conSystem = None
+    mydb = None
     __raresInSystemCache = {}
 
-    def __init__(self, raresCon, systemCon):
+    def __init__(self, mydb):
         '''
         Constructor
         '''
-        self.con = raresCon
-        self.conSystem = systemCon
-        self.system = elitesystem(self.conSystem)
+        self.mydb = mydb
 
     def getRaresListFitered(self,sunDistanc):
         
-        cur = self.con.cursor()
-#        cur.execute('SELECT * FROM Rares JOIN SysStation ON Rares.System==SysStation.SysStationSystem AND Rares.Station==SysStation.SysStationStation where SysStation.SysStationDist <=%d AND SysStation.SysStationDist >0 group by System;' % sunDistanc) 
-        cur.execute('SELECT * FROM Rares where offline is NULL and illegal is NULL and permit is NULL ;') 
+        cur = self.mydb.cursor()
+
+        cur.execute('''SELECT * FROM rares
+                            left join stations on rares.StationID=stations.id
+                            left join systems ON rares.SystemID=systems.id
+                            where offline != "Y" and illegal != "Y" 
+                            AND systems.permit != 1
+                            AND stations.StarDist <= ?''', (sunDistanc,)) 
+
         data = cur.fetchall()
         cur.close()
         results = []
         for rSystem in data:
-            dist = self.system.getStarDistFrom(rSystem["System"], rSystem["Station"])
-            if  dist  and dist <= sunDistanc:
-                results.append( [ rSystem["System"], dist ] )
+            results.append( [ rSystem["SystemID"], rSystem["StarDist"] ] )
                 
         return results
     
@@ -41,9 +41,9 @@ class rares(object):
         data = self.__raresInSystemCache.get(system)
 
         if data is None:
-            cur = self.con.cursor()
+            cur = self.mydb.cursor()
 #            cur.execute('SELECT * FROM Rares JOIN SysStation ON Rares.System==SysStation.SysStationSystem AND Rares.Station==SysStation.SysStationStation where Rares.System == "%s";' % system) 
-            cur.execute('SELECT * FROM Rares where Rares.System == "%s";' % system) 
+            cur.execute('SELECT * FROM rares where SystemID = ?', (system,)) 
             data = cur.fetchall()
             cur.close()
             self.__raresInSystemCache[system] = data

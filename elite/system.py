@@ -12,15 +12,15 @@ class system(object):
     '''
     classdocs
     '''
-    con = None
+    mydb = None
     
     __systemdatacache = {}
 
-    def __init__(self, con):
+    def __init__(self, mydb):
         '''
         Constructor
         '''
-        self.con = con
+        self.mydb = mydb
 
     def calcDistanceFromData(self, dataA, dataB):
         # #sqrt( (xA-xB)2 + (yA-yB)2 + (zA-zB)2 )
@@ -85,7 +85,8 @@ class system(object):
         sysInRange = 0
         for name in systemList:
 
-            dist = self.calcDistance(startSystem , name[0])
+            #dist = self.calcDistance(startSystem , name[0])
+            dist = self.mydb.getDistanceFromTo(startSystem, name[0])
             if dist:
                 if dist < maxDist:
                     system = {"System" : name[0], "dist" : dist  }
@@ -98,13 +99,3 @@ class system(object):
 
         return systems
     
-    def getStationsFromSystem(self,system):
-
-        cur = self.con.cursor()
-        cur.execute('SELECT SysStationStation FROM SysStation  where sysStationSystem == "%s" group by SysStationStation ;' % system)
-        rows = cur.fetchall()
-        cur.close()
-        stations = []
-        for row in rows:
-            stations.append(row[0])
-        return stations

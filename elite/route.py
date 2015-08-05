@@ -17,12 +17,12 @@ class route(object):
     '''
     #__slots__ = ["bla"]
     #bla =1
-    maxHops = 6
-    maxJumpDistance = 12.71
-    maxDeep = 20
+    maxHops = None
+    maxJumpDistance = None
+    maxDeep = None
     # die kürzeste route is nicht die beste wegen den optimalen preisen bei > 150ly
 
-    systemName = None
+    systemID = None
     _before = None
 #    _initSystem = None  # startsystem
     initSystem = None  # startsystem
@@ -34,13 +34,13 @@ class route(object):
     deep = 1
     _hopsFromBefore = None
     _dist = None  # distance to before system
-    con = None
+    mydb = None
     rares = None
     system = None
 
-    def __init__(self, con, before=None, maxDeep=None,  maxJumpDistance=None, maxHops=None):
+    def __init__(self, mydb, before=None, maxDeep=None,  maxJumpDistance=None, maxHops=None):
         # super(route, self).__init__()
-        self.con = con
+        self.mydb = mydb
         self.possibleSystems = []
         self._before = before
         if before:
@@ -52,18 +52,18 @@ class route(object):
 
 #            self.rares =  before.rares
         else:
-            self.system = elitesystem(self.con)
+            self.system = elitesystem(self.mydb)
             self.maxDeep = maxDeep
             self.maxHops = maxHops
             self.maxJumpDistance = maxJumpDistance
 #            self.rares = eliterares(con)
 
-    def addPossibleSystems(self, system, dist, startdist, systemList):
+    def addPossibleSystems(self, systemID, dist, startdist, systemList):
 #    def addPossibleSystems(self, system, dist,  rarelist):
-        newroute = route(self.con, self)
+        newroute = route(self.mydb, self)
         newroute._availableSystemList = systemList
         newroute._dist = dist
-        newroute.systemName = system
+        newroute.systemID = systemID
         newroute.starDist = startdist
         newroute.deep = self.deep + 1
         newroute._hopsFromBefore = int(round((dist / self.maxJumpDistance) + 0.5)) 
@@ -87,10 +87,10 @@ class route(object):
         return MaxDeep
 
     def getLongRouting(self, maxdeep, dist, totalStartDist, totalHops, systems=[]):
-        systems.append(self.systemName)
+        systems.append(self.systemID)
         for nextsystem in self.possibleSystems:
             if nextsystem.deep >= maxdeep:
-                print("system:%s -> %s deep: %d dist:%d totalStarDist:%d hops:%d" % (systems, self.systemName, nextsystem.deep, nextsystem._dist + dist, nextsystem.starDist + totalStartDist, nextsystem._hopsFromBefore + totalHops))
+                print("system:%s -> %s deep: %d dist:%d totalStarDist:%d hops:%d" % (systems, self.systemID, nextsystem.deep, nextsystem._dist + dist, nextsystem.starDist + totalStartDist, nextsystem._hopsFromBefore + totalHops))
             nextsystem.getLongRouting(maxdeep, nextsystem._dist + dist, nextsystem.starDist + totalStartDist, nextsystem._hopsFromBefore + totalHops, systems)
         systems.pop()
 
@@ -165,7 +165,7 @@ class route(object):
         for nextsystem in self.possibleSystems:
             if nextsystem and nextsystem.deep == maxdeep and nextsystem._hopsFromBefore + totalHops == minHops and nextsystem.starDist + totalStartDist == minStardist and minDist == nextsystem._dist + dist:
 
-                #print("best system: %s deep: %d dist:%d totalStarDist:%d hops:%d" % ( self.systemName, nextsystem.deep, nextsystem._dist + dist, nextsystem.starDist + totalStartDist, nextsystem._hopsFromBefore + totalHops))
+                #print("best system: %s deep: %d dist:%d totalStarDist:%d hops:%d" % ( self.systemID, nextsystem.deep, nextsystem._dist + dist, nextsystem.starDist + totalStartDist, nextsystem._hopsFromBefore + totalHops))
                 before = nextsystem
                 systems = []
                 while before:
@@ -223,16 +223,16 @@ class route(object):
         count = len(currentRoute)+1
         #if count == 1: return 
         def listWorker(curSystem, count):
-            if curSystem.systemName in currentRoute:
+            if curSystem.systemID in currentRoute:
                 count -= 1
-            elif curSystem.systemName == system:
+            elif curSystem.systemID == system:
                 count -= 1
 
             #print(count)
             if count == 0:
-#                print(system, curSystem.systemName ,currentRoute)
+#                print(system, curSystem.systemID ,currentRoute)
                 # allow other routes to me drop only extaxt ends to me
-                if curSystem.systemName == system:
+                if curSystem.systemID == system:
                     return True
                 return
 
@@ -249,7 +249,7 @@ class route(object):
         maxDistance = self.maxHops * self.maxJumpDistance
 
         #print(len(self._availableSystemList), self._availableSystemList)
-        systems = self.system.getSystemsInDistance(self.systemName, maxDistance, self._availableSystemList)
+        systems = self.system.getSystemsInDistance(self.systemID, maxDistance, self._availableSystemList)
 
 
         #=======================================================================
@@ -261,10 +261,10 @@ class route(object):
         if slowMode != True:
             systems = sorted(systems, key=lambda system: system["dist"], reverse=True)
             # build current routelist
-            currentRoute.append(self.systemName)
+            currentRoute.append(self.systemID)
             before = self._before
             while before:
-                currentRoute.append(before.systemName)
+                currentRoute.append(before.systemID)
                 before = before._before
 
         for system in systems:
@@ -277,6 +277,8 @@ class route(object):
                     nextSystemlist.remove(listitem)
                     break
 
+            if stardist == None:
+                stardist = 0
             if slowMode == True:
                 self.addPossibleSystems(system["System"], system["dist"], stardist, nextSystemlist)
             else:

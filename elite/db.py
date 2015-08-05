@@ -9,11 +9,13 @@ speedup: http://codereview.stackexchange.com/questions/26822/myth-busting-sqlite
 '''
 import sqlite3
 import os
+import sys
 
 import elite.loader.maddavo as maddavo_loader
 import elite.loader.bpc as bpc_loader
 import elite.loader.EDMarakedConnector as EDMarakedConnector_loader
 import elite.loader.eddb as eddb_loader
+import elite.loader.raresimport as raresimport
 
 import sqlite3_functions
 
@@ -48,12 +50,12 @@ class db(object):
 
         if new_db:
             self.initNewDB()
-            #self.importData()
+            self.importData()
         #else:
             # test import
-        self.initNewDB()
+#        self.initNewDB()
+#        self.importData()
         self.fillCache()
-            #self.importData()
             
         dbVersion = self.getConfig( 'dbVersion' )
         if dbVersion == False:
@@ -93,18 +95,8 @@ class db(object):
     def importData(self):
         print("import data")
 
-        maddavo_sysl = maddavo_loader.system.loader(self)
-        maddavo_sysl.importData(None)
-
-        maddavo_stationl = maddavo_loader.station.loader(self)
-        maddavo_stationl.importData(None)
-
-        maddavo_item = maddavo_loader.items.loader(self)
-        maddavo_item.importData(None)
-
-        maddavo_prices = maddavo_loader.prices.loader(self)
-        maddavo_prices.importData()
-
+        raresimport.loader(self).importData('db/rares.csv')
+        
     def updateData(self):
         '''
         update price date from all sources
@@ -143,7 +135,7 @@ class db(object):
 
 
         #systems
-        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN, modified timestamp)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, modified timestamp)" )
 #        self.con.execute( "create UNIQUE index  IF NOT EXISTS systems_unique_System on systems (System)" )
 
         #stations
@@ -152,15 +144,18 @@ class db(object):
 
         #items
         self.con.execute( "CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )" )
-
         #price
         self.con.execute( "CREATE TABLE IF NOT EXISTS price (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS price_unique_System_Station_Item on price (SystemID,StationID,ItemID)" )
+        self.con.execute( "CREATE UNIQUE INDEX IF NOT EXISTS `price_index_StationID_ItemID` ON `price` (`StationID` ,`ItemID` )")
         self.con.execute( "create index  IF NOT EXISTS price_modified on price (modified)" )
 
         #det default config
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "dbVersion", DBVERSION ) )
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", 'c:\Users\mEDI\Documents\ED' ) )
+
+        #rares
+        self.con.execute( "CREATE TABLE IF NOT EXISTS rares (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, Name TEXT, Price INT, MaxAvail INT, illegal BOOLEAN DEFAULT NULL, offline BOOLEAN DEFAULT NULL, modifydate timestamp, comment TEXT )" )
         
         self.con.commit()
 
@@ -207,7 +202,16 @@ class db(object):
             self.__systemIDCache[system] = result[0]
             return result[0]
 
-    def getStationID(self,systemID,station):
+    def getSystemname(self,SystemID):
+        cur = self.cursor()
+        cur.execute( "select System from systems where id = ? limit 1", ( SystemID, ) )
+
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
+
+    def getStationID(self, systemID, station):
         if not systemID or not station:
             return
         station = station.lower()
@@ -225,6 +229,37 @@ class db(object):
         if result:
             self.__stationIDCache[key] = result[0]
             return result[0]
+
+    def getStationname(self,stationID):
+
+        cur = self.cursor()
+        cur.execute( "select Station from stations where id = ? limit 1", (stationID, ) )
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
+        
+    def getStarDistFromStation(self, station, system=None):
+        '''
+        allow stationID or (station name + (system name or systemID))
+        '''
+        if not isinstance(station, int):
+            if isinstance(system, int):
+                systemID = system
+            else:
+                systemID = self.getSystemIDbyName(system)
+
+            systemID = self.getStationID(systemID, station)
+        else:
+            stationID = station
+
+        if not stationID: return
+        
+        cur = self.cursor()
+        cur.execute( "select StarDist from stations where id = ? limit 1", ( stationID, ) )
+        result = cur.fetchone()
+        cur.close()
+        return result[0]
 
     def getItemID(self,itemname):
 
@@ -247,6 +282,22 @@ class db(object):
         result = cur.fetchone()
         cur.close()
         return result
+
+    def getStationsFromSystem(self,system):
+
+        if isinstance(system, int):
+            systemID = system
+        else:
+            systemID = self.getSystemIDbyName(system)
+
+        cur = self.con.cursor()
+        cur.execute('SELECT id, Station FROM stations  where SystemID=? ' , (systemID,))
+        rows = cur.fetchall()
+        cur.close()
+        stations = []
+        for row in rows:
+            stations.append( [ row["id"], row["Station"] ] )
+        return stations
         
     def getStationData(self,stationID):
         cur = self.cursor()
@@ -254,6 +305,7 @@ class db(object):
         result = cur.fetchone()
         cur.close()
         return result
+
 
     def getItemPriceDataByID(self,systemID,stationID,itemID):
         cur = self.cursor()
@@ -346,8 +398,46 @@ class db(object):
         cur.close()
         return result
 
+    def getDealsFromTo(self, fromStation,  toStation):
 
-    def getDealsFromTo(self,systemA, systemB, maxAgeDate):
+        if isinstance(fromStation,int):
+            fromStationID = fromStation
+        else:
+            fromStationID = self.getStationID( fromStation )
+
+        if isinstance(toStation,int):
+            toStationID = toStation
+        else:
+            toStationID = self.getStationID( toStation )
+
+        cur = self.cursor()
+
+        cur.execute('''select priceA.ItemID AS ItemID, priceB.StationBuy-priceA.StationSell AS profit,
+                             priceB.StationBuy AS StationBuy,  priceA.StationSell AS StationSell,
+                             items.name AS itemName,
+                             stationA.Station AS fromStation,
+                             stationB.Station AS toStation
+                             
+                    FROM price AS priceA
+
+                    inner JOIN price AS priceB ON priceB.StationID=? AND priceA.ItemID=priceB.ItemID AND priceB.StationBuy > priceA.StationSell
+                    left JOIN items on priceA.ItemID=items.id
+                    left JOIN stations AS stationA on priceA.StationID=stationA.id
+                    left JOIN stations AS stationB on priceB.StationID=stationB.id
+
+                    WHERE priceA.StationSell > 0 AND priceA.StationID=? 
+                    ''', (toStationID,fromStationID))
+        
+        result = cur.fetchall()
+        cur.close()
+
+#        for i in result:
+#            print(i)
+            
+        return result
+
+
+    def getDealsFromTo_old(self,systemA, systemB, maxAgeDate):
         '''
         unused only experimental
         '''
@@ -380,7 +470,7 @@ class db(object):
         cur.execute("CREATE /*TEMPORARY*/ TABLE testtable AS select * FROM price where systemID in (%s)  AND modified > ?" % (systemBseq) , systemBID  )
         return
         cur.execute("DROP TABLE IF EXISTS testtable2")
- #       cur.execute( """CREATE /*TEMPORARY*/ TABLE testtable2 AS select  
+#        cur.execute( """CREATE /*TEMPORARY*/ TABLE testtable2 AS select  
         cur.execute( """select  
                         ( b.StationBuy - a.StationSell ) AS profitAtoB,
                         ( a.StationBuy - b.StationSell ) AS profitBtoA, 
