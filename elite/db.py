@@ -388,8 +388,9 @@ class db(object):
                     left JOIN systems on systems.id = price.SystemID
                     left JOIN stations on stations.id = price.StationID
  
-                    where   
-                        price.modified >= ?
+                    where
+                        systems.permit != 1
+                        AND price.modified >= ?
                         AND stations.StarDist <= ?
                         """  , (systemA["posX"],systemA["posY"],systemA["posZ"], distance, maxAgeDate, maxStarDist  )  )
         
