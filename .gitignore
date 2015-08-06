@@ -58,3 +58,7 @@ target/
 /.project
 /.pydevproject
 *$py.class
+old/*
+test/*
+.settings
+

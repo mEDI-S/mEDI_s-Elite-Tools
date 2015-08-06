@@ -1,3 +1,7 @@
 *.db
 *.json
 *.price
+Category.csv
+Item.csv
+System.csv
+station.csv
