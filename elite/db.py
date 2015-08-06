@@ -10,6 +10,7 @@ speedup: http://codereview.stackexchange.com/questions/26822/myth-busting-sqlite
 import sqlite3
 import os
 import sys
+from datetime import datetime, date, time, timedelta
 
 import elite.loader.maddavo as maddavo_loader
 import elite.loader.bpc as bpc_loader
@@ -124,7 +125,19 @@ class db(object):
         myBPCloader = bpc_loader.prices.loader(self)
         myBPCloader.importData()
 
-        
+        lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
+        optimize = None
+        if lastOptimize:
+            lastOptimize = datetime.strptime(lastOptimize , "%Y-%m-%d %H:%M:%S")
+            if lastOptimize + timedelta(days=7) < datetime.now():
+                optimize = True
+        else:
+            optimize = True
+
+        if optimize:
+            self.optimizeDatabase()
+            self.setConfig( 'lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
+            
     def initNewDB(self):
         print("create new db")
         '''
@@ -159,6 +172,29 @@ class db(object):
         
         self.con.commit()
 
+    def optimizeDatabase(self):
+        '''
+        optimize all tables and indexes
+        '''
+        cur = self.cursor()
+
+        cur.execute( "select * from sqlite_master order by rootpage" )
+        result = cur.fetchall()
+
+        for table in result:
+            print("vacuum %s" % table["name"])
+            self.con.execute( "vacuum '%s'" % table["name"]  )
+
+        cur.execute( "select * from sqlite_master where type = 'table' order by rootpage" )
+        result = cur.fetchall()
+
+        for table in result:
+            print("analyze %s" % table["name"])
+            cur.execute( "analyze '%s'" %  table["name"] )
+
+        self.con.commit()
+        cur.close()
+        
     def cursor( self ):
         cur = self.con.cursor()
         #cur.execute("PRAGMA synchronous = OFF")
