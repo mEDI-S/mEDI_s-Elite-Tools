@@ -1,15 +1,13 @@
 # -*- coding: UTF8
 
-from elite.db import db
-
-
 import timeit
 import sys
 from datetime import datetime, date, time, timedelta
+import elite
 
 start = timeit.default_timer()
 
-mydb = db()
+mydb = elite.db()
 
 '''
 search best deal in my system for a A-B-A route
@@ -19,7 +17,8 @@ startSystem = "ltt 9810"
 
 searchModus = 2  # 1=bestDealFromMySystem 2=findBestDealInMyCircle
 maxDist = 40  # max distace for B system
-maxSearchRange = 60  # only used in mode 2
+maxJumpDistance = 23
+maxSearchRange = 80  # only used in mode 2
 maxStarDist = 1300
 maxAge = 14  # max data age in days
 minLoopProfit = 3000
@@ -27,6 +26,8 @@ minTradeProfit = 1000  # only to minimize results (speedup)
 minStock = 150000  # > 10000 = stable route > 50000 = extrem stable route and faster results
 
 maxAgeDate = datetime.utcnow() - timedelta(days=maxAge)
+
+elitetime =  elite.elitetime(mydb, maxJumpDistance)
 
 
 # das ressultat von findDealsFromTo() muss einfacher durchsuchbar sein die mega for schleifen sind scheise
@@ -129,9 +130,15 @@ calculate a rating "only profit is not the best option on long ways"
 for deal in bestProfitList:
     startDist = (deal[1]["StarDist"] + deal[3]["StarDist"])
    # rating = deal[0] - startDist/1.1
-    rating = deal[0] #+ minLoopProfit / (startDist * 0.03)
-#    print(rating, deal[0], startDist)
-    deal.append(rating)
+    timeA = elitetime.calcTimeFromTo(deal[1]["SystemID"],deal[2]["StationID"], deal[2]["SystemID"])
+    timeB = elitetime.calcTimeFromTo(deal[3]["SystemID"],deal[4]["StationID"], deal[4]["SystemID"])
+    lapTime = timeA + timeB
+    lapsInHour = int( 3600 / lapTime ) #round down
+
+    profitHour = deal[0]*lapsInHour
+
+    deal.append(profitHour)
+    deal.append( {"timeA":timeA, "timeB":timeB, "lapTime":lapTime, "lapsInHour":lapsInHour } )
 
 '''
 print results (best deals list)
@@ -152,8 +159,12 @@ for deal in bestProfitList:
     count += 1
     if count > 20:
          break
-
-    print("%d. profit %d dist %s ly rating: %d" % (count, deal[0], dist, deal[5]))
+    
+    
+    timeT = "%s:%s" % ( divmod(deal[6]["lapTime"] * deal[6]["lapsInHour"], 60))
+    timeL = "%s:%s" % ( divmod(deal[6]["lapTime"], 60))
+    
+    print("%d. profit %d dist %s ly profit/h: %d Laps/h: %d/%s LapTime: %s " % (count, deal[0], dist, deal[5] ,deal[6]["lapsInHour"], timeT, timeL))
 
     item = deal[1]
     profit = deal[2]["StationBuy"] - deal[1]["StationSell"]
