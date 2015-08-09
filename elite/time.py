@@ -12,8 +12,11 @@ class elitetime(object):
     '''
     Time Duration Calculator
     '''
+    if __name__ == '__main__':
+        mydb = db()
+    else:
+        mydb = None
 
-    mydb = db()
     maxJumpDist = None  # max jump distance
 
     '''
