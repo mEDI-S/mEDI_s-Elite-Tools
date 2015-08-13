@@ -170,10 +170,12 @@ class db(object):
         #rares
         self.con.execute( "CREATE TABLE IF NOT EXISTS rares (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, Name TEXT, Price INT, MaxAvail INT, illegal BOOLEAN DEFAULT NULL, offline BOOLEAN DEFAULT NULL, modifydate timestamp, comment TEXT )" )
 
-        #systemDistances dynamic cache
-        self.con.execute( "CREATE TABLE IF NOT EXISTS systemDistances(dist FLOAT, systemAID INT, systemBID INT)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS systemDistances_unique_systemA_systemB on systemDistances (systemAID, systemBID)" )
+        #dealCache dynamic cache
+        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistances(dist FLOAT, priceAID INT, priceBID INT)" )
+        self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistances_unique_priceA_priceB on dealsInDistances (priceAID, priceBID)" )
 
+        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)" )
+        self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)" )
 
         self.con.commit()
 
@@ -479,26 +481,52 @@ class db(object):
             
         return result
 
-    def calcSystemDistanceTableForSystem(self, systemIDlist):
-        
-        print("calcSystemDistanceTableForSystem", len(systemIDlist))
+    def calcDealsInDistancesCache(self, systemIDlist, maxAgeDate , minTradeProfit=1000,dist=51):
+        print("calcDealsInDistancesCache", len(systemIDlist))
+
         cur = self.cursor()
 
-        def doIt( strlist ):
-            print(strlist)
-            cur.execute("INSERT or IGNORE INTO systemDistances ( dist, systemAID, systemBID ) select calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) AS dist, systemA.id AS systemAID,systemB.id AS systemBID FROM systems AS systemA left join systems AS systemB ON systemA.id != systemB.id where systemA.id IN (%s) AND dist < 51" % (strlist,)  )
+        for system in systemIDlist:
+            systemID = system["id"]
+
+            cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems ( systemID, dist ) values (?, ? )", (systemID, dist )) 
+
+            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            systemA = cur.fetchone()
+    
+            cur.execute("""INSERT or IGNORE INTO dealsInDistances (dist,  priceAID,  priceBID ) 
+
+                            select dist, priceA.id AS priceAID, priceB.id AS priceBID 
+/*                            
+                            FROM price AS priceA
+
+                            inner JOIN   (select priceB.id AS id , priceB.StationBuy, priceB.ItemID,  calcDistance(?, ?, ?, systemB.posX, systemB.posY, systemB.posZ ) AS dist
+                                            from systems AS systemB 
+                                            inner join price AS priceB ON priceB.SystemID=systemB.id 
+                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?) 
+                                AS priceB ON priceA.ItemID=priceB.ItemID 
+
+*/
+                            FROM (select priceB.id AS id , priceB.StationBuy, priceB.ItemID,  calcDistance(?, ?, ?, systemB.posX, systemB.posY, systemB.posZ ) AS dist
+                                            from systems AS systemB 
+                                            inner join price AS priceB ON priceB.SystemID=systemB.id 
+                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?) 
+                                AS priceB  
+
+                            inner JOIN price AS priceA ON priceA.ItemID=priceB.ItemID       
+
+                        where
+                            priceA.SystemID = ?
+                            AND priceA.modified >= ?
+                            AND priceA.StationSell > 0 
+
+                            AND priceB.StationBuy > priceA.StationSell 
+                            AND priceB.StationBuy - priceA.StationSell >= ?
+
+                            """  , (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID,  maxAgeDate, minTradeProfit  )  )
+
             self.con.commit()
 
-        slist = []
-
-        for x in systemIDlist:
-            slist.append( str(x["id"]) )
-            if len(slist) >= 100:
-                doIt( ', '.join(slist) )
-                slist = []
-        if len(slist) > 0:
-            doIt( ', '.join(slist) )
-        
 
     def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50):
         if isinstance(system,int):
@@ -532,28 +560,29 @@ class db(object):
                     
                         """    , ( systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist)  ) 
 
-        # check the distance cache
-        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, systemDistances.dist from TEAMP_selectSystemA AS systems LEFT join systemDistances ON systems.id=systemDistances.systemAID  where  distn<=? AND systemDistances.dist is NULL group by id", ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance, ) )
+        # check the dealsIndistance cache
+        cur.execute( """select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
+                             from TEAMP_selectSystemA AS systems 
+                             
+                             LEFT join dealsInDistancesSystems  ON systems.id=dealsInDistancesSystems.SystemID
+                             where  distn<=? AND dealsInDistancesSystems.dist is NULL group by id
+                             
+                             """, ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance, ) )
         systemList = cur.fetchall()
         if systemList:
-            self.calcSystemDistanceTableForSystem(systemList)
+            self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
-        cur.execute("""select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
+
+        cur.execute("""select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
                         systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA,
-                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB,  systemDistancesB.dist AS dist,
+                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB,  dist,
                         items.name AS itemName 
 
                         from TEAMP_selectSystemA AS systemA
 
-/*                        inner JOIN systems AS systemB ON calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) <= ?*/
-/* 0,7s vs 9,6 or on full set 26s vs. 72s*/
-                        inner JOIN systemDistances AS systemDistancesB ON systemDistancesB.systemAID=systemA.id AND systemDistancesB.dist <= ? 
+                        inner join (select * from  dealsInDistances inner join price ON price.id=dealsInDistances.priceAID WHERE dealsInDistances.dist <= ? ) AS priceA ON priceA.SystemID=systemA.id
 
-
-                        inner join price AS priceA ON priceA.SystemID=systemA.id
-
-                        inner join price AS priceB on priceA.ItemID=priceB.ItemID
-
+                        inner join price AS priceB on priceB.id=priceA.priceBID
 
                         left join systems AS systemB  ON systemB.id=priceB.SystemID
 
@@ -569,7 +598,7 @@ class db(object):
                         AND priceA.Stock>=?
                         AND stationA.StarDist <= ?
 
-                        AND priceB.SystemID=systemDistancesB.systemBID
+                        /*AND priceB.SystemID=systemDistancesB.systemBID*/
                         /*AND priceB.SystemID=systemB.id*/
 
                         AND priceB.modified >= ?
@@ -601,21 +630,28 @@ class db(object):
         stationA = cur.fetchone()
         systemID = stationA["SystemID"]
 
-        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, systemDistances.dist from systems LEFT  join systemDistances ON systems.id=systemDistances.systemAID  where  distn<=? AND systemDistances.dist is NULL group by id", ( stationA["posX"], stationA["posY"], stationA["posZ"],  distance*1.2, ) )
+
+        # check the dealsIndistance cache
+        cur.execute( """select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
+                             from TEAMP_selectSystemA AS systems 
+                             
+                             LEFT join dealsInDistancesSystems  ON systems.id=dealsInDistancesSystems.SystemID
+                             where  distn<=? AND dealsInDistancesSystems.dist is NULL group by id
+                             
+                             """, ( stationA["posX"], stationA["posY"], stationA["posZ"],  distance, ) )
         systemList = cur.fetchall()
         if systemList:
-            self.calcSystemDistanceTableForSystem(systemList)
-
+            self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
-                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.StationID AS StationBID, stationB.Station AS StationB,  systemDistancesB.dist,
+                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.StationID AS StationBID, stationB.Station AS StationB,  dist,
                         items.name AS itemName
 
                         FROM price AS priceA
 
-                        inner JOIN  price AS priceB ON  priceA.ItemID=priceB.ItemID AND priceA.Stock>=? AND  priceB.StationBuy > priceA.StationSell AND priceB.StationBuy-priceA.StationSell >= ? 
+                        inner join dealsInDistances ON dealsInDistances.priceAID=priceA.id
 
-                        inner JOIN systemDistances AS systemDistancesB ON systemDistancesB.systemAID=priceA.SystemID AND systemDistancesB.systemBID=priceB.SystemID AND systemDistancesB.dist <= ? 
+                        inner join price AS priceB on priceB.id=dealsInDistances.priceBID
 
                         left join systems AS systemB  ON systemB.id=priceB.SystemID
                         left JOIN stations AS stationB on stationB.id = priceB.StationID
@@ -623,15 +659,19 @@ class db(object):
                         
                     where
                         priceA.StationID=?
+                        AND priceA.Stock>=?
+                        AND dealsInDistances.dist <= ?
                         AND priceA.modified >= ?
                         AND priceB.modified >= ?
                         AND systemB.permit != 1
                         
                         AND priceA.StationSell>0 
                         AND stationB.StarDist <= ?
+                        AND priceB.StationBuy > priceA.StationSell
+                        AND profit >= ? 
                         order by profit DESC
                         limit ?
-                        """    , (  minStock,minProfit, distance, stationID, maxAgeDate, maxAgeDate, maxStarDist, reslultLimit  )  )
+                        """    , ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
         
         result = cur.fetchall()
 

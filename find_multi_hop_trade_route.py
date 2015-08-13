@@ -11,7 +11,7 @@ mydb = elite.db()
 
 startSystem = "ltt 9810"
 
-tradingHops = 3  # 2 is minimum +1 for the back hop
+tradingHops = 3  # +1 for the back hop
 maxDist = 40  # max distace for B system
 maxJumpDistance = 23
 maxSearchRange = 50  # on start search used
@@ -19,7 +19,7 @@ maxStarDist = 1300
 maxAge = 14  # max data age in days
 minTradeProfit = 1000  # only to minimize results (speedup)
 minStock = 150000  # > 10000 = stable route > 50000 = extrem stable route and faster results
-resultLimit = 30
+resultLimit = 100
 
 maxAgeDate = datetime.utcnow() - timedelta(days=maxAge)
 
@@ -38,13 +38,14 @@ print("getBestDealsinDistance", round(timeit.default_timer() - start2, 2))
 
 print("startdeals", len(startdeals))
 
-
+#sys.exit()
 
 for deal in startdeals:
     deals.append({ "profit":0, "time":0 , "path":[deal] })
 
 
 for deep in range(1, tradingHops):
+    print("deep", deep+1)
     for deal in deals[:]:
         if deep == len(deal["path"]):
             delsX = mydb.getBestDealsFromStationInDistance(deal["path"][ len(deal["path"])-1 ]["StationBID"], maxDist, maxAgeDate, maxStarDist, minTradeProfit, minStock, resultLimit)
