@@ -479,13 +479,28 @@ class db(object):
             
         return result
 
-    def calcSystemDistanceTableForSystem(self, systemID):
+    def calcSystemDistanceTableForSystem(self, systemIDlist):
+        
+        print("calcSystemDistanceTableForSystem", len(systemIDlist))
         cur = self.cursor()
-        cur.execute("INSERT or IGNORE INTO systemDistances ( dist, systemAID, systemBID ) select calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) AS dist, systemA.id AS systemAID,systemB.id AS systemBID FROM systems AS systemA left join systems AS systemB ON systemA.id != systemB.id where systemA.id=? AND dist < 101", (systemID,)  )
+
+        def doIt( strlist ):
+            print(strlist)
+            cur.execute("INSERT or IGNORE INTO systemDistances ( dist, systemAID, systemBID ) select calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) AS dist, systemA.id AS systemAID,systemB.id AS systemBID FROM systems AS systemA left join systems AS systemB ON systemA.id != systemB.id where systemA.id IN (%s) AND dist < 51" % (strlist,)  )
+            self.con.commit()
+
+        slist = []
+
+        for x in systemIDlist:
+            slist.append( str(x["id"]) )
+            if len(slist) >= 100:
+                doIt( ', '.join(slist) )
+                slist = []
+        if len(slist) > 0:
+            doIt( ', '.join(slist) )
         
-        self.con.commit()
-        
-    def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock):
+
+    def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50):
         if isinstance(system,int):
             systemID = system
         else:
@@ -497,65 +512,87 @@ class db(object):
         cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
-        #get startsystems
-#        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist from systems where  dist <= ?", ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance, ) )
-#        systemListA = cur.fetchall()
-#
-#        systemAseq=', '.join( [str(x[0]) for x in systemListA] )
+        # use a temp table to build a startsystem list
+        cur.execute("""CREATE TEMPORARY TABLE TEAMP_selectSystemA AS select systemA.id AS id, systemA.posX AS posX, systemA.posY AS posY, systemA.posZ AS posZ, systemA.System AS System
 
+                        FROM ( select calcDistance(?, ?, ?, systems.posX, systems.posY, systems.posZ ) as startDist, * from systems where startDist <= ? ) as systemA
 
-#        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist from systems where  dist <= ?", ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance*2, ) )
-#        systemListB = cur.fetchall()
-       
-#        systemBseq=', '.join( [str(x[0]) for x in systemListB] )
+                        inner join price AS priceA ON systemA.id=priceA.SystemID
 
+                        left JOIN stations AS stationA on stationA.id = priceA.StationID
 
-        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, systemDistances.dist from systems LEFT  join systemDistances ON systems.id=systemDistances.systemAID  where  distn<=? AND systemDistances.dist is NULL group by id", ( systemA["posX"], systemA["posY"], systemA["posZ"],  maxSearchRange*1.3, ) )
+                    where
+                        priceA.modified >= ?
+                        AND priceA.StationSell>0 
+                        AND priceA.Stock>=?
+                        AND systemA.permit != 1
+                        AND stationA.StarDist <= ?
+
+                    group by systemA.id
+                    
+                        """    , ( systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist)  ) 
+
+        # check the distance cache
+        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, systemDistances.dist from TEAMP_selectSystemA AS systems LEFT join systemDistances ON systems.id=systemDistances.systemAID  where  distn<=? AND systemDistances.dist is NULL group by id", ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance, ) )
         systemList = cur.fetchall()
         if systemList:
-            print("calcSystemDistanceTableForSystem", len(systemList))
-            for x in systemList:
-                self.calcSystemDistanceTableForSystem(x["id"])
-                #print(x)
-
+            self.calcSystemDistanceTableForSystem(systemList)
 
         cur.execute("""select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
                         systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA,
-                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB,  systemDistancesB.dist,
-                        items.name AS itemName
-                        
-                        FROM price AS priceA
+                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB,  systemDistancesB.dist AS dist,
+                        items.name AS itemName 
 
-                        left JOIN stations AS stationA on stationA.id = priceA.StationID
-                        left join systems AS systemA  ON systemA.id=priceA.SystemID
-                        inner join systemDistances ON systemDistances.systemAID=priceA.SystemID AND systemDistances.systemBID=? AND systemDistances.dist <= ?
+                        from TEAMP_selectSystemA AS systemA
 
-                        inner JOIN  price AS priceB ON  priceA.ItemID=priceB.ItemID AND priceA.Stock>=? AND  priceB.StationBuy > priceA.StationSell AND priceB.StationBuy-priceA.StationSell >= ? 
+/*                        inner JOIN systems AS systemB ON calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) <= ?*/
+/* 0,7s vs 9,6 or on full set 26s vs. 72s*/
+                        inner JOIN systemDistances AS systemDistancesB ON systemDistancesB.systemAID=systemA.id AND systemDistancesB.dist <= ? 
 
-                        inner JOIN systemDistances AS systemDistancesB ON systemDistancesB.systemAID=priceA.SystemID AND systemDistancesB.systemBID=priceB.SystemID AND systemDistancesB.dist <= ? 
+
+                        inner join price AS priceA ON priceA.SystemID=systemA.id
+
+                        inner join price AS priceB on priceA.ItemID=priceB.ItemID
+
 
                         left join systems AS systemB  ON systemB.id=priceB.SystemID
+
+                        left JOIN stations AS stationA on stationA.id = priceA.StationID
+
                         left JOIN stations AS stationB on stationB.id = priceB.StationID
+
                         left JOIN items on priceA.ItemID=items.id
+
                     where
                         priceA.modified >= ?
-                        AND priceB.modified >= ?
-                        AND systemA.permit != 1
-                        AND systemB.permit != 1
-                        
                         AND priceA.StationSell>0 
+                        AND priceA.Stock>=?
                         AND stationA.StarDist <= ?
+
+                        AND priceB.SystemID=systemDistancesB.systemBID
+                        /*AND priceB.SystemID=systemB.id*/
+
+                        AND priceB.modified >= ?
+                        AND priceB.StationBuy>0 
+                        AND systemB.permit != 1
                         AND stationB.StarDist <= ?
-                        /*AND calcDistance(systemA.posX, systemA.posY, systemA.posZ, systemB.posX, systemB.posY, systemB.posZ ) <= ?*/
-                        order by profit DESC
-                        limit 100
-                        """    , ( systemID,maxSearchRange, minStock,minProfit,distance, maxAgeDate,maxAgeDate, maxStarDist ,maxStarDist )  )
-        
+
+                        AND  priceB.StationBuy > priceA.StationSell 
+                        AND priceB.StationBuy-priceA.StationSell >= ?
+
+                    order by profit DESC
+
+                        limit ?
+
+                        """    , ( distance, maxAgeDate, minStock, maxStarDist, maxAgeDate, maxStarDist, minProfit, resultLimit)  ) #  
+
         result = cur.fetchall()
 
         cur.close()
         return result
-    def getBestDealsFromStationInDistance(self,stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock):
+
+
+    def getBestDealsFromStationInDistance(self,stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock, reslultLimit=20):
 
         cur = self.cursor()
 
@@ -567,10 +604,7 @@ class db(object):
         cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, systemDistances.dist from systems LEFT  join systemDistances ON systems.id=systemDistances.systemAID  where  distn<=? AND systemDistances.dist is NULL group by id", ( stationA["posX"], stationA["posY"], stationA["posZ"],  distance*1.2, ) )
         systemList = cur.fetchall()
         if systemList:
-            print("calcSystemDistanceTableForSystem", len(systemList))
-            for x in systemList:
-                self.calcSystemDistanceTableForSystem(x["id"])
-                #print(x)
+            self.calcSystemDistanceTableForSystem(systemList)
 
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
@@ -596,8 +630,8 @@ class db(object):
                         AND priceA.StationSell>0 
                         AND stationB.StarDist <= ?
                         order by profit DESC
-                        limit 20
-                        """    , (  minStock,minProfit, distance, stationID, maxAgeDate, maxAgeDate, maxStarDist  )  )
+                        limit ?
+                        """    , (  minStock,minProfit, distance, stationID, maxAgeDate, maxAgeDate, maxStarDist, reslultLimit  )  )
         
         result = cur.fetchall()
 
