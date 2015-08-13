@@ -177,6 +177,28 @@ class db(object):
         self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)" )
 
+ 
+        # trigger to controll the dynamic cache
+        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
+                            WHEN NEW.StationBuy != OLD.StationBuy OR NEW.StationSell != OLD.StationSell
+                            BEGIN
+                                DELETE FROM dealsInDistances WHERE priceAID=OLD.id;
+                                DELETE FROM dealsInDistancesSystems WHERE systemID=OLD.SystemID;
+                            END; """ )
+
+        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_delete_price AFTER DELETE  ON  price
+                            BEGIN
+                                DELETE FROM dealsInDistances WHERE priceAID=OLD.id;
+                                DELETE FROM dealsInDistances WHERE priceBID=OLD.id;
+                                DELETE FROM dealsInDistancesSystems WHERE systemID=OLD.SystemID;
+                            END; """ )
+
+        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_insert_price AFTER INSERT  ON  price
+                            BEGIN
+                                DELETE FROM dealsInDistancesSystems WHERE systemID=NEW.SystemID;
+                            END; """ )
+
+
         self.con.commit()
 
     def optimizeDatabase(self):
