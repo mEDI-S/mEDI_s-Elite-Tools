@@ -464,7 +464,7 @@ class db(object):
         cur.close()
         return result
 
-    def getDealsFromTo(self, fromStation,  toStation):
+    def getDealsFromTo(self, fromStation,  toStation, maxAgeDate=datetime.utcnow()-timedelta(days=14) ):
 
         if isinstance(fromStation,int):
             fromStationID = fromStation
@@ -491,9 +491,14 @@ class db(object):
                     left JOIN stations AS stationA on priceA.StationID=stationA.id
                     left JOIN stations AS stationB on priceB.StationID=stationB.id
 
-                    WHERE priceA.StationSell > 0 AND priceA.StationID=? 
+                    WHERE 
+
+                        priceA.StationID=? 
+                        AND priceA.StationSell > 0
+                        AND priceA.modified >= ?
+                        AND priceB.modified >= ?
                     order by profit DESC
-                    ''', (toStationID,fromStationID))
+                    ''', (toStationID, fromStationID, maxAgeDate, maxAgeDate))
         
         result = cur.fetchall()
         cur.close()
