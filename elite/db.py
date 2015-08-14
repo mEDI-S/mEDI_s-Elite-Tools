@@ -581,7 +581,7 @@ class db(object):
         systemA = cur.fetchone()
 
         # use a temp table to build a startsystem list
-        cur.execute("""CREATE TEMPORARY TABLE TEAMP_selectSystemA AS select systemA.id AS id, systemA.posX AS posX, systemA.posY AS posY, systemA.posZ AS posZ, systemA.System AS System
+        cur.execute("""CREATE TEMPORARY TABLE TEAMP_selectSystemA AS select systemA.id AS id, systemA.posX AS posX, systemA.posY AS posY, systemA.posZ AS posZ, systemA.System AS System, systemA.startDist AS startDist
 
                         FROM ( select calcDistance(?, ?, ?, systems.posX, systems.posY, systems.posZ ) as startDist, * from systems where startDist <= ? ) as systemA
 
@@ -617,7 +617,7 @@ class db(object):
                         priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
                         systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
                         systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
-                        dist, items.name AS itemName 
+                        dist, systemA.startDist AS startDist, items.name AS itemName 
 
                         from TEAMP_selectSystemA AS systemA
 
