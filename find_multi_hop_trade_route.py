@@ -11,15 +11,15 @@ mydb = elite.db()
 
 startSystem = "ltt 9810"
 
-tradingHops = 3  # +1 for the back hop
-maxDist = 40  # max distace for B system
+tradingHops = 4  # +1 for the back hop
+maxDist = 43  # max distace for B system
 maxJumpDistance = 23
-maxSearchRange = 50  # on start search used
+maxSearchRange = 60  # on start search used
 maxStarDist = 1300
 maxAge = 14  # max data age in days
 minTradeProfit = 1000  # only to minimize results (speedup)
 minStock = 150000  # > 10000 = stable route > 50000 = extrem stable route and faster results
-resultLimit = 100
+resultLimit = 50
 
 maxAgeDate = datetime.utcnow() - timedelta(days=maxAge)
 
@@ -104,17 +104,22 @@ for i, deal in enumerate(deals):
 
     print("%d. profit: %d profit/h:%d Laps/h: %d/%s LapTime: %s" % (i + 1, deal["profit"], deal["profitHour"], deal["lapsInHour"], timeT, timeL)) 
 
-    beforeStation = deal["path"][0]["StationA"] 
-    beforeSystem = deal["path"][0]["SystemA"]
+
+    before = { "StationB":deal["path"][0]["StationA"], "SystemB":deal["path"][0]["SystemA"], "StarDist":deal["path"][0]["stationA.StarDist"], "refuel":deal["path"][0]["stationA.refuel"]  }
+
     for d in deal["path"]:
-        print("\t%s : %s (%s buy:%d) (%s ly)-> %s : %s sell:%d profit:%d" % (beforeSystem, beforeStation, d["itemName"],d["StationSell"], d["dist"], d["SystemB"], d["StationB"],d["StationBuy"],  d["profit"] ) )
+        #print(d.keys())
+        print("\t%s : %s (%d ls) (%s buy:%d) (%s ly)-> %s : %s (%d ls) (sell:%d profit:%d)" % (before["SystemB"], before["StationB"], before["StarDist"] , d["itemName"],d["StationSell"], d["dist"], d["SystemB"], d["StationB"],d["StarDist"], d["StationBuy"],  d["profit"] ) )
+        if before["refuel"] != 1:
+            print("\t\tWarning: %s have no refuel!?" % before["StationB"])
         
-        beforeStation = d["StationB"]
-        beforeSystem = d["SystemB"]
+        before = d
 
     backdist = mydb.getDistanceFromTo(deal["path"][0]["SystemAID"] , deal["path"][ len(deal["path"])-1 ]["SystemBID"])
+
     if deal["backToStartDeal"]:
-        print("\t%s : %s (%s buy:%d) (%s ly)-> %s : %s sell:%d profit:%d" % (beforeSystem, deal["backToStartDeal"]["fromStation"] , deal["backToStartDeal"]["itemName"], deal["backToStartDeal"]["StationSell"], backdist, deal["path"][0]["SystemA"], deal["backToStartDeal"]["toStation"],deal["backToStartDeal"]["StationBuy"],  deal["backToStartDeal"]["profit"] ) )
+        #print(deal["backToStartDeal"].keys())
+        print("\t%s : %s (%d ls) (%s buy:%d) (%s ly)-> %s : %s sell:%d profit:%d" % (before["SystemB"], deal["backToStartDeal"]["fromStation"] , before["StarDist"], deal["backToStartDeal"]["itemName"], deal["backToStartDeal"]["StationSell"], backdist, deal["path"][0]["SystemA"], deal["backToStartDeal"]["toStation"],deal["backToStartDeal"]["StationBuy"],  deal["backToStartDeal"]["profit"] ) )
     else:
         print("\tno back deal (%s ly) ->%s : %s" % (backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"]  ))
 

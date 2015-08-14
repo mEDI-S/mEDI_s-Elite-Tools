@@ -549,6 +549,19 @@ class db(object):
 
             self.con.commit()
 
+    def checkDealsInDistancesCache(self):
+        cur = self.cursor()
+
+        cur.execute( """select * from dealsInDistances
+                    left join price AS priceA ON priceA.id=dealsInDistances.priceAID
+                    left join price AS priceB ON priceB.id=dealsInDistances.priceBID
+                     where
+                       priceB.StationBuy < priceA.StationSell 
+                       OR priceB.StationBuy IS NULL
+                       OR priceA.StationSell IS NULL
+                     """)
+
+        result = cur.fetchone()
 
     def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50):
         if isinstance(system,int):
@@ -595,10 +608,11 @@ class db(object):
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
 
-        cur.execute("""select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
-                        systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA,
-                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB,  dist,
-                        items.name AS itemName 
+        cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.id, priceB.id,
+                        priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
+                        systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
+                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+                        dist, items.name AS itemName 
 
                         from TEAMP_selectSystemA AS systemA
 
@@ -619,9 +633,6 @@ class db(object):
                         AND priceA.StationSell>0 
                         AND priceA.Stock>=?
                         AND stationA.StarDist <= ?
-
-                        /*AND priceB.SystemID=systemDistancesB.systemBID*/
-                        /*AND priceB.SystemID=systemB.id*/
 
                         AND priceB.modified >= ?
                         AND priceB.StationBuy>0 
@@ -666,8 +677,8 @@ class db(object):
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
-                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.StationID AS StationBID, stationB.Station AS StationB,  dist,
-                        items.name AS itemName
+                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+                        dist, items.name AS itemName
 
                         FROM price AS priceA
 
