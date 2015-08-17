@@ -8,17 +8,18 @@ import elite
 start = timeit.default_timer()
 
 mydb = elite.db()
+location = elite.location(mydb)
 
-startSystem = "ltt 9810"
+startSystem = location.getLocation()
 
 tradingHops = 2  # +1 for the back hop
 maxDist = 46  # max distace for B system
 maxJumpDistance = 23
-maxSearchRange = 60  # on start search used
+maxSearchRange = 100  # on start search used
 maxStarDist = 1300
 maxAge = 14  # max data age in days
 minTradeProfit = 1000  # only to minimize results (speedup)
-minStock = 150000  # > 10000 = stable route > 50000 = extrem stable route and faster results
+minStock = 10000  # > 10000 = stable route > 50000 = extrem stable route and faster results
 resultLimit = 100
 
 maxAgeDate = datetime.utcnow() - timedelta(days=maxAge)
