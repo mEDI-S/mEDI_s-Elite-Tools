@@ -47,7 +47,7 @@ class loader(object):
     def importData(self, filename=None):
         if not filename: filename = 'db/LTT 9810.Friedrich Peters Vision.2015-07-21T23.05.20.csv'
         
-        with open(filename ,"rb") as csvfile:
+        with open(filename ,"r") as csvfile:
             simpelreader = csv.reader(csvfile, dialect='excel',delimiter=';',quoting=csv.QUOTE_NONE)
 
             cur = self.mydb.cursor()
