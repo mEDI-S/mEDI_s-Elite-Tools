@@ -1,3 +1,4 @@
 # -*- coding: UTF8
 
-import prices
+
+from elite.loader.bpc import prices

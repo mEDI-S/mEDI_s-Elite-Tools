@@ -11,9 +11,13 @@ import os
 import csv
 from datetime import datetime, date, time, timedelta
 
-from StringIO import StringIO
 import gzip
-import urllib2
+import io
+
+try:
+    import urllib2
+except ImportError:
+    import urllib.request as urllib2
 
 class loader(object):
     '''
@@ -148,7 +152,7 @@ class loader(object):
         response = urllib2.urlopen(request)
         if response.info().get('Content-Encoding') == 'gzip':
             # print("gzip ok")
-            buf = StringIO(response.read())
+            buf = io.BytesIO(response.read())
             f = gzip.GzipFile(fileobj=buf)
         else:
             # print("none")

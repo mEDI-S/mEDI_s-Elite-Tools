@@ -165,8 +165,8 @@ class db(object):
 
         #det default config
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "dbVersion", DBVERSION ) )
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", 'c:\Users\mEDI\Documents\ED' ) )
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EliteLogDir", 'C:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\Logs' ) )
+        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", r'c:\Users\mEDI\Documents\ED' ) )
+        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EliteLogDir", r'C:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\Logs' ) )
 
         #rares
         self.con.execute( "CREATE TABLE IF NOT EXISTS rares (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, Name TEXT, Price INT, MaxAvail INT, illegal BOOLEAN DEFAULT NULL, offline BOOLEAN DEFAULT NULL, modifydate timestamp, comment TEXT )" )

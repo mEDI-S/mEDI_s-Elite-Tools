@@ -6,9 +6,13 @@ Created on 21.07.2015
 import re
 from datetime import datetime, date, time, timedelta
 #import urllib
-from StringIO import StringIO
 import gzip
-import urllib2
+import io
+
+try:
+    import urllib2
+except ImportError:
+    import urllib.request as urllib2
 
 # in python3 urllib.request
 class loader(object):
@@ -203,7 +207,7 @@ class loader(object):
         response = urllib2.urlopen(request)
         if response.info().get('Content-Encoding') == 'gzip':
             #print("gzip ok")
-            buf = StringIO( response.read())
+            buf = io.BytesIO(response.read())
             f = gzip.GzipFile(fileobj=buf)
         else:
             #print("none")

@@ -1,5 +1,5 @@
 
-import system
-import station
-import prices
-import items
+from elite.loader.maddavo import system
+from elite.loader.maddavo import station
+from elite.loader.maddavo import prices
+from elite.loader.maddavo import items
