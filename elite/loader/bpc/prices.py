@@ -4,12 +4,9 @@ Created on 22.07.2015
 @author: mEDI
 '''
 
-######
-# achtung SC table import datetime ist in localzeit
-#
-
 import sqlite3
 from datetime import datetime, date, time, timedelta
+import os
 
 class loader(object):
     '''
@@ -18,18 +15,25 @@ class loader(object):
 
     mydb = None
     con = None
+    dbPath = None
     
     def __init__(self,mydb):
         '''
         Constructor
         '''
         self.mydb = mydb
-        self.dbPath = "c:\Program Files (x86)\Slopeys ED BPC\ED4.db"
-#        self.dbPath = "db\ED4.db"
         
     def connect_BPC_DB(self,dbPath=None):
-        if dbPath: self.dbPath = dbPath
-        
+        if dbPath:
+            self.dbPath = dbPath
+        else:
+            self.dbPath = self.mydb.getConfig( 'BPC_db_path' )        
+            
+        if not os.path.isfile( self.dbPath ):
+            print("Warning: config->BPC_db_path: '%s' do not exist" % self.dbPath)
+            return
+            
+
         self.con = sqlite3.connect(self.dbPath)
         self.con.row_factory = sqlite3.Row    
 
@@ -38,6 +42,9 @@ class loader(object):
         print("update from BPC")
         self.connect_BPC_DB()
 
+        if not self.con:
+            return
+        
         utcOffeset =  datetime.now() - datetime.utcnow() 
 
         # set last update to now()        
