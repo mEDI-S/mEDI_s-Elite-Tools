@@ -138,7 +138,11 @@ class loader(object):
     def update(self):
         lastUpdateTime = self.mydb.getConfig( 'lastEDMarkedConnectorUpdate' )
         cvsDir = self.mydb.getConfig( 'EDMarkedConnector_cvsDir' )
-        #lastUpdateTime = "2015-07-23 14:29:27"
+
+        if not os.path.isdir(cvsDir):
+            print("Warning: config->EDMarkedConnector_cvsDir: '%s' do not exist" % cvsDir)
+            return
+
         currentUpdateTime = None
         newstEntry = None
         if lastUpdateTime:
