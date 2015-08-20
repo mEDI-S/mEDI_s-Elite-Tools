@@ -33,10 +33,11 @@ class db(object):
     __systemIDCache = {}
     __itemIDCache = {}
 
-    def __init__(self):
+    def __init__(self, guiMode=None):
         '''
         Constructor
         '''
+        self.guiMode = guiMode
         if self.con is not None:
             return
 
@@ -54,7 +55,7 @@ class db(object):
             self.importData()
         #else:
             # test import
-        self.initNewDB()
+        #self.initNewDB()
 #        self.importData()
         self.fillCache()
             
@@ -63,8 +64,8 @@ class db(object):
             print(dbVersion)
             print("version false db")
             self.initNewDB()
-
-        self.updateData()
+        if not self.guiMode:
+            self.updateData()
         
     def cleanCache(self):
         '''

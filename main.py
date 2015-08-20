@@ -10,6 +10,7 @@ import timeit
 from gui import multihoproute
 
 from PySide import QtCore, QtGui
+from _datetime import datetime
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -23,13 +24,14 @@ class MainWindow(QtGui.QMainWindow):
 
         self.setWindowTitle("mEDI's Elite Tools")
 
-        self.mydb = elite.db()
+        self.mydb = elite.db(guiMode=True)
         self.location = elite.location(self.mydb)
 
 
         self.createActions()
         self.createMenus()
-
+        self.createTimer()
+        
         message = "Welcomme to mEDI's Elite Tools"
         self.statusBar().showMessage(message)
 
@@ -108,8 +110,24 @@ class MainWindow(QtGui.QMainWindow):
         self.helpMenu.addAction(self.aboutAct)
         self.helpMenu.addAction(self.aboutQtAct)
 
+    def createTimer(self):
+        self.updateDBtimer = QtCore.QTimer()
+        self.updateDBtimer.start(1000*60)
+        self.updateDBtimer.timeout.connect(self.updateDB)
 
 
+    def updateDB(self):
+        self.updateDBtimer.stop()
+
+        self.statusBar().showMessage("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
+        starttime = timeit.default_timer()
+
+        self.mydb.updateData()
+        
+        self.statusBar().showMessage("Update database finished (%ss)" % round(timeit.default_timer() - starttime, 2))
+
+        self.updateDBtimer.start()
+        #self.updateDBtimer.start(1000*2)
 if __name__ == '__main__':
 
     import sys
