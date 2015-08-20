@@ -583,6 +583,7 @@ class db(object):
         systemA = cur.fetchone()
 
         # use a temp table to build a startsystem list
+        cur.execute("DROP TABLE IF EXISTS TEAMP_selectSystemA ")
         cur.execute("""CREATE TEMPORARY TABLE TEAMP_selectSystemA AS select systemA.id AS id, systemA.posX AS posX, systemA.posY AS posY, systemA.posZ AS posZ, systemA.System AS System, systemA.startDist AS startDist
 
                         FROM ( select calcDistance(?, ?, ?, systems.posX, systems.posY, systems.posZ ) as startDist, * from systems where startDist <= ? ) as systemA
