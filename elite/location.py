@@ -29,9 +29,13 @@ class location(object):
 
         cDate, logfile = self.getLastLog()
 
-        if not self._lastCDate or cDate > self._lastCDate:
-            self._lastCDate = cDate
-            self.readLog(logfile)
+        if logfile:
+            if not self._lastCDate or cDate > self._lastCDate:
+                self._lastCDate = cDate
+                self.readLog(logfile)
+
+        if not self.location:
+            self.location =  ""
 
         return self.location
 
@@ -39,7 +43,7 @@ class location(object):
         eliteLogDir = self.mydb.getConfig( 'EliteLogDir' )
         if not os.path.isdir( eliteLogDir ):
             print("Warning: EliteLogDir:'%s' does not exist" % eliteLogDir)
-            return
+            return (None,None)
 
         logfiles = []
         for f in os.listdir(eliteLogDir):
