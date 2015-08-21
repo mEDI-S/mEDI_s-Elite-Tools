@@ -7,7 +7,7 @@ Created on 19.08.2015
 '''
 import elite
 import timeit
-from gui import multihoproute
+import gui
 
 from PySide import QtCore, QtGui
 from _datetime import datetime
@@ -16,6 +16,7 @@ from _datetime import datetime
 class MainWindow(QtGui.QMainWindow):
 
     mydb = None
+    dbworker = None
     location = None
     multiHopRouteWidget = []
     
@@ -25,6 +26,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("mEDI's Elite Tools")
 
         self.mydb = elite.db(guiMode=True)
+        self.dbworker =  gui.dbworker.new(self)
+        
         self.location = elite.location(self.mydb)
 
 
@@ -48,7 +51,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def multiHopRoute(self):
 
-        mhr_widget = multihoproute.Widget(self)
+        mhr_widget = gui.multihoproute.Widget(self)
 
         self.multiHopRouteWidget.append(mhr_widget)
         pos = len(self.multiHopRouteWidget)
@@ -120,14 +123,12 @@ class MainWindow(QtGui.QMainWindow):
         self.updateDBtimer.stop()
 
         self.statusBar().showMessage("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
-        starttime = timeit.default_timer()
 
-        self.mydb.updateData()
-        
-        self.statusBar().showMessage("Update database finished (%ss)" % round(timeit.default_timer() - starttime, 2))
+        #self.mydb.updateData()
+        self.dbworker.updateDB()
 
         self.updateDBtimer.start()
-        #self.updateDBtimer.start(1000*2)
+
 if __name__ == '__main__':
 
     import sys

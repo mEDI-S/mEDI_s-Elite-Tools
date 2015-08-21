@@ -45,25 +45,26 @@ class db(object):
         if not os.path.isfile(DBPATH):
             print("new db")
             new_db = True
+
         self.con = sqlite3.connect(DBPATH, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
         self.con.row_factory = sqlite3.Row    
 
         sqlite3_functions.registerSQLiteFunktions(self.con)
 
         if new_db:
-            self.initNewDB()
+            self.initDB()
             self.importData()
-        #else:
-            # test import
-        #self.initNewDB()
-#        self.importData()
+        else:
+            self.initDB()
+
         self.fillCache()
             
         dbVersion = self.getConfig( 'dbVersion' )
         if dbVersion == False:
             print(dbVersion)
             print("version false db")
-            self.initNewDB()
+            self.initDB()
+
         if not self.guiMode:
             self.updateData()
         
@@ -139,8 +140,8 @@ class db(object):
             self.optimizeDatabase()
             self.setConfig( 'lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
             
-    def initNewDB(self):
-        print("create new db")
+    def initDB(self):
+        print("create/update db")
         '''
         create tables
         '''
@@ -179,8 +180,8 @@ class db(object):
 
         self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems_queue (systemID INTEGER PRIMARY KEY)" )
 
- 
         # trigger to controll the dynamic cache
         self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
                             WHEN NEW.StationBuy != OLD.StationBuy OR NEW.StationSell != OLD.StationSell
@@ -199,6 +200,12 @@ class db(object):
         self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_insert_price AFTER INSERT  ON  price
                             BEGIN
                                 DELETE FROM dealsInDistancesSystems WHERE systemID=NEW.SystemID;
+                            END; """ )
+
+
+        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_delete_dealsInDistancesSystems AFTER DELETE  ON  dealsInDistancesSystems
+                            BEGIN
+                                insert or ignore into dealsInDistancesSystems_queue (systemID) values(OLD.systemID);
                             END; """ )
 
 
@@ -555,7 +562,20 @@ class db(object):
 
                             """  , (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID,  maxAgeDate, minTradeProfit  )  )
 
+            # delete system from queue
+            cur.execute("DELETE FROM dealsInDistancesSystems_queue WHERE systemID=?", [systemID])
+
             self.con.commit()
+
+    def calcDealsInDistancesCacheQueue(self):
+        cur = self.cursor()
+
+        cur.execute( "select systemID AS id  from dealsInDistancesSystems_queue")
+        systemList = cur.fetchall()
+        if systemList:
+            maxAgeDate = datetime.utcnow() - timedelta(days=14) #TODO: save max age and use the max?
+            self.calcDealsInDistancesCache(systemList, maxAgeDate )
+
 
     def checkDealsInDistancesCache(self):
         cur = self.cursor()
