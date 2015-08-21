@@ -7,6 +7,7 @@ Created on 19.08.2015
 '''
 from PySide import QtCore, QtGui
 import elite
+import timeit
 
 
 
@@ -220,14 +221,16 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 class Widget(QtGui.QWidget):
     main = None
+    mydb = None
     route = None
         
     def __init__(self, main):
         super(Widget, self).__init__(main)
 
         self.main = main
+        self.mydb = main.mydb
         self.createActions()
-        self.route = elite.dealsroute(self.main.mydb)
+        self.initRoute()
 
 
     def getWideget(self):
@@ -360,7 +363,52 @@ class Widget(QtGui.QWidget):
         else:
             self.optionsGroupBox.show()
 
+    def initRoute(self):
+        ''' init the route on start and set saved options'''
+
+        self.route = elite.dealsroute(self.mydb)
+
+        tradingHops = self.mydb.getConfig( 'option_tradingHops' )
+        if tradingHops:
+            self.route.setOption( "tradingHops", tradingHops )
+
+        maxJumpDistance = self.mydb.getConfig( 'option_maxJumpDistance' )
+        if maxJumpDistance:
+            self.route.setOption( "maxJumpDistance", maxJumpDistance )
+
+        maxDist = self.mydb.getConfig( 'option_maxDist' )
+        if maxDist:
+            self.route.setOption( "maxDist", maxDist )
+
+        maxSearchRange = self.mydb.getConfig( 'option_maxSearchRange' )
+        if maxSearchRange:
+            self.route.setOption( "maxSearchRange", maxSearchRange )
+
+        minStock = self.mydb.getConfig( 'option_minStock' )
+        if minStock:
+            self.route.setOption( "minStock", minStock )
+
+        maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
+        if maxStarDist:
+            self.route.setOption( "maxStarDist", maxStarDist )
+
+        minTradeProfit = self.mydb.getConfig( 'option_minTradeProfit' )
+        if minTradeProfit:
+            self.route.setOption( "minTradeProfit", minTradeProfit )
+
+
     def startRouteSearch(self):
+
+        #save last options
+        self.mydb.setConfig( 'option_tradingHops', self.maxHopsspinBox.value() )
+        self.mydb.setConfig( 'option_maxJumpDistance', self.maxJumpDistSpinBox.value() )
+        self.mydb.setConfig( 'option_maxDist', self.maxDistSpinBox.value() )
+        self.mydb.setConfig( 'option_maxSearchRange', self.searchRangeSpinBox.value() )
+        self.mydb.setConfig( 'option_minStock', self.minStockSpinBox.value() )
+        self.mydb.setConfig( 'option_maxStarDist', self.maxStartDistSpinBox.value() )
+        self.mydb.setConfig( 'option_minTradeProfit', self.minProfitSpinBox.value() )
+
+        starttime = timeit.default_timer()
 
         self.route.setOption( "startSystem", self.locationlineEdit.text() )
         self.route.setOption( "tradingHops", self.maxHopsspinBox.value() )
@@ -371,6 +419,7 @@ class Widget(QtGui.QWidget):
         self.route.setOption( "maxStarDist", self.maxStartDistSpinBox.value() )
         self.route.setOption( "maxAge", self.maxAgeSpinBox.value() )
         self.route.setOption( "minTradeProfit", self.minProfitSpinBox.value() )
+
         
         self.route.calcDefaultOptions()
         
@@ -387,6 +436,8 @@ class Widget(QtGui.QWidget):
             self.routeview.resizeColumnToContents(i)
         
         self.routeview.show()
+
+        self.main.statusBar().showMessage("Route Calculated (%ss)" % round(timeit.default_timer() - starttime, 2))
         
     def createActions(self):
         pass
