@@ -231,26 +231,31 @@ class Widget(QtGui.QWidget):
         self.mydb = main.mydb
         self.createActions()
         self.initRoute()
-
+        self.createTimer()
 
     def getWideget(self):
 
         gridLayout = QtGui.QGridLayout()
 
+        self.autoUpdateLocation = QtGui.QCheckBox("Location Update")
+        self.autoUpdateLocation.setChecked(True)
+        self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
+        gridLayout.addWidget(self.autoUpdateLocation, 1, 0)
+
         label = QtGui.QLabel("Max Hops:")
         self.maxHopsspinBox = QtGui.QSpinBox()
         self.maxHopsspinBox.setRange(1, 10)
         self.maxHopsspinBox.setValue( self.route.getOption("tradingHops"))
-        gridLayout.addWidget(label, 1, 0)
-        gridLayout.addWidget(self.maxHopsspinBox, 1, 1)
+        gridLayout.addWidget(label, 1, 1)
+        gridLayout.addWidget(self.maxHopsspinBox, 1, 2)
 
         label = QtGui.QLabel("Search Range:")
         self.searchRangeSpinBox = QtGui.QSpinBox()
         self.searchRangeSpinBox.setRange(0, 1000)
         self.searchRangeSpinBox.setSuffix("ly")
         self.searchRangeSpinBox.setValue( self.route.getOption("maxSearchRange") )
-        gridLayout.addWidget(label, 1, 2)
-        gridLayout.addWidget(self.searchRangeSpinBox, 1, 3)
+        gridLayout.addWidget(label, 1, 3)
+        gridLayout.addWidget(self.searchRangeSpinBox, 1, 4)
 
 
         label = QtGui.QLabel("Max Data Age:")
@@ -258,29 +263,8 @@ class Widget(QtGui.QWidget):
         self.maxAgeSpinBox.setRange(1, 1000)
         self.maxAgeSpinBox.setSuffix("Day")
         self.maxAgeSpinBox.setValue( self.route.getOption("maxAge") )
-        gridLayout.addWidget(label, 1, 4)
-        gridLayout.addWidget(self.maxAgeSpinBox, 1, 5)
-
-
-
-        label = QtGui.QLabel("Max Dist:")
-        self.maxDistSpinBox = QtGui.QSpinBox()
-        self.maxDistSpinBox.setRange(0, 1000)
-        self.maxDistSpinBox.setSuffix("ly")
-        self.maxDistSpinBox.setSingleStep(1)
-        self.maxDistSpinBox.setValue( self.route.getOption("maxDist") )
-        gridLayout.addWidget(label, 2, 2)
-        gridLayout.addWidget(self.maxDistSpinBox, 2, 3)
-
-
-        label = QtGui.QLabel("Max Star Dist:")
-        self.maxStartDistSpinBox = QtGui.QSpinBox()
-        self.maxStartDistSpinBox.setRange(10, 7000000)
-        self.maxStartDistSpinBox.setSuffix("ls")
-        self.maxStartDistSpinBox.setSingleStep(10)
-        self.maxStartDistSpinBox.setValue( self.route.getOption("maxStarDist") )
-        gridLayout.addWidget(label, 2, 4)
-        gridLayout.addWidget(self.maxStartDistSpinBox, 2, 5)
+        gridLayout.addWidget(label, 1, 5)
+        gridLayout.addWidget(self.maxAgeSpinBox, 1, 6)
 
 
         label = QtGui.QLabel("Min Profit:")
@@ -289,8 +273,29 @@ class Widget(QtGui.QWidget):
         self.minProfitSpinBox.setSuffix("cr")
         self.minProfitSpinBox.setSingleStep(100)
         self.minProfitSpinBox.setValue( self.route.getOption("minTradeProfit") )
-        gridLayout.addWidget(label, 2, 0)
-        gridLayout.addWidget(self.minProfitSpinBox, 2, 1)
+        gridLayout.addWidget(label, 2, 1)
+        gridLayout.addWidget(self.minProfitSpinBox, 2, 2)
+
+
+        label = QtGui.QLabel("Max Dist:")
+        self.maxDistSpinBox = QtGui.QSpinBox()
+        self.maxDistSpinBox.setRange(0, 1000)
+        self.maxDistSpinBox.setSuffix("ly")
+        self.maxDistSpinBox.setSingleStep(1)
+        self.maxDistSpinBox.setValue( self.route.getOption("maxDist") )
+        gridLayout.addWidget(label, 2, 3)
+        gridLayout.addWidget(self.maxDistSpinBox, 2, 4)
+
+
+        label = QtGui.QLabel("Max Star Dist:")
+        self.maxStartDistSpinBox = QtGui.QSpinBox()
+        self.maxStartDistSpinBox.setRange(10, 7000000)
+        self.maxStartDistSpinBox.setSuffix("ls")
+        self.maxStartDistSpinBox.setSingleStep(10)
+        self.maxStartDistSpinBox.setValue( self.route.getOption("maxStarDist") )
+        gridLayout.addWidget(label, 2, 5)
+        gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
+
 
 
         label = QtGui.QLabel("Max Jump Dist:")
@@ -299,8 +304,8 @@ class Widget(QtGui.QWidget):
         self.maxJumpDistSpinBox.setSuffix("ly")
         self.maxJumpDistSpinBox.setSingleStep(1)
         self.maxJumpDistSpinBox.setValue( self.route.getOption("maxJumpDistance") )
-        gridLayout.addWidget(label, 3, 2)
-        gridLayout.addWidget(self.maxJumpDistSpinBox, 3, 3)
+        gridLayout.addWidget(label, 3, 3)
+        gridLayout.addWidget(self.maxJumpDistSpinBox, 3, 4)
 
 
         label = QtGui.QLabel("Min Stock:")
@@ -308,8 +313,8 @@ class Widget(QtGui.QWidget):
         self.minStockSpinBox.setRange(1000, 1000000)
         self.minStockSpinBox.setSingleStep(100)
         self.minStockSpinBox.setValue( self.route.getOption("minStock") )
-        gridLayout.addWidget(label, 3, 4)
-        gridLayout.addWidget(self.minStockSpinBox, 3, 5)
+        gridLayout.addWidget(label, 3, 5)
+        gridLayout.addWidget(self.minStockSpinBox, 3, 6)
 
 
         locationLabel = QtGui.QLabel("Location:")
@@ -438,7 +443,26 @@ class Widget(QtGui.QWidget):
         self.routeview.show()
 
         self.main.statusBar().showMessage("Route Calculated (%ss)" % round(timeit.default_timer() - starttime, 2))
-        
+
+    def createTimer(self):
+        self.autoUpdateLocationTimer = QtCore.QTimer()
+        self.autoUpdateLocationTimer.start(1000*60)
+        self.autoUpdateLocationTimer.timeout.connect(self.updateLocation)
+
+    def updateLocation(self):
+        if self.autoUpdateLocation.isChecked():
+
+            self.autoUpdateLocationTimer.stop()
+            starttime = timeit.default_timer()
+
+            self.locationlineEdit.setText( self.main.location.getLocation() )
+            print("location updatet %ss" % round(timeit.default_timer() - starttime, 2) )
+
+            self.autoUpdateLocationTimer.start()
+        else:
+            print("stop update location timer")
+            self.autoUpdateLocationTimer.stop()
+
     def createActions(self):
         pass
         
