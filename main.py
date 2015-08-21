@@ -5,12 +5,42 @@ Created on 19.08.2015
 
 @author: mEDI
 '''
+import logging
+import sys
+
+
+class StreamToLogger(object):
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+ 
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+ 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', filename="out.log", filemode='w'
+)
+
+
+try:
+    if __file__:
+        pass
+except:
+    #sys.stdout = StreamToLogger( logging.getLogger('STDOUT'), logging.INFO)
+    sys.stderr = StreamToLogger( logging.getLogger('STDERR'), logging.ERROR)
+
+
+
 import elite
 import timeit
 import gui
 
 from PySide import QtCore, QtGui
 from _datetime import datetime
+
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -22,6 +52,9 @@ class MainWindow(QtGui.QMainWindow):
     
     def __init__(self):
         super(MainWindow, self).__init__()
+
+
+
 
         self.setWindowTitle("mEDI's Elite Tools")
 
@@ -129,9 +162,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.updateDBtimer.start()
 
-if __name__ == '__main__':
 
-    import sys
+
+if __name__ == '__main__':
 
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
