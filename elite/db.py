@@ -159,13 +159,18 @@ class db(object):
 
         #items
         self.con.execute( "CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )" )
+
+        
         #price
         self.con.execute( "CREATE TABLE IF NOT EXISTS price (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS price_unique_System_Station_Item on price (SystemID,StationID,ItemID)" )
         self.con.execute( "CREATE UNIQUE INDEX IF NOT EXISTS `price_index_StationID_ItemID` ON `price` (`StationID` ,`ItemID` )")
         self.con.execute( "create index  IF NOT EXISTS price_modified on price (modified)" )
 
-        #det default config
+        #fakePrice
+        self.con.execute( "CREATE TABLE IF NOT EXISTS fakePrice (priceID INTEGER PRIMARY KEY  )" )
+
+        #default config
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "dbVersion", DBVERSION ) )
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", r'c:\Users\mEDI\Documents\ED' ) )
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EliteLogDir", r'C:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\Logs' ) )
@@ -501,12 +506,16 @@ class db(object):
                     left JOIN stations AS stationA on priceA.StationID=stationA.id
                     left JOIN stations AS stationB on priceB.StationID=stationB.id
 
+                    left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
+                    left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
+
                     WHERE 
 
                         priceA.StationID=? 
                         AND priceA.StationSell > 0
                         AND priceA.modified >= ?
                         AND priceB.modified >= ?
+                        AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
                     order by profit DESC
                     ''', (toStationID, fromStationID, maxAgeDate, maxAgeDate))
         
@@ -552,6 +561,9 @@ class db(object):
 
                             inner JOIN price AS priceA ON priceA.ItemID=priceB.ItemID       
 
+                            left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
+                            left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
+
                         where
                             priceA.SystemID = ?
                             AND priceA.modified >= ?
@@ -559,6 +571,8 @@ class db(object):
 
                             AND priceB.StationBuy > priceA.StationSell 
                             AND priceB.StationBuy - priceA.StationSell >= ?
+
+                            AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
 
                             """  , (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID,  maxAgeDate, minTradeProfit  )  )
 
@@ -657,6 +671,9 @@ class db(object):
 
                         left JOIN items on priceA.ItemID=items.id
 
+                        left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
+                        left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
+
                     where
                         priceA.modified >= ?
                         AND priceA.StationSell>0 
@@ -670,6 +687,7 @@ class db(object):
 
                         AND  priceB.StationBuy > priceA.StationSell 
                         AND priceB.StationBuy-priceA.StationSell >= ?
+                        AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
 
                     order by profit DESC
 
@@ -718,7 +736,10 @@ class db(object):
                         left join systems AS systemB  ON systemB.id=priceB.SystemID
                         left JOIN stations AS stationB on stationB.id = priceB.StationID
                         left JOIN items on priceA.ItemID=items.id
-                        
+
+                        left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
+                        left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
+
                     where
                         priceA.StationID=?
                         AND priceA.Stock>=?
@@ -731,6 +752,7 @@ class db(object):
                         AND stationB.StarDist <= ?
                         AND priceB.StationBuy > priceA.StationSell
                         AND profit >= ? 
+                        AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
                         order by profit DESC
                         limit ?
                         """    , ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
