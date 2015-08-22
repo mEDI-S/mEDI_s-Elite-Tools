@@ -341,8 +341,8 @@ class Widget(QtGui.QWidget):
         searchLimitOptionsList = ["normal","fast","nice","slow","all"]
         for option in searchLimitOptionsList:
             self.searchLimitOption.addItem( option )
-        if self.route.getOption("option_searchLimit"):
-            self.searchLimitOption.setCurrentIndex(self.route.getOption("option_searchLimit"))
+        if self.mydb.getConfig("option_searchLimit"):
+            self.searchLimitOption.setCurrentIndex(self.mydb.getConfig("option_searchLimit"))
         label.setBuddy(self.searchLimitOption)
         #self.searchLimitOption.currentIndexChanged.connect(self.hmm)
         gridLayout.addWidget(label, 3, 1)
