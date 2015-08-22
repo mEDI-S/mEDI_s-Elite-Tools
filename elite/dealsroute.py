@@ -100,7 +100,7 @@ class route(object):
 
     def findBackToStartDeals(self):
         for deal in self.deals:
-            backdeals = self.mydb.getDealsFromTo( deal["path"][ len(deal["path"])-1 ]["StationBID"],  deal["path"][0]["StationAID"], self.maxAgeDate)
+            backdeals = self.mydb.getDealsFromTo( deal["path"][ len(deal["path"])-1 ]["StationBID"],  deal["path"][0]["StationAID"], self.maxAgeDate, 1000)
             if backdeals:
                 deal["backToStartDeal"] = backdeals[0]
 
