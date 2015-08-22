@@ -209,14 +209,13 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         parents = [parent]
 
         for i, deal in enumerate(deals):
-            if i >= 40: break
+            if i >= 100: break
 
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
             
             columnData = [i+1 , deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
-#            parents = []
 
             before = { "StationB":deal["path"][0]["StationA"], "SystemB":deal["path"][0]["SystemA"], "StarDist":deal["path"][0]["stationA.StarDist"], "refuel":deal["path"][0]["stationA.refuel"]  }
             #follow is a child
@@ -335,6 +334,19 @@ class Widget(QtGui.QWidget):
         self.maxStartDistSpinBox.setValue( self.route.getOption("maxStarDist") )
         gridLayout.addWidget(label, 2, 5)
         gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
+
+
+        label = QtGui.QLabel("Search Accuracy:")
+        self.searchLimitOption = QtGui.QComboBox()
+        searchLimitOptionsList = ["normal","fast","nice","slow","all"]
+        for option in searchLimitOptionsList:
+            self.searchLimitOption.addItem( option )
+        if self.route.getOption("option_searchLimit"):
+            self.searchLimitOption.setCurrentIndex(self.route.getOption("option_searchLimit"))
+        label.setBuddy(self.searchLimitOption)
+        #self.searchLimitOption.currentIndexChanged.connect(self.hmm)
+        gridLayout.addWidget(label, 3, 1)
+        gridLayout.addWidget(self.searchLimitOption, 3, 2, 1, 1) #row,col,?,size
 
 
 
@@ -460,6 +472,8 @@ class Widget(QtGui.QWidget):
         self.mydb.setConfig( 'option_minStock', self.minStockSpinBox.value() )
         self.mydb.setConfig( 'option_maxStarDist', self.maxStartDistSpinBox.value() )
         self.mydb.setConfig( 'option_minTradeProfit', self.minProfitSpinBox.value() )
+        self.mydb.setConfig( 'option_searchLimit', self.searchLimitOption.currentIndex() )
+
 
         starttime = timeit.default_timer()
 
@@ -476,7 +490,7 @@ class Widget(QtGui.QWidget):
         
         self.route.calcDefaultOptions()
         
-        self.route.limitCalc("normal") #options (normal, fast, nice, slow, all)
+        self.route.limitCalc( self.searchLimitOption.currentIndex() ) #options (normal, fast, nice, slow, all)
         
         self.route.calcRoute()
         
@@ -490,7 +504,7 @@ class Widget(QtGui.QWidget):
         
         self.routeview.show()
 
-        self.main.statusBar().showMessage("Route Calculated (%ss)" % round(timeit.default_timer() - starttime, 2))
+        self.main.statusBar().showMessage("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
