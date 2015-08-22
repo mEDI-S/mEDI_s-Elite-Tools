@@ -11,7 +11,8 @@ import timeit
 
 
 
-class RouteTreeChildItem(object):
+
+class RouteTreeInfoItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
         self.itemData = data
@@ -27,21 +28,63 @@ class RouteTreeChildItem(object):
         return len(self.childItems)
 
     def columnCount(self):
+        return 1
+
+    def data(self, column):
         if isinstance( self.itemData, str):
-            return 1
-        else:
-            return len(self.itemData)
+            if column == 5:
+                return self.itemData
+
+    def getPiceID(self):
+        if isinstance( self.itemData, list):
+            return self.itemData[1]["priceAid"]
+        
+    def parent(self):
+        return self.parentItem
+
+    def row(self):
+        if self.parentItem:
+            return self.parentItem.childItems.index(self)
+
+        return 0
+
+
+
+class RouteTreeHopItem(object):
+    def __init__(self, data, parent=None, dbresult=None):
+        self.parentItem = parent
+        self.itemData = data
+        self.childItems = []
+        self.dbresult = dbresult
+        
+    def appendChild(self, item):
+        self.childItems.append(item)
+
+    def child(self, row):
+        return self.childItems[row]
+
+    def childCount(self):
+        return len(self.childItems)
+
+    def columnCount(self):
+        return 1
+#        if isinstance( self.itemData, str):
+#            return 1
+#        else:
+#            return len(self.itemData)
 
     def data(self, column):
         if isinstance( self.itemData, str):
             if column == 5:
                 return self.itemData
         else:
-            try:
-                return self.itemData[column]
-            except IndexError:
-                return None
+            if column == 5:
+                return self.itemData[0]
 
+    def getPiceID(self):
+        if self.itemData:
+            return self.dbresult["priceAid"]
+        
     def parent(self):
         return self.parentItem
 
@@ -164,9 +207,6 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
     def setupModelData(self, deals, parent):
         parents = [parent]
-        indentations = [0]
-
-        number = 0
 
         for i, deal in enumerate(deals):
             if i >= 40: break
@@ -190,11 +230,11 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 #                Item =  QtGui.QTreeWidgetItem()
 #                Item.setText(0,columnData)
 #                parents[-1].appendChild(Item)
-                parents[-1].appendChild(RouteTreeChildItem(columnData, parents[-1]))
+                parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
 
                 if before["refuel"] != 1:
                     columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
-                    parents[-1].appendChild(RouteTreeChildItem(columnData, parents[-1]))
+                    parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
                 
                 before = d
 
@@ -207,11 +247,11 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             else:
                 columnData = "no back deal (%s ly) ->%s : %s" % (backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"]  )
 
-            parents[-1].appendChild(RouteTreeChildItem(columnData, parents[-1]))
+            parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], deal["backToStartDeal"]))
         
             if before["refuel"] != 1:
                 columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
-                parents[-1].appendChild(RouteTreeChildItem(columnData, parents[-1]))
+                parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
         
             # not more a child
             parents.pop()
@@ -347,6 +387,8 @@ class Widget(QtGui.QWidget):
 
         self.routeview = QtGui.QTreeView()
 
+        self.routeview.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.routeview.customContextMenuRequested.connect(self.routelistContextMenuEvent)
 
         vGroupBox = QtGui.QGroupBox("Search")
         vGroupBox.setFlat(True)
@@ -361,6 +403,12 @@ class Widget(QtGui.QWidget):
         vGroupBox.setLayout(layout)
 
         return vGroupBox
+
+    def routelistContextMenuEvent(self, event):
+
+        menu = QtGui.QMenu(self)
+        menu.addAction(self.markFakeItemAct)
+        menu.exec_(self.routeview.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
         if not self.optionsGroupBox.isHidden():
@@ -464,5 +512,28 @@ class Widget(QtGui.QWidget):
             self.autoUpdateLocationTimer.stop()
 
     def createActions(self):
-        pass
-        
+        self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
+                statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
+
+    def markFakeItem(self):
+        print("markFakeItem")
+
+        indexes = self.routeview.selectionModel().selectedIndexes()
+ 
+        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
+            id = indexes[0].internalPointer().getPiceID()
+            if id:
+
+                msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                        "Warning", "Warning: fake items are ignored everywhere and no longer displayed",
+                        QtGui.QMessageBox.NoButton, self)
+
+                msgBox.addButton("Save as Facke", QtGui.QMessageBox.AcceptRole)
+                msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+                if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+                    print("set %s as fakeprice" % id)
+                    self.mydb.setFakePrice(id)
+                
+#            print(indexes[0].row(), indexes[0].column() , indexes[0].data(), indexes[0].internalPointer().getPiceID() )
+

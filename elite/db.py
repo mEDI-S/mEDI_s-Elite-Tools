@@ -255,6 +255,12 @@ class db(object):
         self.con.commit()
         cur.close()
 
+    def setFakePrice(self, id):
+        if isinstance( id, int):
+            self.con.execute( "insert or ignore into fakePrice (priceID) values(?);", ( id, ) )
+            self.con.commit()
+
+        
     def getConfig( self, var ):
         cur = self.cursor()
         cur.execute( "select val from config where var = ? limit 1", ( var, ) )
@@ -495,6 +501,7 @@ class db(object):
 
         cur.execute('''select priceA.ItemID AS ItemID, priceB.StationBuy-priceA.StationSell AS profit,
                              priceB.StationBuy AS StationBuy,  priceA.StationSell AS StationSell,
+                            priceA.id AS priceAid, priceB.id AS priceBid,
                              items.name AS itemName,
                              stationA.Station AS fromStation,
                              stationB.Station AS toStation
@@ -653,8 +660,8 @@ class db(object):
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.id, priceB.id,
                         priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
-                        systemA.System AS SystemA, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
-                        systemB.System AS SystemB, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+                        systemA.System AS SystemA, priceA.id AS priceAid, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
+                        systemB.System AS SystemB, priceB.id AS priceBid, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
                         dist, systemA.startDist AS startDist, items.name AS itemName 
 
                         from TEAMP_selectSystemA AS systemA
@@ -723,8 +730,8 @@ class db(object):
         if systemList:
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
-        cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID , priceB.StationBuy, priceA.StationSell,
-                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+        cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID, priceA.id AS priceAid, priceB.StationBuy, priceA.StationSell,
+                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.id AS priceBid, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
                         dist, items.name AS itemName
 
                         FROM price AS priceA

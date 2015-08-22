@@ -74,12 +74,10 @@ class MainWindow(QtGui.QMainWindow):
         self.setMinimumSize(160,160)
         self.resize(640,480)
 
-    def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
-        menu.addAction(self.cutAct)
-        menu.addAction(self.copyAct)
-        menu.addAction(self.pasteAct)
-        menu.exec_(event.globalPos())
+#    def contextMenuEvent(self, event):
+#        menu = QtGui.QMenu(self)
+#        menu.addAction(self.multiHopRouteAct)
+#        menu.exec_(event.globalPos())
 
 
     def multiHopRoute(self):
