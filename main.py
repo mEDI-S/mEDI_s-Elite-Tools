@@ -71,8 +71,15 @@ class MainWindow(QtGui.QMainWindow):
         message = "Welcomme to mEDI's Elite Tools"
         self.statusBar().showMessage(message)
 
-        self.setMinimumSize(160,160)
-        self.resize(640,480)
+        self.setMinimumSize(640,400)
+
+        windowsize = self.mydb.getConfig('mainwindow.size')
+        if windowsize:
+            windowsize = windowsize.split(",")
+            self.resize(int(windowsize[0]), int(windowsize[1]))
+        else:
+            self.resize(640,480)
+
 
 #    def contextMenuEvent(self, event):
 #        menu = QtGui.QMenu(self)
@@ -160,6 +167,20 @@ class MainWindow(QtGui.QMainWindow):
 
         self.updateDBtimer.start()
 
+    def closeEvent( self, event ):
+        if self.closeApp():
+            event.accept()
+        else:
+            event.ignore()
+
+    def closeApp( self ):
+        self.saveOptions()
+        QtGui.qApp.quit()
+
+    def saveOptions( self ):
+        size = self.size()
+        
+        self.mydb.setConfig( 'mainwindow.size', "%d,%d" % ( size.width(), size.height() ) )
 
 
 if __name__ == '__main__':
