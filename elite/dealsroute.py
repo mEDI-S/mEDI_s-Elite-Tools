@@ -51,20 +51,20 @@ class route(object):
         if option in self.options:
             return self.options[option]
 
-    def limitCalc(self, accuracy="normal"):
-            
+    def limitCalc(self, accuracy=0):
+        ''' ["normal","fast","nice","slow","all"] '''
         maxResults = 100000 # normal
 
-        if accuracy == "fast":
+        if accuracy == 1:
             maxResults = 5000
-        elif accuracy == "nice":
+        elif accuracy == 2:
             maxResults = 1000000
-        elif accuracy == "slow":
+        elif accuracy == 3:
             maxResults = 4000000
             
         self.options["resultLimit"] = round( maxResults**(1.0 / self.options["tradingHops"] )) #max results = 1000000 = resultLimit^tradingHops
 
-        if accuracy == "all":
+        if accuracy == 4:
             self.options["resultLimit"] = 999999
 
     def setMaxAgeDate(self):

@@ -11,6 +11,7 @@ location = elite.location(mydb)
 route = elite.dealsroute(mydb)
 
 route.setOption( "startSystem", location.getLocation() )
+
 route.setOption( "tradingHops", 2 )
 route.setOption( "maxJumpDistance", 16.3 )
 route.setOption( "minStock", 10000 )
@@ -19,7 +20,7 @@ route.setOption( "maxSearchRange", route.getOption("maxJumpDistance") * 6 )
 
 route.calcDefaultOptions()
 
-route.limitCalc("normal") #options (normal, fast, nice, slow, all)
+route.limitCalc(0) #options (normal, fast, nice, slow, all)
 
 route.calcRoute()
 
