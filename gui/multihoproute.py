@@ -135,7 +135,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, route, parent=None):
         super(RouteTreeModel, self).__init__(parent)
         self.route = route
-        self.rootItem = RouteTreeItem(("Nr.","Profit/h", "Profit","StartDist","Laps/h","LapTime" ))
+        self.rootItem = RouteTreeItem(("Nr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
 
         self.setupModelData(route.deals, self.rootItem)
 
@@ -248,10 +248,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             if deal["backToStartDeal"]:
                 #print(deal["backToStartDeal"].keys())
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (before["SystemB"], deal["backToStartDeal"]["fromStation"] , before["StarDist"], deal["backToStartDeal"]["itemName"], deal["backToStartDeal"]["StationSell"],deal["backToStartDeal"]["StationBuy"],  deal["backToStartDeal"]["profit"], backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"] ) 
+                temp = { "SystemB":deal["path"][0]["SystemA"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
+                parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], temp))
             else:
                 columnData = "no back deal (%s ly) ->%s : %s" % (backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"]  )
+                parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
 
-            parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], deal["backToStartDeal"]))
         
             if before["refuel"] != 1:
                 columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
@@ -267,7 +269,8 @@ class Widget(QtGui.QWidget):
     main = None
     mydb = None
     route = None
-        
+    activeRoutePointer = None
+
     def __init__(self, main):
         super(Widget, self).__init__(main)
 
@@ -424,7 +427,15 @@ class Widget(QtGui.QWidget):
     def routelistContextMenuEvent(self, event):
 
         menu = QtGui.QMenu(self)
-        menu.addAction(self.markFakeItemAct)
+
+        indexes = self.routeview.selectionModel().selectedIndexes()
+        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
+            menu.addAction(self.markFakeItemAct)
+        elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
+            menu.addAction(self.clipbordRouteHelperAct)
+        else:
+            print(type(indexes[0].internalPointer()))
+
         menu.exec_(self.routeview.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
@@ -541,6 +552,63 @@ class Widget(QtGui.QWidget):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
                 statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
 
+        self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self,
+                statusTip="Start a helper job to set automatly the next routehop to clipboard", triggered=self.clipbordRouteHelper)
+
+
+    def clipbordRouteHelper(self):
+        indexes = self.routeview.selectionModel().selectedIndexes()
+ 
+        if isinstance( indexes[0].internalPointer(), RouteTreeItem):
+            self.activeRoutePointer = indexes[0].internalPointer()
+#            print("bla?", type(self.activeRoutePointer), type(indexes[0] ))
+
+        self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
+        self.timer_setNextRouteHopToClipbord.start(1000*60)
+        self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
+
+        self.setNextRouteHopToClipbord(init=True)
+
+    def setNextRouteHopToClipbord(self, init=None):
+        ''' helper to set next route hop to clipboard '''
+        if not self.activeRoutePointer:
+            return
+        
+        location = self.main.location.getLocation()
+        clipbordText = self.main.clipboard.text()
+
+        if init:
+            self.lastClipboardEntry = None
+        elif self.lastClipboardEntry != clipbordText:
+            #stop timer and job do other tool use the clipbord
+            print("setNextRouteHopToClipbord stop job")
+            self.timer_setNextRouteHopToClipbord.stop()
+            return
+
+        for cid in range( 0, self.activeRoutePointer.childCount() ):
+            child = self.activeRoutePointer.child(cid)
+            if isinstance( child, RouteTreeHopItem):
+#                    print(cid, type(child))
+#                    print(child.dbresult)
+#                print(child.dbresult["SystemB"])
+
+                if child.dbresult["SystemB"] == location:
+                    if self.activeRoutePointer.childCount() > cid+1:
+                        child = self.activeRoutePointer.child(cid+1)
+                    else: #start system is next hop
+                        child = self.activeRoutePointer.child(0)
+
+                    system = child.dbresult["SystemB"]
+
+                    if system != clipbordText:
+                        self.main.clipboard.setText( system )
+                        self.lastClipboardEntry = system
+                        print("setNextRouteHopToClipbord set clipboard to", child.dbresult["SystemB"])
+
+                    break
+
+        self.timer_setNextRouteHopToClipbord.start()
+    
     def markFakeItem(self):
         print("markFakeItem")
 

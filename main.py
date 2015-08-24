@@ -90,6 +90,7 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.resize(640,480)
 
+        self.clipboard = QtGui.QClipboard()
 
 #    def contextMenuEvent(self, event):
 #        menu = QtGui.QMenu(self)
