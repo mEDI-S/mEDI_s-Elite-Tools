@@ -32,7 +32,7 @@ class RouteTreeInfoItem(object):
 
     def data(self, column):
         if isinstance( self.itemData, str):
-            if column == 5:
+            if column == 0:
                 return self.itemData
 
     def getPiceID(self):
@@ -75,7 +75,7 @@ class RouteTreeHopItem(object):
 
     def data(self, column):
         if isinstance( self.itemData, str):
-            if column == 5:
+            if column == 0:
                 return self.itemData
         else:
             if column == 5:
@@ -136,6 +136,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         super(RouteTreeModel, self).__init__(parent)
         self.route = route
         self.rootItem = RouteTreeItem(("Nr.","Profit/h", "Profit","StartDist","Laps/h","LapTime" ))
+
         self.setupModelData(route.deals, self.rootItem)
 
     def columnCount(self, parent):
@@ -167,7 +168,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         return None
 
-    def index(self, row, column, parent):
+    def index(self, row, column, parent=QtCore.QModelIndex() ):
         if not self.hasIndex(row, column, parent):
             return QtCore.QModelIndex()
 
@@ -205,6 +206,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
+
     def setupModelData(self, deals, parent):
         parents = [parent]
 
@@ -216,6 +218,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             
             columnData = [i+1 , deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
+
 
             before = { "StationB":deal["path"][0]["StationA"], "SystemB":deal["path"][0]["SystemA"], "StarDist":deal["path"][0]["stationA.StarDist"], "refuel":deal["path"][0]["stationA.refuel"]  }
             #follow is a child
@@ -230,6 +233,8 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 #                Item.setText(0,columnData)
 #                parents[-1].appendChild(Item)
                 parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
+
+
 
                 if before["refuel"] != 1:
                     columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
@@ -497,11 +502,18 @@ class Widget(QtGui.QWidget):
         self.route.printList()
 
         routeModel = RouteTreeModel(self.route)
-        self.routeview.setModel(routeModel)
+        self.routeview.setModel(routeModel) #QtCore.QModelIndex()
+        for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
+            #rid item count
+            for cid in range( 0, routeModel.rowCount(routeModel.index(rid,0)) ):
+                #cid child item count
+                self.routeview.setFirstColumnSpanned(cid, routeModel.index(rid,0) , True)        
+
         self.routeview.expandToDepth(1)
+
         for i in range(0, 5):
             self.routeview.resizeColumnToContents(i)
-        
+
         self.routeview.show()
 
         self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
