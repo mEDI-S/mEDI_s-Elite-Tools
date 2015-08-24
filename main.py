@@ -54,6 +54,7 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
 
 
+        self.guiMutex = QtCore.QMutex()
 
 
         self.setWindowTitle("mEDI's Elite Tools")
@@ -68,8 +69,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createMenus()
         self.createTimer()
         
-        message = "Welcomme to mEDI's Elite Tools"
-        self.statusBar().showMessage(message)
+        self.setStatusBar("Welcomme to mEDI's Elite Tools")
 
         self.setMinimumSize(640,400)
 
@@ -86,6 +86,10 @@ class MainWindow(QtGui.QMainWindow):
 #        menu.addAction(self.multiHopRouteAct)
 #        menu.exec_(event.globalPos())
 
+    def setStatusBar(self, msg):
+        self.guiMutex.lock()
+        self.statusBar().showMessage(msg)
+        self.guiMutex.unlock()
 
     def multiHopRoute(self):
 
@@ -159,8 +163,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def updateDB(self):
         self.updateDBtimer.stop()
-
-        self.statusBar().showMessage("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
 
         #self.mydb.updateData()
         self.dbworker.updateDB()

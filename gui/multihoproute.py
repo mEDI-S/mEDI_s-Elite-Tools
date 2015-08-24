@@ -504,7 +504,7 @@ class Widget(QtGui.QWidget):
         
         self.routeview.show()
 
-        self.main.statusBar().showMessage("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
+        self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()

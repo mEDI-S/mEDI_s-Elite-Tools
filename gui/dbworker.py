@@ -6,6 +6,7 @@ Created on 21.08.2015
 
 import elite
 import timeit
+from _datetime import datetime
 
 from PySide import QtCore, QtGui
 
@@ -33,12 +34,12 @@ class _updateDBchild(QtCore.QThread):
         mydb = elite.db(guiMode=True)
         mydb.updateData()
 
-        mainClass.statusBar().showMessage("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
+        mainClass.setStatusBar("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
         starttime = timeit.default_timer()
 
         mydb.calcDealsInDistancesCacheQueue()
 
-        mainClass.statusBar().showMessage("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
+        mainClass.setStatusBar("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
 
         mutex.lock()
         databaseLock = None
@@ -66,9 +67,9 @@ class new(object):
 
 
         if self._updatedb.isRunning():
-            print("is running")
             return
 
         self._updatedb.start()
+        mainClass.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
 
 
