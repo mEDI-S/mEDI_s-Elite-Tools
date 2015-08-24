@@ -5,6 +5,18 @@ Created on 19.08.2015
 
 @author: mEDI
 '''
+
+try:
+    from _version import __buildid__ as v
+    __buildid__ = v
+    from _version import __version__ as v
+    __version__ = v
+
+    del v
+except ImportError:
+    __buildid__ = "UNKNOWN"
+    __version__ = "UNKNOWN"
+
 import logging
 import sys
 
@@ -14,6 +26,7 @@ class StreamToLogger(object):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
+        self.logger.log(logging.INFO,"version: %s (%s)" % (__version__, __buildid__) )
  
     def write(self, buf):
         for line in buf.rstrip().splitlines():
@@ -33,13 +46,10 @@ except:
     sys.stderr = StreamToLogger( logging.getLogger('STDERR'), logging.ERROR)
 
 
-
 import elite
-import timeit
 import gui
 
 from PySide import QtCore, QtGui
-from _datetime import datetime
 
 
 
@@ -115,9 +125,10 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def about(self):
-        QtGui.QMessageBox.about(self, "About Menu",
-                "The <b>Menu</b> example shows how to create menu-bar menus "
-                "and context menus.")
+        QtGui.QMessageBox.about(self, "About",
+                "Version: %s\n"
+                "Build ID: %s\n"
+                " " % (__version__, __buildid__))
 
     def aboutQt(self):
         pass

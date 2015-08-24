@@ -62,3 +62,4 @@ old/*
 test/*
 .settings
 
+/_version.py
