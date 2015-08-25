@@ -56,6 +56,7 @@ class RouteTreeHopItem(object):
         self.itemData = data
         self.childItems = []
         self.dbresult = dbresult
+        self._BGColor = None
         
     def appendChild(self, item):
         self.childItems.append(item)
@@ -72,6 +73,11 @@ class RouteTreeHopItem(object):
 #            return 1
 #        else:
 #            return len(self.itemData)
+
+    def BGColor(self):
+        return self._BGColor
+    def setBGColor(self, BGColor):
+        self._BGColor = BGColor
 
     def data(self, column):
         if isinstance( self.itemData, str):
@@ -102,7 +108,8 @@ class RouteTreeItem(object):
         self.parentItem = parent
         self.itemData = data
         self.childItems = []
-
+        self.activeRoute = None
+   
     def appendChild(self, item):
         self.childItems.append(item)
 
@@ -149,8 +156,20 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return None
 
+        if role == QtCore.Qt.BackgroundColorRole:
+            item = index.internalPointer()
+            #print(type(item))
+            if isinstance( item, RouteTreeHopItem):
+                return item.BGColor() #yellow or green https://srinikom.github.io/pyside-docs/PySide/QtGui/QColor.html
+            elif isinstance( item, RouteTreeItem):
+                if item.activeRoute:
+                    return QtGui.QColor(QtCore.Qt.cyan)
+            elif isinstance( item, RouteTreeInfoItem):
+                return QtGui.QColor(QtCore.Qt.red)
+
         if role != QtCore.Qt.DisplayRole:
             return None
+
 
         item = index.internalPointer()
 
@@ -165,7 +184,6 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.rootItem.data(section)
-
         return None
 
     def index(self, row, column, parent=QtCore.QModelIndex() ):
@@ -248,7 +266,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             if deal["backToStartDeal"]:
                 #print(deal["backToStartDeal"].keys())
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (before["SystemB"], deal["backToStartDeal"]["fromStation"] , before["StarDist"], deal["backToStartDeal"]["itemName"], deal["backToStartDeal"]["StationSell"],deal["backToStartDeal"]["StationBuy"],  deal["backToStartDeal"]["profit"], backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"] ) 
-                temp = { "SystemB":deal["path"][0]["SystemA"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
+                temp = { "SystemB":deal["path"][0]["SystemA"], "SystemA":before["SystemB"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
                 parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], temp))
             else:
                 columnData = "no back deal (%s ly) ->%s : %s" % (backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"]  )
@@ -380,7 +398,7 @@ class Widget(QtGui.QWidget):
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = QtGui.QLineEdit()
         self.locationlineEdit.setText( self.main.location.getLocation() )
-
+        self.locationlineEdit.textChanged.connect(self.triggerLocationChanged)
 
         locationGroupBox = QtGui.QGroupBox()
         layout = QtGui.QHBoxLayout()
@@ -525,6 +543,7 @@ class Widget(QtGui.QWidget):
         for i in range(0, 5):
             self.routeview.resizeColumnToContents(i)
 
+        self.triggerLocationChanged()
         self.routeview.show()
 
         self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
@@ -548,6 +567,30 @@ class Widget(QtGui.QWidget):
             print("stop update location timer")
             self.autoUpdateLocationTimer.stop()
 
+    def triggerLocationChanged(self):
+        self.setLocationColors()
+
+    def setLocationColors(self):
+        print("triggerLocationChanged")
+        location = self.locationlineEdit.text()
+        routeModel = self.routeview.model()
+
+        if location and routeModel:
+            for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
+                route = routeModel.index( rid, 0).internalPointer()
+                for cid in range( 0, route.childCount() ):
+                    child = route.child(cid)
+                    #print(child)
+                    if isinstance( child, RouteTreeHopItem):
+                        if child.dbresult["SystemA"].lower() == location.lower():
+                            if route.activeRoute:
+                                child.setBGColor( QtGui.QColor(QtCore.Qt.green) )
+                            else:
+                                child.setBGColor( QtGui.QColor(QtCore.Qt.yellow) )
+                        else:
+                            child.setBGColor(None)
+        self.routeview.dataChanged(routeModel.index( 0, 0), routeModel.index( rid, 0))
+
     def createActions(self):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
                 statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
@@ -560,15 +603,20 @@ class Widget(QtGui.QWidget):
         indexes = self.routeview.selectionModel().selectedIndexes()
  
         if isinstance( indexes[0].internalPointer(), RouteTreeItem):
+            if self.activeRoutePointer:
+                self.activeRoutePointer.activeRoute = None
             self.activeRoutePointer = indexes[0].internalPointer()
+            self.activeRoutePointer.activeRoute = True
 #            print("bla?", type(self.activeRoutePointer), type(indexes[0] ))
 
         self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
         self.timer_setNextRouteHopToClipbord.start(1000*60)
         self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
 
-        self.setNextRouteHopToClipbord(init=True)
 
+        self.triggerLocationChanged()
+        self.setNextRouteHopToClipbord(init=True)
+        
     def setNextRouteHopToClipbord(self, init=None):
         ''' helper to set next route hop to clipboard '''
         if not self.activeRoutePointer:
@@ -596,16 +644,23 @@ class Widget(QtGui.QWidget):
                     if self.activeRoutePointer.childCount() > cid+1:
                         child = self.activeRoutePointer.child(cid+1)
                     else: #start system is next hop
-                        child = self.activeRoutePointer.child(0)
+                        child = self.activeRoutePointer.child( 0 )
 
                     system = child.dbresult["SystemB"]
 
                     if system != clipbordText:
                         self.main.clipboard.setText( system )
                         self.lastClipboardEntry = system
-                        print("setNextRouteHopToClipbord set clipboard to", child.dbresult["SystemB"])
+                        print("setNextRouteHopToClipbord set clipboard to", system)
 
                     break
+        if not self.lastClipboardEntry:
+            # not in route? set the first hop to clipboard
+            child = self.activeRoutePointer.child( 0 )
+            system = child.dbresult["SystemA"]
+            self.main.clipboard.setText( system )
+            self.lastClipboardEntry = system
+            print("setNextRouteHopToClipbord set clipboard to", system)
 
         self.timer_setNextRouteHopToClipbord.start()
     

@@ -732,7 +732,8 @@ class db(object):
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID, priceA.id AS priceAid, priceB.StationBuy, priceA.StationSell,
-                        systemB.System AS SystemB,priceB.SystemID AS SystemBID , priceB.id AS priceBid, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+                        systemB.System AS SystemB, priceB.SystemID AS SystemBID , priceB.id AS priceBid, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
+                        systemA.System AS SystemA,
                         dist, items.name AS itemName
 
                         FROM price AS priceA
@@ -741,6 +742,7 @@ class db(object):
 
                         inner join price AS priceB on priceB.id=dealsInDistances.priceBID
 
+                        left join systems AS systemA  ON systemA.id=priceA.SystemID
                         left join systems AS systemB  ON systemB.id=priceB.SystemID
                         left JOIN stations AS stationB on stationB.id = priceB.StationID
                         left JOIN items on priceA.ItemID=items.id
