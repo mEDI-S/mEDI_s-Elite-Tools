@@ -10,6 +10,7 @@ speedup: http://codereview.stackexchange.com/questions/26822/myth-busting-sqlite
 import sqlite3
 import os
 import sys
+import timeit
 from datetime import datetime, date, time, timedelta
 
 import elite.loader.maddavo as maddavo_loader
@@ -107,9 +108,7 @@ class db(object):
 
         elite.loader.eddb.updateAll(self)
 
-
-        edMarked =  EDMarakedConnector_loader.loader(self)
-        edMarked.update()
+        EDMarakedConnector_loader.loader(self).update()
 
         maddavo_station = maddavo_loader.station.loader(self)
         maddavo_station.update()

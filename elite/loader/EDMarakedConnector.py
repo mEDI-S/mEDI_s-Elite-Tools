@@ -3,19 +3,16 @@ Created on 24.07.2015
 
 @author: mEDI
 '''
-import os, sys, time
-from stat import S_ISREG, ST_CTIME, ST_MODE
+import os
 import re
 import csv
-from datetime import datetime, date,  timedelta
+from datetime import datetime, timedelta
 
 class loader(object):
     '''
-    classdocs
+    E:D Marked Connector cvs loader
     '''
     mydb = None
-    __itemCache = None
-
 
     def __init__(self, mydb):
         '''
@@ -24,28 +21,7 @@ class loader(object):
         self.mydb = mydb
 
 
-    def createPriceKeyCache(self):
-        '''
-        build key cache
-        '''
-        if self.__itemCache: return
-        print("create cache")
-        self.__itemCache = {}
-        #get all items and build a cache (extrem faster as single querys) 
-        mycur = self.mydb.cursor()
-        mycur.execute( "select id, StationID, ItemID, modified from price" )
-        result = mycur.fetchall()
-
-        for item in result:
-            cacheKey = "%d_%d" % (item["StationID"], item["ItemID"])
-            self.__itemCache[cacheKey] = [item["id"], item["modified"]]
-        result= None
-
-    def cleanCache(self):
-        self.__itemCache = None
-
     def importData(self, filename=None):
-        if not filename: filename = 'db/LTT 9810.Friedrich Peters Vision.2015-07-21T23.05.20.csv'
         
         with open(filename ,"r") as csvfile:
             simpelreader = csv.reader(csvfile, dialect='excel',delimiter=';',quoting=csv.QUOTE_NONE)
@@ -55,18 +31,13 @@ class loader(object):
             fields = mylist[0]
             #print(fields)
 
-            self.createPriceKeyCache()
 
-            insertStations = []
-            updateStations = []
             updateItems = []
             insertCount = 0
             updateCount = 0
             for row in mylist[1:]:
                 #print(len(row), row)
                 system = row[fields.index("System")].lower()
-                station = row[fields.index("Station")].lower()
-                item = row[fields.index("Commodity")].lower()
                 StationSell = 0
                 if row[fields.index("Buy")].isdigit(): StationSell = int(row[fields.index("Buy")])
                 StationBuy = 0
@@ -109,21 +80,27 @@ class loader(object):
                 '''
                 main import
                 '''
-                cacheKey = "%d_%d" % (stationID, itemID)
 
-                if cacheKey not in  self.__itemCache:
+                cur.execute("""select id, modified FROM price
+                            where  
+                                price.StationID = ?
+                                AND  price.ItemID = ?
+                                limit 1
+                            """  , (stationID, itemID)  )
+        
+                result = cur.fetchone()
+
+                if not result:
                     insertCount += 1
                     print("insert")
                     #add new price
                     cur.execute( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand,Stock, modified, source) values (?,?,?,?,?,?,?,?,3) ",
                         ( systemID, stationID, itemID, StationBuy, StationSell  , Demand , Stock, modifydate) )
                 
-                elif self.__itemCache[cacheKey][1] < modifydate:
+                elif result["modified"] < modifydate:
                     # update price
                     updateCount +=1
-                    self.__itemCache[cacheKey][1] = modifydate
-                    #print("update")
-                    updateItems.append( [StationBuy, StationSell  , Demand , Stock, modifydate, self.__itemCache[cacheKey][0] ] )
+                    updateItems.append( [StationBuy, StationSell  , Demand , Stock, modifydate, result["id"] ] )
                     
             if updateItems:
                 cur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Dammand=?,Stock=?, modified=? ,source=3 where id = ?", updateItems)
@@ -143,7 +120,6 @@ class loader(object):
             print("Warning: config->EDMarkedConnector_cvsDir: '%s' do not exist" % cvsDir)
             return
 
-        currentUpdateTime = None
         newstEntry = None
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime , "%Y-%m-%d %H:%M:%S")
@@ -164,5 +140,3 @@ class loader(object):
         if newstEntry:
             newstEntry = newstEntry + timedelta(seconds=1)
             self.mydb.setConfig( 'lastEDMarkedConnectorUpdate', newstEntry.strftime("%Y-%m-%d %H:%M:%S") )
-
-        self.cleanCache()
