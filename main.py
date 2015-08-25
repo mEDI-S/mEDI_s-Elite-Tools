@@ -181,6 +181,13 @@ class MainWindow(QtGui.QMainWindow):
 
         self.updateDBtimer.start()
 
+    def lockDB(self):
+        self.dbworker.lockDB()
+        self.dbworker.waitQuit()
+
+    def unlockDB(self):
+        self.dbworker.unockDB()
+
     def closeEvent( self, event ):
         if self.closeApp():
             event.accept()

@@ -498,6 +498,8 @@ class Widget(QtGui.QWidget):
 
     def startRouteSearch(self):
 
+        self.main.lockDB()
+
         #save last options
         self.mydb.setConfig( 'option_tradingHops', self.maxHopsspinBox.value() )
         self.mydb.setConfig( 'option_maxJumpDistance', self.maxJumpDistSpinBox.value() )
@@ -528,10 +530,11 @@ class Widget(QtGui.QWidget):
         
         self.route.calcRoute()
         
-        self.route.printList()
+        #self.route.printList()
 
         routeModel = RouteTreeModel(self.route)
         self.routeview.setModel(routeModel) #QtCore.QModelIndex()
+
         for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
             #rid item count
             for cid in range( 0, routeModel.rowCount(routeModel.index(rid,0)) ):
@@ -547,6 +550,8 @@ class Widget(QtGui.QWidget):
         self.routeview.show()
 
         self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
+
+        self.main.unlockDB()
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
@@ -682,7 +687,9 @@ class Widget(QtGui.QWidget):
 
                 if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
                     print("set %s as fakeprice" % id)
+                    self.main.lockDB()
                     self.mydb.setFakePrice(id)
+                    self.main.unlockDB()
                 
 #            print(indexes[0].row(), indexes[0].column() , indexes[0].data(), indexes[0].internalPointer().getPiceID() )
 

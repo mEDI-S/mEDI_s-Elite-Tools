@@ -24,9 +24,11 @@ class _updateDBchild(QtCore.QThread):
         global databaseLock, mainClass
 
         mutex.lock()
+
         if databaseLock:
-            databaseAccessWait.wait(mutex)
-            databaseLock = True
+            mutex.unlock()
+            return
+
         mutex.unlock()
 
         starttime = timeit.default_timer()
@@ -70,6 +72,30 @@ class new(object):
             return
 
         self._updatedb.start()
+        self._updatedb.setPriority(QtCore.QThread.LowPriority)
+
         mainClass.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
 
 
+    def waitQuit(self):
+        starttime = timeit.default_timer()
+
+        if self._updatedb.isRunning():
+            mainClass.setStatusBar("wait of updateDB")
+        while self._updatedb.isRunning():
+            #self._updatedb.terminate()
+            print("wait of update %ss" % round(timeit.default_timer() - starttime, 2))
+            self._updatedb.wait(1000)
+
+    def lockDB(self):
+        mutex.lock()
+        databaseLock = True
+        mutex.unlock()
+
+    def unockDB(self):
+        mutex.lock()
+
+        databaseAccessWait.wakeOne()
+        databaseLock = None
+
+        mutex.unlock()
