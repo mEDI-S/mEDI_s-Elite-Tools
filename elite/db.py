@@ -15,7 +15,7 @@ from datetime import datetime, date, time, timedelta
 import elite.loader.maddavo as maddavo_loader
 import elite.loader.bpc as bpc_loader
 import elite.loader.EDMarakedConnector as EDMarakedConnector_loader
-import elite.loader.eddb as eddb_loader
+import elite.loader.eddb 
 import elite.loader.raresimport as raresimport
 
 import sqlite3_functions
@@ -104,16 +104,9 @@ class db(object):
         '''
         update price date from all sources
         '''        
-        print("update data")
-        
-        eddb_commodities = eddb_loader.items.loader(self)
-        eddb_commodities.update()
 
-        eddb_systems = eddb_loader.systems.loader(self)
-        eddb_systems.update()
+        elite.loader.eddb.updateAll(self)
 
-        eddb_stations = eddb_loader.stations.loader(self)
-        eddb_stations.update()
 
         edMarked =  EDMarakedConnector_loader.loader(self)
         edMarked.update()

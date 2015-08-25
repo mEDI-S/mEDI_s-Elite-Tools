@@ -80,7 +80,7 @@ class loader(object):
 
             cDate = datetime.fromtimestamp(os.path.getmtime(filename))
 
-            if cDate < datetime.now() - timedelta(hours=24):
+            if cDate < datetime.now() - timedelta(hours=1):
                 self.updateFromUrl(filename, eddbUrl_commodities)
 
         else:  # download file not exists
