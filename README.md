@@ -37,3 +37,28 @@ Windows alpa build [Download](http://tmp.medi.li/mediselitetools.7z)
 linux users get the sources and start it in console `python main.py`
 requiered modules: PySide
 
+
+
+----------
+
+# Required #
+
+### VerboseLogging
+to get the current location
+enabel VerboseLogging
+
+Open in a texteditor  like [notepad++](https://notepad-plus-plus.org/)
+
+`c:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\AppConfig.xml`
+
+search Network and set it to
+
+        <Network
+          VerboseLogging="1"
+          Port="0"
+          upnpenabled="1"
+          LogFile="netLog"
+          DatestampLog="1"
+         >
+       </Network>
+and restart the game
