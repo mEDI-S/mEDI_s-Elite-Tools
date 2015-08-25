@@ -4,20 +4,17 @@ Created on 23.07.2015
 
 @author: mEDI
 
-
-speedup: http://codereview.stackexchange.com/questions/26822/myth-busting-sqlite3-performance-w-pysqlite
 '''
+
 import sqlite3
 import os
-import sys
-import timeit
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 
 import elite.loader.maddavo
-import elite.loader.bpc as bpc_loader
+import elite.loader.bpc
 import elite.loader.EDMarakedConnector
 import elite.loader.eddb 
-import elite.loader.raresimport as raresimport
+import elite.loader.raresimport
 
 import sqlite3_functions
 
@@ -25,9 +22,7 @@ DBPATH = os.path.join("db","my.db")
 DBVERSION = 1
 
 class db(object):
-    '''
-    classdocs
-    '''
+
     path = None
     con = None
     __stationIDCache = {}
@@ -35,9 +30,7 @@ class db(object):
     __itemIDCache = {}
 
     def __init__(self, guiMode=None):
-        '''
-        Constructor
-        '''
+
         self.guiMode = guiMode
         if self.con is not None:
             return
@@ -58,7 +51,7 @@ class db(object):
         else:
             self.initDB()
 
-        self.fillCache()
+        #self.fillCache()
             
         dbVersion = self.getConfig( 'dbVersion' )
         if dbVersion == False:
@@ -99,7 +92,7 @@ class db(object):
     def importData(self):
         print("import data")
 
-        raresimport.loader(self).importData('db/rares.csv')
+        elite.loader.raresimport.loader(self).importData('db/rares.csv')
         
     def updateData(self):
         '''
@@ -112,8 +105,7 @@ class db(object):
 
         elite.loader.maddavo.updateAll(self)
 
-        myBPCloader = bpc_loader.prices.loader(self)
-        myBPCloader.importData()
+        elite.loader.bpc.prices.loader(self).importData()
 
         lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
         optimize = None
@@ -704,7 +696,6 @@ class db(object):
         #get pos data from systemA
         cur.execute( "select * from stations left join systems on systems.id=stations.SystemID  where stations.id = ?  limit 1", ( stationID, ) )
         stationA = cur.fetchone()
-        systemID = stationA["SystemID"]
 
 
         # check the dealsIndistance cache
@@ -755,58 +746,6 @@ class db(object):
                         limit ?
                         """    , ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
         
-        result = cur.fetchall()
-
-        cur.close()
-        return result
-
-    def getDealsFromTo_old(self,systemA, systemB, maxAgeDate):
-        '''
-        unused only experimental
-        '''
-        # systemB is name, systemID or systemID list
-        # system is systemID or name
-        if isinstance(systemA,int):
-            systemAID = systemA
-        else:
-            systemAID = self.getSystemIDbyName(systemA)
-
-        if isinstance(systemB,int):
-            systemBID = systemB
-            systemBseq = "?"
-        elif isinstance(systemB,list):
-            pass
-            systemB.append(systemAID)
-            systemBID = systemB
-            systemBseq=','.join(['?']*len(systemB))
-        else:
-            systemBID = self.getSystemIDbyName(systemB)
-            systemBseq = "?"
-        print(systemBseq)
-
-        #print(systemAID, systemBID)
-        cur = self.cursor()
-
-        cur.execute("DROP TABLE IF EXISTS testtable ")
-
-        systemBID.append(maxAgeDate)
-        cur.execute("CREATE /*TEMPORARY*/ TABLE testtable AS select * FROM price where systemID in (%s)  AND modified > ?" % (systemBseq) , systemBID  )
-        return
-        cur.execute("DROP TABLE IF EXISTS testtable2")
-#        cur.execute( """CREATE /*TEMPORARY*/ TABLE testtable2 AS select  
-        cur.execute( """select  
-                        ( b.StationBuy - a.StationSell ) AS profitAtoB,
-                        ( a.StationBuy - b.StationSell ) AS profitBtoA, 
-                        items.name AS itemName, a.StationID AS AstationID ,a.ItemID as itemID, a.StationSell AS AstationSell, a.StationBuy AS AstationBuy,
-                        b.StationID AS BstationID,  b.StationSell AS BstationSell, b.StationBuy AS BstationBuy
-                     from testtable AS a
-                     inner  JOIN testtable as b ON  b.SystemID is ? AND a.ItemID = b.ItemID AND b.modified > ?
-                     left JOIN items on items.id = a.ItemID
-                        where  a.SystemID is ? AND  a.modified >= ?   """, ( systemBID,maxAgeDate,systemAID,maxAgeDate,  ) )
-
-#/*SELECT `_rowid_`,* FROM `testtable2` where AstationSell > 0  ORDER BY profitAtoB DESC */
-#SELECT `_rowid_`,* FROM `testtable2` where BstationSell > 0  ORDER BY profitBtoA DESC 
-
         result = cur.fetchall()
 
         cur.close()

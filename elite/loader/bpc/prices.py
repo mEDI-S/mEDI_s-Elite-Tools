@@ -5,31 +5,25 @@ Created on 22.07.2015
 '''
 
 import sqlite3
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 import os
 
 class loader(object):
-    '''
-    classdocs
-    '''
 
     mydb = None
     con = None
     dbPath = None
     
-    def __init__(self,mydb):
-        '''
-        Constructor
-        '''
+    def __init__(self, mydb):
         self.mydb = mydb
         
-    def connect_BPC_DB(self,dbPath=None):
+    def connect_BPC_DB(self, dbPath=None):
         if dbPath:
             self.dbPath = dbPath
         else:
-            self.dbPath = self.mydb.getConfig( 'BPC_db_path' )        
+            self.dbPath = self.mydb.getConfig('BPC_db_path')        
             
-        if not os.path.isfile( self.dbPath ):
+        if not os.path.isfile(self.dbPath):
             print("Warning: config->BPC_db_path: '%s' do not exist" % self.dbPath)
             return
             
@@ -39,52 +33,51 @@ class loader(object):
 
 
     def importData(self):
-        print("update from BPC")
         self.connect_BPC_DB()
 
         if not self.con:
             return
         
-        utcOffeset =  datetime.now() - datetime.utcnow() 
 
-        # set last update to now()        
-        lastUpdateTime = self.mydb.getConfig( 'lastBPCimport' )
+        utcOffeset = datetime.now() - datetime.utcnow() 
+
+        lastUpdateTime = self.mydb.getConfig('lastBPCimport')
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime , "%Y-%m-%d %H:%M:%S")
-            #only update all 10 min
-            if datetime.utcnow()-timedelta(minutes=30) < lastUpdateTime:
-                print("do noting")
+            # only update all 30 min
+            if datetime.utcnow() - timedelta(minutes=30) < lastUpdateTime:
                 return
             else:
                 cur = self.con.cursor()
-                cur.execute( "SELECT max(SCStationLastUpdate) FROM `SC`  ;" )
+                cur.execute("SELECT max(SCStationLastUpdate) FROM `SC`  ;")
                 lastDBupdate = cur.fetchone()[0]
                 cur.close()
-                if len(lastDBupdate) ==  16:
+                if len(lastDBupdate) == 16:
                     lastDBupdate = datetime.strptime(lastDBupdate , "%Y-%m-%d %H:%M")
-                    #print(type(lastDBupdate), lastDBupdate-utcOffeset, lastUpdateTime)
-                    if lastDBupdate-utcOffeset <= lastUpdateTime  :
-                        print("do noting")
+                    # print(type(lastDBupdate), lastDBupdate-utcOffeset, lastUpdateTime)
+                    if lastDBupdate - utcOffeset <= lastUpdateTime  :
                         return
-                        
+
+                
 
         else:
-            # on new import get max one year old data 
-            lastUpdateTime =  datetime.now() - timedelta(days=365)
+            lastUpdateTime = datetime.now() - timedelta(days=14)
+
+        print("update from BPC")
 
         '''
         build key cache
         '''
-        #get all items and build a cache (extrem faster as single querys) 
+        # get all items and build a cache (extrem faster as single querys) 
         mycur = self.mydb.cursor()
-        mycur.execute( "select SystemID, StationID, ItemID, modified from price" )
+        mycur.execute("select SystemID, StationID, ItemID, modified from price")
         result = mycur.fetchall()
-        itemCache= {}
+        itemCache = {}
 
         for item in result:
             cacheKey = "%d_%d_%d" % (item["SystemID"], item["StationID"], item["ItemID"])
             itemCache[cacheKey] = item["modified"]
-        result= None
+        result = None
 
         
         '''
@@ -93,7 +86,7 @@ class loader(object):
         self.connect_BPC_DB()
 
         cur = self.con.cursor()
-        cur.execute( "select * from SC where SCStationLastUpdate > ? ORDER BY `SCStationLastUpdate` DESC", ( lastUpdateTime, ) )
+        cur.execute("select * from SC where SCStationLastUpdate > ? ORDER BY `SCStationLastUpdate` DESC", (lastUpdateTime,))
         result = cur.fetchall()
         failCount = 0
         insertCount = 0
@@ -108,10 +101,10 @@ class loader(object):
             if not systemID or not stationID or not itemID:
                 failCount += 1
                 # extrem many fail entrys in bpc
-                #print(price)
+                # print(price)
             else:
                 cacheKey = "%d_%d_%d" % (systemID, stationID, itemID)
-                #print(price["SCStationLastUpdate"] )
+                # print(price["SCStationLastUpdate"] )
                 if len(price["SCStationLastUpdate"]) == 16:
                     modifydate = datetime.strptime(price["SCStationLastUpdate"] , "%Y-%m-%d %H:%M")
                 elif len(price["SCStationLastUpdate"]) > 16:
@@ -126,28 +119,26 @@ class loader(object):
 
 
                 if not itemCache.get(cacheKey):
-                    #print(cacheKey,systemID, stationID, itemID,item)
+                    # print(cacheKey,systemID, stationID, itemID,item)
                     insertCount += 1
-                    mycur.execute( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand,Stock, modified, source) values (?,?,?,?,?,?,?,?,2) ",
-                        ( systemID, stationID, itemID, price["SCStationSell"] , price["SCStationPrice"] , 0 , price["SCStationStock"], modifydate) )
+                    mycur.execute("insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand,Stock, modified, source) values (?,?,?,?,?,?,?,?,2) ",
+                        (systemID, stationID, itemID, price["SCStationSell"] , price["SCStationPrice"] , 0 , price["SCStationStock"], modifydate))
 
                 elif itemCache[cacheKey] < modifydate:
-                    #print("update", cacheKey)
-                    # dammand auf 1 setzen wenn ein sell price da ist?
-                    updateItems.append( [ price["SCStationSell"] , price["SCStationPrice"] ,  price["SCStationStock"], modifydate, systemID, stationID, itemID ] )
+                    updateItems.append([ price["SCStationSell"] , price["SCStationPrice"] , price["SCStationStock"], modifydate, systemID, stationID, itemID ])
 
         if failCount:
             print("failCount", failCount)
 
         if updateItems:
-            print("update items", len(updateItems),"insert items", insertCount)
-            mycur.executemany( "UPDATE price SET  StationBuy=?, StationSell=?,  Stock=?, modified=? ,source=2 where SystemID == ? AND StationID == ? AND ItemID == ?",updateItems)
+            print("update items", len(updateItems), "insert items", insertCount)
+            mycur.executemany("UPDATE price SET  StationBuy=?, StationSell=?,  Stock=?, modified=? ,source=2 where SystemID == ? AND StationID == ? AND ItemID == ?", updateItems)
         
         self.mydb.con.commit()
         mycur.close()
         cur.close()
-        #set last updatetime to now()
+        # set last updatetime to now()
         if newstEntry:   
-            self.mydb.setConfig( 'lastBPCimport', newstEntry.strftime("%Y-%m-%d %H:%M:%S") )
+            self.mydb.setConfig('lastBPCimport', newstEntry.strftime("%Y-%m-%d %H:%M:%S"))
 
         
