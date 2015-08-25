@@ -13,9 +13,9 @@ import sys
 import timeit
 from datetime import datetime, date, time, timedelta
 
-import elite.loader.maddavo as maddavo_loader
+import elite.loader.maddavo
 import elite.loader.bpc as bpc_loader
-import elite.loader.EDMarakedConnector as EDMarakedConnector_loader
+import elite.loader.EDMarakedConnector
 import elite.loader.eddb 
 import elite.loader.raresimport as raresimport
 
@@ -108,13 +108,9 @@ class db(object):
 
         elite.loader.eddb.updateAll(self)
 
-        EDMarakedConnector_loader.loader(self).update()
+        elite.loader.EDMarakedConnector.loader(self).update()
 
-        maddavo_station = maddavo_loader.station.loader(self)
-        maddavo_station.update()
-
-        maddavo_prices = maddavo_loader.prices.loader(self)
-        maddavo_prices.update()
+        elite.loader.maddavo.updateAll(self)
 
         myBPCloader = bpc_loader.prices.loader(self)
         myBPCloader.importData()

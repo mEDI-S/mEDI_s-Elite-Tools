@@ -1,11 +1,11 @@
+# -*- coding: UTF8
 '''
 Created on 21.07.2015
 
 @author: mEDI
 '''
 import re
-from datetime import datetime, date, time, timedelta
-#import urllib
+from datetime import datetime, timedelta
 import gzip
 import io
 
@@ -14,23 +14,16 @@ try:
 except ImportError:
     import urllib.request as urllib2
 
-# in python3 urllib.request
 class loader(object):
-    '''
-    classdocs
-    '''
 
     __dataCache = {}
     mydb = None
 
     def __init__(self, mydb=None):
-        '''
-        Constructor
-        '''
+
         self.mydb = mydb
 
-    def load(self,filename=None):
-        if not filename: filename = "db/all_maddavo.prices"
+    def load(self,filename):
 
         f = open(filename, 'r')
         #self.__dataCache = {}
@@ -43,15 +36,14 @@ class loader(object):
             elif "+ " == line[0:2]:  # drop class/group
                 continue
             elif "@ " == line[0:2]:  # get system/stations name
-        #        name = line[2:]
                 ma = re.search("@ (.*)/(.*)", line)
                 if ma:
                     systemName = ma.group(1).lower()
                     stationName = ma.group(2).lower()
                 else:
                     print("loading error system/stationname")
-                #print(line , ma.group(1))
                 continue
+
             else:
                 ma = re.search("^(.+?)\s+(\d+)\s+(\d+)\s+(\d+.|\?|-)\s+(\d+.|-|\?)\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s*.*", line)
                 if ma:
@@ -71,7 +63,6 @@ class loader(object):
                     if not self.__dataCache[systemName].get(stationName) : self.__dataCache[systemName][stationName] = {}
                     if not self.__dataCache[systemName][stationName].get(itemName) : self.__dataCache[systemName][stationName][itemName] = []
         
-                    # erstmal nur das rein was ich brauche die tage
                     ##########
                     # struktur: self.__dataCache{}->systemName{}->stationName{}->itemName{}->[station_buy, station_sell, Dammand, Stock, modifydate]
                     ########
@@ -94,8 +85,6 @@ class loader(object):
                     pass
                     print("loading error: parsing '%s'" % line)
         
-        #print(self.__dataCache)
-        #print(self.__dataCache["CEMIESS".lower()]["Shoemaker City".lower()]["CONSUMER TECHNOLOGY".lower()] )
     def importData(self):
 
         if len(self.__dataCache) == 0: self.load()
@@ -108,7 +97,7 @@ class loader(object):
         itemCache= {}
 
         for item in result:
-            cacheKey = "%d_%d_%d" % (item["SystemID"], item["StationID"], item["ItemID"])
+            cacheKey = "%d_%d" % (item["StationID"], item["ItemID"])
             itemCache[cacheKey] = item["modified"]
         result= None
 
@@ -128,7 +117,7 @@ class loader(object):
                 for item in self.__dataCache[system][station]:
 
                     itemID = self.mydb.getItemID(item)
-                    cacheKey = "%d_%d_%d" % (systemID, stationID, itemID)
+                    cacheKey = "%d_%d" % (stationID, itemID)
 
                     if not itemCache.get(cacheKey):
 #                        print(cacheKey,systemID, stationID, itemID,item)
@@ -153,16 +142,13 @@ class loader(object):
         url_twoDayData = "http://www.davek.com.au/td/prices-2d.asp"
         url_threeHorsData = "http://www.davek.com.au/td/prices-3h.asp"
         
-        print("update from maddavo")
         lastUpdateTime = self.mydb.getConfig( 'lastMaddavoDownload' )
-        #lastUpdateTime = "2015-07-23 14:29:27"
         currentUpdateTime = None
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime , "%Y-%m-%d %H:%M:%S")
 
             if lastUpdateTime < datetime.now() - timedelta(days=2):
                 print("download full")
-#                currentUpdateTime = datetime.now() - timedelta(hours=3)
                 currentUpdateTime = datetime.now()
                 self.updateFromUrl(url_fullData)
                 self.updateFromUrl(url_twoDayData)
@@ -170,20 +156,20 @@ class loader(object):
 
             elif lastUpdateTime < datetime.now() - timedelta(hours=3):
                 print("download 2d")
-#                currentUpdateTime = datetime.now() - timedelta(hours=1)
                 currentUpdateTime = datetime.now()
                 self.updateFromUrl(url_twoDayData)
                 self.updateFromUrl(url_threeHorsData)
+
             elif lastUpdateTime < datetime.now() - timedelta(minutes=60):
                 print("download 3h")
                 currentUpdateTime = datetime.now()
                 self.updateFromUrl(url_threeHorsData)
+
             else:
                 print("download noting")
 
         else:
             print("download full fallback")
-#            currentUpdateTime = datetime.now() - timedelta(hours=3)
             currentUpdateTime = datetime.now()
             self.updateFromUrl(url_fullData)
             self.updateFromUrl(url_twoDayData)
@@ -191,9 +177,6 @@ class loader(object):
 
         if currentUpdateTime:
             self.mydb.setConfig( 'lastMaddavoDownload', currentUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
-
-
-
 
 
     def updateFromUrl(self,url):
@@ -206,11 +189,9 @@ class loader(object):
         request.add_header('Accept-encoding', 'gzip')
         response = urllib2.urlopen(request)
         if response.info().get('Content-Encoding') == 'gzip':
-            #print("gzip ok")
             buf = io.BytesIO(response.read())
             f = gzip.GzipFile(fileobj=buf)
         else:
-            #print("none")
             f = response
 
         wfp = open(filename,"wb")
@@ -218,8 +199,6 @@ class loader(object):
         wfp.close()
 
         
-#        file,http = urllib.urlretrieve(url, tempFile)
-#        if http["Content-Type"] == "application/tradedangerous":
         if response.info().get('content-type').split("; ")[0] == "application/tradedangerous":
             self.load(tempFile)
             self.importData()
@@ -228,43 +207,5 @@ class loader(object):
             print(response.info().items())
 
         
-        #urllib.urlretrieve()
     def cleanCache(self):
         self.__dataCache = {}
-        
-    def getBuyPrice(self,system,station,item):
-        '''
-        return price u can buy the item
-        '''
-        if len(self.__dataCache) == 0: self.load()
-
-        system = system.lower()
-        station = station.lower()
-        item = item.lower()
-        if self.__dataCache.has_key(system) and self.__dataCache[system].has_key(station) and self.__dataCache[system][station].has_key(item):
-            return self.__dataCache[system][station][item][1]
-        else:
-            return None
-    def getSellPrice(self,system,station,item):
-        '''
-        return price u can sell item to station
-        '''
-        if len(self.__dataCache) == 0: self.load()
-
-        system = system.lower()
-        station = station.lower()
-        item = item.lower()
-        if self.__dataCache.has_key(system) and self.__dataCache[system].has_key(station) and self.__dataCache[system][station].has_key(item):
-            return self.__dataCache[system][station][item][0]
-        else:
-            return None
-    def getItemsFromStation(self, system, station):
-        if len(self.__dataCache) == 0: self.load()
-
-        system = system.lower()
-        station = station.lower()
-
-        #if self.__dataCache.has_key(system) and self.__dataCache[system].has_key(station):
-        return self.__dataCache[system].get(station)
-        #else:
-        #    return None

@@ -9,7 +9,7 @@ import or update db with system data from http://www.davek.com.au/td/station.asp
 '''
 import os
 import csv
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 
 import gzip
 import io
@@ -44,7 +44,6 @@ class loader(object):
             cur = self.mydb.cursor()
             mylist = list(simpelreader)
             fields = mylist[0]
-            #print(fields)
 
             #get all stations 
             cur.execute( "select id, modified from stations" )
@@ -139,8 +138,6 @@ class loader(object):
         else:  # download file not exists
             self.updateFromUrl(filename, systems_url)
 
-#        self.importData(filename)
-#        self.updateFromUrl(filename, eddbUrl_systems)
 
     def updateFromUrl(self, filename, url):
         if not url: return
@@ -151,11 +148,9 @@ class loader(object):
         request.add_header('Accept-encoding', 'gzip')
         response = urllib2.urlopen(request)
         if response.info().get('Content-Encoding') == 'gzip':
-            # print("gzip ok")
             buf = io.BytesIO(response.read())
             f = gzip.GzipFile(fileobj=buf)
         else:
-            # print("none")
             f = response
 
         wfp = open(filename, "wb")
