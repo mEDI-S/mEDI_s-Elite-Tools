@@ -7,18 +7,12 @@ Created on 19.08.2015
 '''
 
 try:
-    from _version import __buildid__ as v
-    __buildid__ = v
-    from _version import __version__ as v
-    __version__ = v
-    from _version import __builddate__ as v
-    __builddate__ = v
-    
-    del v
+    from _version import __buildid__ , __version__, __builddate__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
-
+    __builddate__ = "UNKNOWN"
+    
 import logging
 import sys
 
@@ -47,10 +41,8 @@ except:
     #sys.stdout = StreamToLogger( logging.getLogger('STDOUT'), logging.INFO)
     sys.stderr = StreamToLogger( logging.getLogger('STDERR'), logging.ERROR)
 
-
 import elite
 import gui
-
 from PySide import QtCore, QtGui
 
 
@@ -94,50 +86,31 @@ class MainWindow(QtGui.QMainWindow):
 
         self.clipboard = QtGui.QClipboard()
 
-#    def contextMenuEvent(self, event):
-#        menu = QtGui.QMenu(self)
-#        menu.addAction(self.multiHopRouteAct)
-#        menu.exec_(event.globalPos())
 
     def setStatusBar(self, msg):
-#        self.guiMutex.lock()
         print("statusBar msg: %s" % msg)
         self.statusBar().showMessage(msg)
-#        self.guiMutex.unlock()
 
     def multiHopRoute(self):
 
         mhr_widget = gui.multihoproute.Widget(self)
-
         self.multiHopRouteWidget.append(mhr_widget)
-        pos = len(self.multiHopRouteWidget)
+
         widget = mhr_widget.getWideget()
 
-
+        pos = len(self.multiHopRouteWidget)
         dock = QtGui.QDockWidget("Multi Hop Route %d" % pos, self)
         dock.setAllowedAreas( QtCore.Qt.AllDockWidgetAreas)
-#        dock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.AllDockWidgetAreas)
-#        dock.setFloating(True)
+        dock.DockWidgetFeature(QtGui.QDockWidget.AllDockWidgetFeatures )
 
         dock.setWidget(widget)
 
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
 
         self.viewMenu.addAction(dock.toggleViewAction())
 
         
-
-
-    def about(self):
-        QtGui.QMessageBox.about(self, "About",
-                "Version: %s\n"
-                "Build ID: %s\n"
-                "Build Date: %s\n"
-                " " % (__version__, __buildid__, __builddate__))
-
-    def aboutQt(self):
-        pass
-
     def createActions(self):
 
         self.exitAct = QtGui.QAction("E&xit", self, shortcut="Ctrl+Q",
@@ -164,8 +137,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.aboutQtAct = QtGui.QAction("About &Qt", self,
                 statusTip="Show the Qt library's About box",
-                triggered=self.aboutQt)
-        self.aboutQtAct.triggered.connect(QtGui.qApp.aboutQt)
+                triggered=QtGui.qApp.aboutQt)
 
        
     def createMenus(self):
@@ -211,7 +183,6 @@ class MainWindow(QtGui.QMainWindow):
     def updateDB(self):
         self.updateDBtimer.stop()
 
-        #self.mydb.updateData()
         self.dbworker.updateDB()
 
         self.updateDBtimer.start()
@@ -242,6 +213,15 @@ class MainWindow(QtGui.QMainWindow):
         url = QtCore.QUrl(url, QtCore.QUrl.StrictMode)
         if not QtGui.QDesktopServices.openUrl(url):
             QtGui.QMessageBox.warning(self, 'Open Url', 'Could not open url:%s' % url)
+
+
+    def about(self):
+        QtGui.QMessageBox.about(self, "About",
+                "Version: %s\n"
+                "Build ID: %s\n"
+                "Build Date: %s\n"
+                " " % (__version__, __buildid__, __builddate__))
+
 
     def aboutWebside(self):
         self.openUrl('https://github.com/mEDI-S/mEDI_s-Elite-Tools')

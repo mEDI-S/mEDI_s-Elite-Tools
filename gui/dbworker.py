@@ -6,7 +6,7 @@ Created on 21.08.2015
 
 import elite
 import timeit
-from _datetime import datetime
+from datetime import datetime
 
 from PySide import QtCore, QtGui
 

@@ -158,7 +158,6 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.BackgroundColorRole:
             item = index.internalPointer()
-            #print(type(item))
             if isinstance( item, RouteTreeHopItem):
                 return item.BGColor() #yellow or green https://srinikom.github.io/pyside-docs/PySide/QtGui/QColor.html
             elif isinstance( item, RouteTreeItem):
@@ -691,5 +690,4 @@ class Widget(QtGui.QWidget):
                     self.mydb.setFakePrice(id)
                     self.main.unlockDB()
                 
-#            print(indexes[0].row(), indexes[0].column() , indexes[0].data(), indexes[0].internalPointer().getPiceID() )
 
