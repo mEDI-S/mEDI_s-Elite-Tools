@@ -8,6 +8,7 @@ Created on 23.07.2015
 
 import sqlite3
 import os
+import sys
 from datetime import datetime, timedelta
 
 import elite.loader.maddavo
@@ -48,20 +49,23 @@ class db(object):
         if new_db:
             self.initDB()
             self.importData()
+            self.getSystemPaths()        
         else:
-            self.initDB()
+            pass
+            #self.initDB()
 
         #self.fillCache()
             
         dbVersion = self.getConfig( 'dbVersion' )
-        if dbVersion == False:
-            print(dbVersion)
-            print("version false db")
+        if dbVersion != DBVERSION:
             self.initDB()
+            self.getSystemPaths()        
+            self.setConfig('dbVersion', DBVERSION)
 
         if not self.guiMode:
             self.updateData()
-        
+    
+
     def cleanCache(self):
         '''
         clean all caches
@@ -787,6 +791,43 @@ class db(object):
 
         cur.close()
         return result
+
+    def getSystemPaths(self):
+        print("getSystemPaths")
+
+        if sys.platform=='win32':
+            from PySide import QtCore
+            ''' Elite Dangerous (steam install) log path '''
+            #HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320\InstallLocation
+            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320",QtCore.QSettings.NativeFormat)
+            InstallLocation = settings.value("InstallLocation")
+            logPath = os.path.join(InstallLocation ,'Products\FORC-FDEV-D-1010\Logs')
+            if os.path.isdir(logPath):
+                self.setConfig('EliteLogDir', logPath)
+                #print("set %s" % logPath)
+                
+            
+            ''' EDMarketConnector settings import '''
+            #HKEY_CURRENT_USER\Software\Marginal\EDMarketConnector\outdir
+            settings = QtCore.QSettings("Marginal", "EDMarketConnector")
+            outdir = settings.value("outdir")
+            if outdir and os.path.isdir(outdir):
+                self.setConfig('EDMarkedConnector_cvsDir', outdir)
+                #print("set %s" % outdir)
+
+            ''' Slopeys ED BPC path import '''
+            #HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC\UninstallString
+            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC",QtCore.QSettings.NativeFormat)
+            uninstallerPath = settings.value(r"UninstallString")
+            if uninstallerPath:
+                path = uninstallerPath.split("\\")
+                path.pop()
+                path.append("ED4.db")
+                path = "\\".join(path)
+                if os.path.isfile(path):
+                    self.setConfig('BPC_db_path', path)
+                    #print("set %s" % path)
+                    
 
 if __name__ == '__main__':
     #mydb = db()
