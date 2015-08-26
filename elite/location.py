@@ -18,6 +18,8 @@ class location(object):
     mydb = None
     location = None
     _lastCDate = None
+    _lastFile = None
+    _lastPos = None
 
     def __init__(self, mydb):
         '''
@@ -61,9 +63,13 @@ class location(object):
 
     def readLog(self, logfile ):
 
-        #print(logfile)
-        
         fh = open(logfile, 'rb')
+
+        if self._lastFile == logfile and self._lastPos:
+            fh.seek(self._lastPos,0)
+        else:
+            self._lastFile = logfile
+
         for line in fh:
             locationma = re.search("^\{\d{2}:\d{2}:\d{2}\} System\:\d+\((.*?)\) .*", line.decode(encoding='ascii',errors='replace') )
 
@@ -72,4 +78,5 @@ class location(object):
                 if locationma.group(1):
                     self.location = locationma.group(1)
 
+        self._lastPos = fh.tell()
         fh.close()
