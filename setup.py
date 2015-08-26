@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import subprocess
+import elite
 
 __version__ = "0.1"
 __buildid__ = ""
@@ -88,6 +89,20 @@ setup(name='mEDIs Elite Tools',
       description = 'Elite Tools',
       options = dict(build_exe = buildOptions),
       executables = executables)
+
+
+''' manipulate db clone '''
+clonedDBpath = os.path.join(buildpath, "db/my.db" )
+
+if os.path.isfile(clonedDBpath):
+    db = elite.db(guiMode=True, DBPATH=clonedDBpath)
+
+    db.setConfig('initRun', 1)
+
+    db.close()
+
+
+
 
 
 outputfile = "build/mediselitetools.7z"

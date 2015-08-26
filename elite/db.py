@@ -19,7 +19,7 @@ import elite.loader.raresimport
 
 import sqlite3_functions
 
-DBPATH = os.path.join("db","my.db")
+__DBPATH__ = os.path.join("db","my.db")
 DBVERSION = 1
 
 class db(object):
@@ -30,7 +30,7 @@ class db(object):
     __systemIDCache = {}
     __itemIDCache = {}
 
-    def __init__(self, guiMode=None):
+    def __init__(self, guiMode=None, DBPATH=__DBPATH__):
 
         self.guiMode = guiMode
         if self.con is not None:
@@ -56,12 +56,19 @@ class db(object):
 
         #self.fillCache()
             
-        dbVersion = self.getConfig( 'dbVersion' )
-        if dbVersion != DBVERSION:
+
+        if self.getConfig( 'dbVersion' ) != DBVERSION:
+            ''' run on database update'''
             self.initDB()
             self.getSystemPaths()        
             self.setConfig('dbVersion', DBVERSION)
 
+        elif self.getConfig( 'initRun' ) == 1:
+            ''' run on first start (install with build db)'''
+            self.initDB()
+            self.getSystemPaths()        
+            self.setConfig('initRun', 0)
+            
         if not self.guiMode:
             self.updateData()
     
@@ -828,6 +835,8 @@ class db(object):
                     self.setConfig('BPC_db_path', path)
                     #print("set %s" % path)
                     
+    def close(self):
+        self.con.close()
 
 if __name__ == '__main__':
     #mydb = db()
