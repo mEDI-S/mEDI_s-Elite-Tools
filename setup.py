@@ -4,9 +4,13 @@ import sys
 import shutil
 import subprocess
 import elite
+from datetime import datetime
 
 __version__ = "0.1"
 __buildid__ = ""
+__builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+__ZIPFILE__ = "mediselitetools.7z"
+
 
 '''
 usage:
@@ -15,12 +19,12 @@ c:\Python34_32\python.exe setup.py build
 http://cx-freeze.readthedocs.org/en/latest/distutils.html
 '''
 
-VERSION_PY = """
-# This file is originally generated from Git information by running 'setup.py
+VERSION_PY = """# This file is originally generated from Git information by running 'setup.py
 __buildid__ = '%s'
 __version__ = '%s'
-"""
+__builddate__ = '%s'"""
 
+VERSION_HOMEPAGE = """buildid=%s;version=%s;file=%s;builddate=%s"""
 
 
 buildpath = r"build\exe.win32-3.4/"
@@ -49,9 +53,16 @@ def update_version_py():
     __buildid__ = stdout.strip().decode("utf-8")
 
     f = open("_version.py", "w")
-    f.write(VERSION_PY % (__buildid__, __version__))
+    f.write(VERSION_PY % (__buildid__, __version__, __builddate__))
     f.close()
     print("_version.py to '%s'" % __buildid__)
+
+    ''' create versions file '''
+
+    f = open("build/mediselitetools.version.txt", "w")
+    f.write(VERSION_HOMEPAGE % (__buildid__, __version__, __ZIPFILE__, __builddate__))
+    f.close()
+
 
 update_version_py()
 
@@ -104,8 +115,7 @@ if os.path.isfile(clonedDBpath):
 
 
 
-
-outputfile = "build/mediselitetools.7z"
+outputfile = os.path.join("build", __ZIPFILE__)
 zipexepath = r"c:\Program Files\7-Zip\7z.exe"
 
 if os.path.isfile(outputfile):
@@ -114,3 +124,4 @@ if os.path.isfile(outputfile):
 #compress
 options = "-y -t7z -mx9"
 os.spawnl(os.P_WAIT, zipexepath,"7z","a",outputfile , "./build/exe.win32-3.4/*",  options)
+

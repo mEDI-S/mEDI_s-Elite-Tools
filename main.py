@@ -11,7 +11,9 @@ try:
     __buildid__ = v
     from _version import __version__ as v
     __version__ = v
-
+    from _version import __builddate__ as v
+    __builddate__ = v
+    
     del v
 except ImportError:
     __buildid__ = "UNKNOWN"
@@ -130,7 +132,8 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMessageBox.about(self, "About",
                 "Version: %s\n"
                 "Build ID: %s\n"
-                " " % (__version__, __buildid__))
+                "Build Date: %s\n"
+                " " % (__version__, __buildid__, __builddate__))
 
     def aboutQt(self):
         pass
@@ -143,6 +146,18 @@ class MainWindow(QtGui.QMainWindow):
         self.multiHopRouteAct = QtGui.QAction("Multi Hop Route", self,
                 statusTip="Open A Multi Hop Route Window", triggered=self.multiHopRoute)
 
+        self.aboutWebsideAct = QtGui.QAction("Webside", self,
+                statusTip="Open Webside",
+                triggered=self.aboutWebside)
+
+        self.aboutChangelogAct = QtGui.QAction("Changelog", self,
+                statusTip="Open Changelog on GitHub",
+                triggered=self.aboutChangelog)
+
+        self.aboutcheckUpdateAct = QtGui.QAction("Check for Updates", self,
+                statusTip="Check for Updates",
+                triggered=self.checkUpdate)
+
         self.aboutAct = QtGui.QAction("&About", self,
                 statusTip="Show the application's About box",
                 triggered=self.about)
@@ -152,7 +167,7 @@ class MainWindow(QtGui.QMainWindow):
                 triggered=self.aboutQt)
         self.aboutQtAct.triggered.connect(QtGui.qApp.aboutQt)
 
-
+       
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addSeparator()
@@ -165,6 +180,14 @@ class MainWindow(QtGui.QMainWindow):
         self.viewMenu = self.menuBar().addMenu("&View")
 
         self.helpMenu = self.menuBar().addMenu("&Help")
+
+        self.helpMenu.addAction(self.aboutWebsideAct)
+        self.helpMenu.addAction(self.aboutChangelogAct)
+        self.helpMenu.addSeparator()
+
+        self.helpMenu.addAction(self.aboutcheckUpdateAct)
+        self.helpMenu.addSeparator()
+        
         self.helpMenu.addAction(self.aboutAct)
         self.helpMenu.addAction(self.aboutQtAct)
 
@@ -214,6 +237,56 @@ class MainWindow(QtGui.QMainWindow):
         size = self.size()
         
         self.mydb.setConfig( 'mainwindow.size', "%d,%d" % ( size.width(), size.height() ) )
+
+    def openUrl(self, url):
+        url = QtCore.QUrl(url, QtCore.QUrl.StrictMode)
+        if not QtGui.QDesktopServices.openUrl(url):
+            QtGui.QMessageBox.warning(self, 'Open Url', 'Could not open url:%s' % url)
+
+    def aboutWebside(self):
+        self.openUrl('https://github.com/mEDI-S/mEDI_s-Elite-Tools')
+
+    def aboutChangelog(self):
+        self.openUrl('https://github.com/mEDI-S/mEDI_s-Elite-Tools/commits/master')
+
+    def checkUpdate(self):
+        try:
+            import urllib2
+        except ImportError:
+            import urllib.request as urllib2
+
+        version = None
+        url_home = "http://tmp.medi.li"
+        url_version = "%s/mediselitetools.version.txt" % url_home
+
+        try:
+            request = urllib2.Request(url_version)
+            response = urllib2.urlopen(request)
+            if response:
+                version = response.read()
+        except:
+            QtGui.QMessageBox.warning(self, 'Open Url', 'Could not open url')
+
+        if version:
+            version = version.strip().decode("utf-8")
+            version = dict(x.split('=') for x in version.split(';'))
+            #print(version)
+            if version["builddate"] != __builddate__:
+                url_update = "%s/%s" % (url_home, version["file"])
+
+                msg = "a newer version is available!\n"
+                msg += "\nInstalled:\n\t Version: %s\n\t Buildid: %s\n\t Build Date: %s " % (__version__, __buildid__, __builddate__)
+                msg += "\nNew Version:\n\t Version: %s\n\t Buildid: %s\n\t Build Date: %s " % (version["version"], version["buildid"], version["builddate"])
+
+                msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                        "Update Available", msg,
+                        QtGui.QMessageBox.NoButton, self)
+
+                msgBox.addButton("Download", QtGui.QMessageBox.AcceptRole)
+                msgBox.addButton("no thanks", QtGui.QMessageBox.RejectRole)
+
+                if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+                    self.openUrl(url_update)
 
 
 if __name__ == '__main__':
