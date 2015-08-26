@@ -14,12 +14,18 @@ databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
 mutex = QtCore.QMutex()
 mainClass = None
+statusbarMsg = None
 
 class _updateDBchild(QtCore.QThread):
     '''
     updatedb child job
     '''
-    
+    def sendMsg(self, newmsg):
+        global statusbarMsg
+        mutex.lock()
+        statusbarMsg = newmsg
+        mutex.unlock()
+        
     def run(self):
         global databaseLock, mainClass
 
@@ -36,12 +42,12 @@ class _updateDBchild(QtCore.QThread):
         mydb = elite.db(guiMode=True)
         mydb.updateData()
 
-        mainClass.setStatusBar("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
+        self.sendMsg("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
         starttime = timeit.default_timer()
 
         mydb.calcDealsInDistancesCacheQueue()
 
-        mainClass.setStatusBar("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
+        self.sendMsg("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
 
         mutex.lock()
         databaseLock = None
@@ -72,6 +78,8 @@ class new(object):
             return
 
         self._updatedb.start()
+        #self._updatedb.exec_()
+        
         self._updatedb.setPriority(QtCore.QThread.LowPriority)
 
         mainClass.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
@@ -99,3 +107,18 @@ class new(object):
         databaseLock = None
 
         mutex.unlock()
+
+    def getStatusbarMsg(self):
+        global statusbarMsg
+        msg = None
+
+        mutex.lock()
+
+        if statusbarMsg:
+            msg = statusbarMsg
+            statusbarMsg = None
+
+        mutex.unlock()
+
+        return msg
+    

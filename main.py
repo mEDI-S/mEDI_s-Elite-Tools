@@ -98,9 +98,10 @@ class MainWindow(QtGui.QMainWindow):
 #        menu.exec_(event.globalPos())
 
     def setStatusBar(self, msg):
-        self.guiMutex.lock()
+#        self.guiMutex.lock()
+        print("statusBar msg: %s" % msg)
         self.statusBar().showMessage(msg)
-        self.guiMutex.unlock()
+#        self.guiMutex.unlock()
 
     def multiHopRoute(self):
 
@@ -172,6 +173,17 @@ class MainWindow(QtGui.QMainWindow):
         self.updateDBtimer.start(1000*60)
         self.updateDBtimer.timeout.connect(self.updateDB)
 
+        self.childMsgPullTimer = QtCore.QTimer()
+        self.childMsgPullTimer.start(500)
+        self.childMsgPullTimer.timeout.connect(self.childMsgPull)
+
+
+    def childMsgPull(self):
+        if self.dbworker:
+            msg = self.dbworker.getStatusbarMsg()
+            if msg:
+                self.setStatusBar( msg )
+        self.childMsgPullTimer.start()
 
     def updateDB(self):
         self.updateDBtimer.stop()
