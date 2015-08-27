@@ -17,9 +17,11 @@ def updateAll(mydb):
             "not all clients start update at same time
             hope it work ;)" '''
 
-        if lastImport.day == datetime.now().day and lastImport.hour < 5 and random.randint(1, 10) == 1 :
+        if lastImport.day == datetime.now().day and lastImport.hour < 5 and (random.randint(1, 10) == 1 or datetime.now().hour > 6):
             pass
-        elif lastImport > datetime.now() - timedelta(hours=24):
+        elif lastImport.day != datetime.now().day:
+            pass
+        else:
             return
 
     print("update from eddb")
