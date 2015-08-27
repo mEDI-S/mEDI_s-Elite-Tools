@@ -33,6 +33,7 @@ class db(object):
     def __init__(self, guiMode=None, DBPATH=__DBPATH__):
 
         self.guiMode = guiMode
+        self._active = True
         if self.con is not None:
             return
 
@@ -41,7 +42,7 @@ class db(object):
             print("new db")
             new_db = True
 
-        self.con = sqlite3.connect(DBPATH, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        self.con = sqlite3.connect(DBPATH, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, check_same_thread = False)
         self.con.row_factory = sqlite3.Row    
 
         sqlite3_functions.registerSQLiteFunktions(self.con)
@@ -72,6 +73,7 @@ class db(object):
         if not self.guiMode:
             self.updateData()
     
+        self.con.execute("PRAGMA journal_mode = MEMORY")
 
     def cleanCache(self):
         '''
@@ -109,14 +111,19 @@ class db(object):
         '''
         update price date from all sources
         '''        
+        if self._active != True: return
 
         elite.loader.eddb.updateAll(self)
+        if self._active != True: return
 
         elite.loader.EDMarakedConnector.loader(self).update()
+        if self._active != True: return
 
         elite.loader.maddavo.updateAll(self)
+        if self._active != True: return
 
         elite.loader.bpc.prices.loader(self).importData()
+        if self._active != True: return
 
         lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
         optimize = None
@@ -368,7 +375,7 @@ class db(object):
             systemID = self.getSystemIDbyName(system)
 
         cur = self.con.cursor()
-        cur.execute('SELECT id, Station FROM stations  where SystemID=? ' , (systemID,))
+        cur.execute('SELECT id, Station FROM stations  where SystemID=? order by Station' , (systemID,))
         rows = cur.fetchall()
         cur.close()
         stations = []
@@ -492,7 +499,7 @@ class db(object):
 
         cur.execute('''select priceA.ItemID AS ItemID, priceB.StationBuy-priceA.StationSell AS profit,
                              priceB.StationBuy AS StationBuy,  priceA.StationSell AS StationSell,
-                            priceA.id AS priceAid, priceB.id AS priceBid,
+                            priceA.id AS priceAid, priceB.id AS priceBid, priceA.Stock AS Stock,
                              items.name AS itemName,
                              stationA.Station AS fromStation,
                              stationB.Station AS toStation
@@ -532,6 +539,8 @@ class db(object):
         cur = self.cursor()
 
         for system in systemIDlist:
+            if self._active != True: return
+            
             systemID = system["id"]
 
             cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems ( systemID, dist ) values (?, ? )", (systemID, dist )) 
@@ -798,7 +807,16 @@ class db(object):
 
         cur.close()
         return result
+    def getAllSystems(self):
+        cur = self.cursor()
+        
+        cur.execute("""select * FROM Systems order by System """)
 
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+        
     def getSystemPaths(self):
         print("getSystemPaths")
 

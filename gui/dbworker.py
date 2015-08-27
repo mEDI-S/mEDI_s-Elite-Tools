@@ -7,13 +7,12 @@ Created on 21.08.2015
 import elite
 import timeit
 from datetime import datetime
-
+import sys
 from PySide import QtCore, QtGui
 
 databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
 mutex = QtCore.QMutex()
-mainClass = None
 statusbarMsg = None
 
 class _updateDBchild(QtCore.QThread):
@@ -27,48 +26,59 @@ class _updateDBchild(QtCore.QThread):
         mutex.unlock()
         
     def run(self):
-        global databaseLock, mainClass
+        global databaseLock
+        self._active = True
 
         mutex.lock()
-
         if databaseLock:
             mutex.unlock()
+            print("databaseLock")
             return
-
+        databaseLock = True
         mutex.unlock()
 
         starttime = timeit.default_timer()
 
-        mydb = elite.db(guiMode=True)
-        mydb.updateData()
+        self.mydb = elite.db(guiMode=True)
+        self.mydb.updateData()
+
+        if self._active != True:
+            self.close()
+            return
 
         self.sendMsg("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
         starttime = timeit.default_timer()
 
-        mydb.calcDealsInDistancesCacheQueue()
+        self.mydb.calcDealsInDistancesCacheQueue()
+
+        if self._active != True:
+            self.close()
+            return
 
         self.sendMsg("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
 
+        self.close()
+
+    def close(self):
+        global databaseLock
+        self.mydb.close()
         mutex.lock()
         databaseLock = None
-        databaseAccessWait.wakeOne()
         mutex.unlock()
 
-
+    def terminate(self):
+        self._active = False
+        self.mydb._active = False
+        
 class new(object):
     '''
     class to do long woking jobs in background
     '''
     _updatedb = None
 
-    def __init__(self, main):
-#        super(dbworker, self).__init__()
-        '''
-        Constructor
-        '''
-        global mainClass
-        mainClass = main
-        
+    def __init__(self, newmain):
+
+        self.main = newmain
         self._updatedb = _updateDBchild()
 
     def updateDB(self):
@@ -78,22 +88,23 @@ class new(object):
             return
 
         self._updatedb.start()
-        #self._updatedb.exec_()
         
         self._updatedb.setPriority(QtCore.QThread.LowPriority)
-
-        mainClass.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
+        self._updatedb.setTerminationEnabled(True)
+        self.main.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
 
 
     def waitQuit(self):
         starttime = timeit.default_timer()
 
         if self._updatedb.isRunning():
-            mainClass.setStatusBar("wait of updateDB")
-        while self._updatedb.isRunning():
-            #self._updatedb.terminate()
-            print("wait of update %ss" % round(timeit.default_timer() - starttime, 2))
-            self._updatedb.wait(1000)
+            self.main.setStatusBar("wait updateDB")
+
+            self._updatedb.terminate()
+
+            while self._updatedb.isRunning():
+                print("wait of update %ss" % round(timeit.default_timer() - starttime, 2))
+                self._updatedb.wait(1000)
 
     def lockDB(self):
         mutex.lock()
