@@ -53,6 +53,7 @@ class MainWindow(QtGui.QMainWindow):
     dbworker = None
     location = None
     multiHopRouteWidget = []
+    dealsFromToWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -62,6 +63,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
         self.setWindowTitle("mEDI's Elite Tools")
+        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
 
         self.mydb = elite.db(guiMode=True)
         self.dbworker =  gui.dbworker.new(self)
@@ -105,10 +107,29 @@ class MainWindow(QtGui.QMainWindow):
 
         dock.setWidget(widget)
 
-        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
 
         self.viewMenu.addAction(dock.toggleViewAction())
+
+
+    def dealsFromToDockWidget(self):
+
+        mhr_widget = gui.deals_from_to.Widget(self)
+        self.dealsFromToWidget.append(mhr_widget)
+
+        widget = mhr_widget.getWideget()
+
+        pos = len(self.dealsFromToWidget)
+        dock = QtGui.QDockWidget("Deals From To %d" % pos, self)
+        dock.setAllowedAreas( QtCore.Qt.AllDockWidgetAreas)
+        dock.DockWidgetFeature(QtGui.QDockWidget.AllDockWidgetFeatures )
+
+        dock.setWidget(widget)
+
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
+
+        self.viewMenu.addAction(dock.toggleViewAction())
+
 
         
     def createActions(self):
@@ -118,6 +139,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.multiHopRouteAct = QtGui.QAction("Multi Hop Route", self,
                 statusTip="Open A Multi Hop Route Window", triggered=self.multiHopRoute)
+
+        self.dealsFromToDockWidgetAct = QtGui.QAction("Deals From To", self,
+                statusTip="Open A Deals From to Window", triggered=self.dealsFromToDockWidget)
 
         self.aboutWebsideAct = QtGui.QAction("Webside", self,
                 statusTip="Open Webside",
@@ -147,6 +171,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.toolsMenu = self.menuBar().addMenu("&Tools")
         self.toolsMenu.addAction(self.multiHopRouteAct)
+        self.toolsMenu.addAction(self.dealsFromToDockWidgetAct)
+
         self.toolsMenu.addSeparator()
 
         self.viewMenu = self.menuBar().addMenu("&View")
@@ -208,6 +234,14 @@ class MainWindow(QtGui.QMainWindow):
         size = self.size()
         
         self.mydb.setConfig( 'mainwindow.size', "%d,%d" % ( size.width(), size.height() ) )
+
+        if self.dealsFromToWidget: # save only from last windows
+            self.dealsFromToWidget[-1].saveOptions()
+
+        if self.multiHopRouteWidget: # save only from last windows
+            self.multiHopRouteWidget[-1].saveOptions()
+
+
 
     def openUrl(self, url):
         url = QtCore.QUrl(url, QtCore.QUrl.StrictMode)
