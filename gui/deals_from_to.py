@@ -1,7 +1,7 @@
 # -*- coding: UTF8
 
 '''
-Created on 19.08.2015
+Created on 27.08.2015
 
 @author: mEDI
 '''
@@ -16,7 +16,6 @@ class Widget(QtGui.QWidget):
     main = None
     mydb = elite.db
     route = None
-    activeRoutePointer = None
 
     def __init__(self, main):
         super(Widget, self).__init__(main)
@@ -250,10 +249,10 @@ class Widget(QtGui.QWidget):
 
         menu = QtGui.QMenu(self)
 
-        indexes = self.routeview.selectionModel().selectedIndexes()
+        indexes = self.dealsview.selectionModel().selectedIndexes()
         menu.addAction(self.markFakeItemAct)
 
-        menu.exec_(self.routeview.viewport().mapToGlobal(event))
+        menu.exec_(self.dealsview.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
         if not self.optionsGroupBox.isHidden():
@@ -301,15 +300,16 @@ class Widget(QtGui.QWidget):
         
 
     def markFakeItem(self):
-        print("markFakeItem")
-        return
-        indexes = self.routeview.selectionModel().selectedIndexes()
- 
-        id = indexes[0].internalPointer().getPiceID()
-        if id:
 
+        indexes = self.dealsview.selectionModel().selectedIndexes()
+ 
+        id = indexes[self.headerList.index("PriceID")].data()
+        print(id)
+        if id:
+            msg = "Warning: fake items are ignored everywhere and no longer displayed\n"
+            msg += "\nSet\n   From Station: %s\n   Item: %s\nas Facke" % (indexes[self.headerList.index("From")].data(), indexes[self.headerList.index("Item")].data() )
             msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
-                    "Warning", "Warning: fake items are ignored everywhere and no longer displayed",
+                    "Warning", msg,
                     QtGui.QMessageBox.NoButton, self)
 
             msgBox.addButton("Save as Facke", QtGui.QMessageBox.AcceptRole)
@@ -355,12 +355,14 @@ class Widget(QtGui.QWidget):
         if not self.dealsview.header().count():
             firstrun = True
 
-    
-        header = ["Item","From","Buy", "Stock","To","Sell","Profit"]
-        model = QtGui.QStandardItemModel(0, len(header), self)
-        for x,column in enumerate(header):
+        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit"]
+
+        model = QtGui.QStandardItemModel(0, len(self.headerList), self)
+        for x,column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
-            
+
+        self.main.lockDB()
+
         fromSystem = self.fromSystem.text()
         fromSystemID = self.mydb.getSystemIDbyName(fromSystem)
     
@@ -378,6 +380,7 @@ class Widget(QtGui.QWidget):
     
         if fromStationID and toStationID:
             deals = self.mydb.getDealsFromTo( fromStationID,  toStationID, maxAgeDate , minStock )
+
         else:
             deals = []
 
@@ -386,13 +389,15 @@ class Widget(QtGui.QWidget):
         for deal in deals:
             if self.minProfitSpinBox.value() <= deal["Profit"]:
                 model.insertRow(0)
-                model.setData(model.index(0, header.index("From") ), deal["fromStation"])
-                model.setData(model.index(0, header.index("To") ), deal["toStation"])
-                model.setData(model.index(0, header.index("Item") ), deal["itemName"])
-                model.setData(model.index(0, header.index("Buy") ), deal["StationSell"])
-                model.setData(model.index(0, header.index("Sell") ), deal["StationBuy"])
-                model.setData(model.index(0, header.index("Profit") ), deal["Profit"])
-                model.setData(model.index(0, header.index("Stock") ), deal["Stock"])
+                
+                model.setData(model.index(0, self.headerList.index("PriceID") ), deal["priceAid"])
+                model.setData(model.index(0, self.headerList.index("From") ), deal["fromStation"])
+                model.setData(model.index(0, self.headerList.index("To") ), deal["toStation"])
+                model.setData(model.index(0, self.headerList.index("Item") ), deal["itemName"])
+                model.setData(model.index(0, self.headerList.index("Buy") ), deal["StationSell"])
+                model.setData(model.index(0, self.headerList.index("Sell") ), deal["StationBuy"])
+                model.setData(model.index(0, self.headerList.index("Profit") ), deal["Profit"])
+                model.setData(model.index(0, self.headerList.index("Stock") ), deal["Stock"])
 
         self.dealsview.setModel(model)
 
@@ -404,8 +409,11 @@ class Widget(QtGui.QWidget):
                 for i,pos in  enumerate(sectionPosList):    
                     self.dealsview.header().moveSection( self.dealsview.header().visualIndex( int(pos) ) , i )
 
-            self.dealsview.sortByColumn( header.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder )
+            self.dealsview.sortByColumn( self.headerList.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder )
 
-            
-        for i in range(0, len(header) ):
+            self.dealsview.hideColumn(self.headerList.index("PriceID"))
+
+        self.main.unlockDB()
+
+        for i in range(0, len(self.headerList) ):
             self.dealsview.resizeColumnToContents(i)
