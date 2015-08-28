@@ -6,14 +6,11 @@ Tools for Elite:Dangerous
 
 ## Features: ##
 * Live data update and import from many sources
-* Clippord Helper (push next navi point to clipbord) `start over route contextmenü`
-
-
-## Screenshot's ##
-![Multi Hop Route screenshot](screenshots/eliteTools.jpg)
-multi hop route
-![Multi Window screenshot](screenshots/dockwidgetexample.jpg)
-multiple open tools
+* Fast search
+* Multi Hop Route Finder
+ * Clippord Helper (push next navi point to clipbord) `start over route contextmenü`
+ * Current location and active route colored 
+* Deals From To Finder
 
 
 ## Data Sources ##
@@ -21,6 +18,14 @@ multiple open tools
 * [eddb - Elite: Dangerous Database](http://eddb.io)
 * [Maddavo's Market Share](http://www.davek.com.au/td/)
 * [Slopey's BPC Market Tool `local installation`](https://forums.frontier.co.uk/showthread.php?t=76081)
+
+
+## Screenshot's ##
+![Deals And Mult Route screenshot](screenshots/dealsAndMultRoute.jpg)
+![Multi Hop Route screenshot](screenshots/eliteTools.jpg)
+multi hop route
+![Multi Window screenshot](screenshots/dockwidgetexample.jpg)
+multiple open tools
 
 
 ## Usage ##
