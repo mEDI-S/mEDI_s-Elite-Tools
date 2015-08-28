@@ -13,13 +13,13 @@ def updateAll(mydb):
     if lastImport:
         lastImport = datetime.strptime(lastImport , "%Y-%m-%d %H:%M:%S")
 
-        ''' omly update all 24h or next dey >5 plus random anti ddos  
+        ''' omly update max all 6h or next dey >5 plus random anti ddos  
             "not all clients start update at same time
             hope it work ;)" '''
 
         if lastImport.day == datetime.now().day and lastImport.hour < 5 and (random.randint(1, 10) == 1 or datetime.now().hour > 6):
             pass
-        elif lastImport.day != datetime.now().day:
+        elif lastImport < datetime.now() - timedelta(hours=12):
             pass
         else:
             return
