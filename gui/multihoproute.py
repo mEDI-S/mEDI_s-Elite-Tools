@@ -31,7 +31,7 @@ class RouteTreeInfoItem(object):
         return 1
 
     def data(self, column):
-        if isinstance( self.itemData, str):
+        if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
             if column == 0:
                 return self.itemData
 
@@ -80,12 +80,9 @@ class RouteTreeHopItem(object):
         self._BGColor = BGColor
 
     def data(self, column):
-        if isinstance( self.itemData, str):
+        if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
             if column == 0:
                 return self.itemData
-        else:
-            if column == 5:
-                return self.itemData[0]
 
     def getPiceID(self):
         if self.itemData:
@@ -400,6 +397,8 @@ class Widget(QtGui.QWidget):
         self.locationlineEdit.textChanged.connect(self.triggerLocationChanged)
 
         locationGroupBox = QtGui.QGroupBox()
+        locationGroupBox.setFlat(True)
+
         layout = QtGui.QHBoxLayout()
 
         self.showOptions = QtGui.QCheckBox("Show Options")
@@ -412,11 +411,9 @@ class Widget(QtGui.QWidget):
         layout.addWidget(locationLabel)
         layout.addWidget(self.locationlineEdit)
         layout.addWidget(self.showOptions)
-        
         layout.addWidget(self.searchbutton)
 
         locationGroupBox.setLayout(layout)
-        locationGroupBox.setFlat(True)
 
 
         self.optionsGroupBox = QtGui.QGroupBox("Options")
@@ -427,7 +424,7 @@ class Widget(QtGui.QWidget):
         self.routeview.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.routeview.customContextMenuRequested.connect(self.routelistContextMenuEvent)
 
-        vGroupBox = QtGui.QGroupBox("Search")
+        vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
         layout = QtGui.QVBoxLayout()
 
@@ -495,10 +492,7 @@ class Widget(QtGui.QWidget):
             self.route.setOption( "minTradeProfit", minTradeProfit )
 
 
-    def startRouteSearch(self):
-
-        self.main.lockDB()
-
+    def saveOptions(self):
         #save last options
         self.mydb.setConfig( 'option_tradingHops', self.maxHopsspinBox.value() )
         self.mydb.setConfig( 'option_maxJumpDistance', self.maxJumpDistSpinBox.value() )
@@ -509,6 +503,9 @@ class Widget(QtGui.QWidget):
         self.mydb.setConfig( 'option_minTradeProfit', self.minProfitSpinBox.value() )
         self.mydb.setConfig( 'option_searchLimit', self.searchLimitOption.currentIndex() )
 
+    def startRouteSearch(self):
+
+        self.main.lockDB()
 
         starttime = timeit.default_timer()
 
