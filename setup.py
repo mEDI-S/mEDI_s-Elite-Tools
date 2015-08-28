@@ -66,6 +66,13 @@ def update_version_py():
 
 update_version_py()
 
+imgPath = "img"
+includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
+
+#add img
+for f in os.listdir(imgPath):
+    includeFilesList.append( [os.path.join(imgPath,f), os.path.join(imgPath,f) ] )
+
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 buildOptions = dict(
@@ -78,7 +85,7 @@ buildOptions = dict(
                     compressed =  True,
                     replace_paths = "*=",
                     #bundle_files = 1
-                    include_files = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]],
+                    include_files = includeFilesList,
                     silent = True,
                     )
 
