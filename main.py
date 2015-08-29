@@ -70,8 +70,9 @@ class MainWindow(QtGui.QMainWindow):
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
 
         self.mydb = elite.db(guiMode=True)
+        self.mydb.startStreamUpdater()
         self.dbworker =  gui.dbworker.new(self)
-        
+
         self.location = elite.location(self.mydb)
 
 
@@ -232,6 +233,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeApp( self ):
         self.saveOptions()
+        self.mydb.close()
         QtGui.qApp.quit()
 
     def saveOptions( self ):

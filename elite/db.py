@@ -16,6 +16,7 @@ import elite.loader.bpc
 import elite.loader.EDMarakedConnector
 import elite.loader.eddb 
 import elite.loader.raresimport
+import elite.loader.eddn
 
 import sqlite3_functions
 
@@ -29,6 +30,7 @@ class db(object):
     __stationIDCache = {}
     __systemIDCache = {}
     __itemIDCache = {}
+    __streamUpdater = []
 
     def __init__(self, guiMode=None, DBPATH=__DBPATH__):
 
@@ -56,6 +58,8 @@ class db(object):
             #self.initDB()
 
         #self.fillCache()
+        self.con.execute("PRAGMA journal_mode = MEMORY")
+        self.con.execute("PRAGMA recursive_triggers=True")
             
 
         if self.getConfig( 'dbVersion' ) != DBVERSION:
@@ -63,9 +67,9 @@ class db(object):
             self.initDB()
             self.getSystemPaths()        
             self.setConfig('dbVersion', DBVERSION)
-
-        elif self.getConfig( 'initRun' ) == 1:
+        elif self.getConfig( 'initRun' ) == "1":
             ''' run on first start (install with build db)'''
+            print("init run")
             self.initDB()
             self.getSystemPaths()        
             self.setConfig('initRun', 0)
@@ -73,7 +77,6 @@ class db(object):
         if not self.guiMode:
             self.updateData()
     
-        self.con.execute("PRAGMA journal_mode = MEMORY")
 
     def cleanCache(self):
         '''
@@ -106,6 +109,15 @@ class db(object):
         print("import data")
 
         elite.loader.raresimport.loader(self).importData('db/rares.csv')
+    def startStreamUpdater(self):
+        ''' Start this only from a gui or other running instances and not in single run scripts'''
+
+        self.__streamUpdater.append( elite.loader.eddn.newClient(self) ) 
+
+    def stopStreamUpdater(self):
+        if self.__streamUpdater:
+            for client in self.__streamUpdater:
+                client.stop()
         
     def updateData(self):
         '''
@@ -124,6 +136,10 @@ class db(object):
 
         elite.loader.bpc.prices.loader(self).importData()
         if self._active != True: return
+
+        if self.__streamUpdater:
+            for client in self.__streamUpdater:
+                client.update()
 
         lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
         optimize = None
@@ -184,6 +200,11 @@ class db(object):
         self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)" )
         self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems_queue (systemID INTEGER PRIMARY KEY)" )
+
+        #ships and shipyard
+        self.con.execute( "CREATE TABLE IF NOT EXISTS ships (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS shipyard (SystemID INT,StationID INT ,ShipID INT, Price INT, modifydate timestamp)" )
+        self.con.execute( "create UNIQUE index  IF NOT EXISTS shipyard_unique_systemID_StationID_ShipID on shipyard (systemID, StationID, ShipID)" )
 
         # trigger to controll the dynamic cache
         self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
@@ -286,6 +307,16 @@ class db(object):
             self.__systemIDCache[system] = result[0]
             return result[0]
 
+    def getShiptID(self, name):
+        name = name.lower()
+
+        cur = self.cursor()
+        cur.execute( "select id from ships where LOWER(Name)=? limit 1", ( name, ) )
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
+        
     def getSystemname(self,SystemID):
         cur = self.cursor()
         cur.execute( "select System from systems where id = ? limit 1", ( SystemID, ) )
@@ -854,6 +885,7 @@ class db(object):
                     #print("set %s" % path)
                     
     def close(self):
+        self.stopStreamUpdater()
         self.con.close()
 
 if __name__ == '__main__':

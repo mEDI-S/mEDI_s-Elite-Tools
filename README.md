@@ -14,6 +14,7 @@ Tools for Elite:Dangerous
 
 
 ## Data Sources ##
+* [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)
 * [Elite: Dangerous Market Connector (EDMC) `csv files`](https://github.com/Marginal/EDMarketConnector)
 * [eddb - Elite: Dangerous Database](http://eddb.io)
 * [Maddavo's Market Share](http://www.davek.com.au/td/)
@@ -40,7 +41,7 @@ multiple open tools
 Windows alpa build [Download](http://tmp.medi.li/mediselitetools.7z)
 
 linux users get the sources and start it in console `python main.py`
-requiered modules: PySide
+requiered modules: PySide, py-dateutil, pyzmq
 
 
 
