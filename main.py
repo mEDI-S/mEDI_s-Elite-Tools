@@ -6,15 +6,19 @@ Created on 19.08.2015
 @author: mEDI
 '''
 
+import logging
+import sys
+
 try:
-    from _version import __buildid__ , __version__, __builddate__
+    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
-    __builddate__ = "UNKNOWN"
-    
-import logging
-import sys
+    __builddate__ = "NONE"
+    __toolname__ = "mEDI s Elite Tools"
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+
+
 
 
 class StreamToLogger(object):
@@ -275,7 +279,9 @@ class MainWindow(QtGui.QMainWindow):
 
         try:
             request = urllib2.Request(url_version)
+            request.add_header('User-Agent', __useragent__)
             response = urllib2.urlopen(request)
+
             if response:
                 version = response.read()
         except:

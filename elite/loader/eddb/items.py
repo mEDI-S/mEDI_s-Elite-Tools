@@ -12,6 +12,16 @@ import json
 
 import gzip
 import io
+import sys
+
+try:
+    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+except ImportError:
+    __buildid__ = "UNKNOWN"
+    __version__ = "UNKNOWN"
+    __builddate__ = "NONE"
+    __toolname__ = "mEDI s Elite Tools"
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
 
 
 try:
@@ -94,6 +104,7 @@ class loader(object):
         print("download %s" % url)
 
         request = urllib2.Request(url)
+        request.add_header('User-Agent', __useragent__)
         request.add_header('Accept-encoding', 'gzip')
         response = urllib2.urlopen(request)
         if response.info().get('Content-Encoding') == 'gzip':
@@ -108,10 +119,6 @@ class loader(object):
         wfp.write(f.read())
         wfp.close()
             
-#        file,http = urllib.urlretrieve(url, filename)
-#        print(response.info().items())
-#        print( response.info().get('content-type').split("; ")[0] )
-
         if response.info().get('content-type').split("; ")[0] == "application/json":
             pass
             self.importData(filename)

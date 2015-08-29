@@ -10,7 +10,7 @@ __version__ = "0.1"
 __buildid__ = ""
 __builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 __ZIPFILE__ = "mediselitetools.7z"
-
+__toolname__ = "mEDI s Elite Tools"
 
 '''
 usage:
@@ -22,7 +22,14 @@ http://cx-freeze.readthedocs.org/en/latest/distutils.html
 VERSION_PY = """# This file is originally generated from Git information by running 'setup.py
 __buildid__ = '%s'
 __version__ = '%s'
-__builddate__ = '%s'"""
+__builddate__ = '%s'
+__toolname__ = '%s'
+
+import sys
+
+__useragent__ = '%%s/%%s (%%s) %%s(%%s)' %% (__toolname__.replace(' ', ''), __version__, sys.platform, __buildid__, __builddate__.replace(' ', '').replace('-', '').replace(':', '') ) 
+
+"""
 
 VERSION_HOMEPAGE = """buildid=%s;version=%s;file=%s;builddate=%s"""
 
@@ -53,7 +60,7 @@ def update_version_py():
     __buildid__ = stdout.strip().decode("utf-8")
 
     f = open("_version.py", "w")
-    f.write(VERSION_PY % (__buildid__, __version__, __builddate__))
+    f.write(VERSION_PY % (__buildid__, __version__, __builddate__, __toolname__))
     f.close()
     print("_version.py to '%s'" % __buildid__)
 
