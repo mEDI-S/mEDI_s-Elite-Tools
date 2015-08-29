@@ -6,6 +6,7 @@ import subprocess
 import elite
 from datetime import datetime
 
+
 __version__ = "0.1"
 __buildid__ = ""
 __builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -72,7 +73,6 @@ def update_version_py():
 
 
 update_version_py()
-
 imgPath = "img"
 includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
 
@@ -82,12 +82,16 @@ for f in os.listdir(imgPath):
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
+#from . import (constants, error, message, context,
+#                      socket, utils, _poll, _version, _device )
+
 buildOptions = dict(
 #                    packages = ["PySide"],
                     packages = [],
                     excludes = [],
 #                    includes = ["PySide"],
-                    includes = [],
+                    includes = ['zmq.backend.cython'],
+#                    includes = [],
                     optimize = 2,
                     compressed =  True,
                     replace_paths = "*=",
@@ -115,6 +119,9 @@ setup(name='mEDIs Elite Tools',
       options = dict(build_exe = buildOptions),
       executables = executables)
 
+# TODO: bad hoax https://github.com/pyinstaller/pyinstaller/issues/1404
+if os.path.isfile(os.path.join(buildpath,"zmq.libzmq.pyd")):
+    os.renames(os.path.join(buildpath,"zmq.libzmq.pyd"),os.path.join(buildpath,"libzmq.pyd"))
 
 ''' manipulate db clone '''
 clonedDBpath = os.path.join(buildpath, "db/my.db" )
