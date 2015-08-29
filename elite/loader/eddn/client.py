@@ -73,7 +73,7 @@ class _child(threading.Thread):
                     
                     __message   = zlib.decompress(__message)
                     
-                    self.data.put_nowait(__message)           
+                    self.data.put(__message)           
 
                     
             except zmq.ZMQError as e:
@@ -82,6 +82,14 @@ class _child(threading.Thread):
                 subscriber.disconnect(self.__relayEDDN)
                 time.sleep(5)
 
+            except Exception as e:
+                print(type(e))
+                print(e.args)
+                print(e)
+            except:
+                print("Unexpected error:"), sys.exc_info()
+
+        print("child exit", self._active)
     def stop(self):
         self._active = False        
 
@@ -113,7 +121,7 @@ class loader(object):
         self.mydb = mydb
 
 
-    def start(self):      
+    def start(self):
         if self.__childTask:
             self.__childTask.stop()
 
@@ -138,7 +146,7 @@ class loader(object):
                 data = self.data.get()
                 if data:
                     data = data.decode(encoding='utf-8',errors='replace')
-                    #print("import", data )
+                    print("import", data )
                     self.importData(data)
 
         if self.__childTask and self.isRunning() == False:

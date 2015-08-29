@@ -233,6 +233,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def closeApp( self ):
         self.saveOptions()
+        self.mydb.stopStreamUpdater()
         self.mydb.close()
         QtGui.qApp.quit()
 

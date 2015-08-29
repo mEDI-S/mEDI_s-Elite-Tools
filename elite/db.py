@@ -885,7 +885,6 @@ class db(object):
                     #print("set %s" % path)
                     
     def close(self):
-        self.stopStreamUpdater()
         self.con.close()
 
 if __name__ == '__main__':
