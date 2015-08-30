@@ -841,12 +841,32 @@ class db(object):
     def getAllSystems(self):
         cur = self.cursor()
         
-        cur.execute("""select * FROM Systems order by System """)
+        cur.execute("""select System, id FROM Systems order by System """)
 
         result = cur.fetchall()
 
         cur.close()
         return result
+
+    def getSystemsWithStationName(self, station):
+
+        stationLikeStr = "%%%s%%" % station
+    
+        cur = self.cursor()
+
+        cur.execute("""select System FROM Systems
+                left join stations on Systems.id=stations.SystemID
+
+                     where stations.Station LIKE ?
+                     group by  Systems.id
+                     order by System
+                     """, (stationLikeStr,))
+
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+
         
     def getSystemPaths(self):
         print("getSystemPaths")

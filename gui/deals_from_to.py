@@ -101,21 +101,13 @@ class Widget(QtGui.QWidget):
 
 
 
-        rawsystemlist = self.mydb.getAllSystems()
-        syslist = []
-        for system in rawsystemlist:
-            syslist.append(system["System"])
 
         fromsystemlabel = QtGui.QLabel("From System:")
-        completer = QtGui.QCompleter(syslist)
-        completer.setMaxVisibleItems(20)
-        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.fromSystem = LineEdit()
         configval = self.mydb.getConfig( 'option_dft_fromSystem' )
         if configval:
             self.fromSystem.setText( configval )
 
-        self.fromSystem.setCompleter(completer)
         self.fromSystem.textChanged.connect(self.triggerFromSystemChanged)
 
         fromstationlabel = QtGui.QLabel("Station:")
@@ -124,18 +116,15 @@ class Widget(QtGui.QWidget):
         configval = self.mydb.getConfig( 'option_dft_fromStation' )
         if configval:
             self.fromStation.setText( configval )
+        self.fromStation.textChanged.connect(self.triggerFromStationChanged)
 
 
         tosystemlabel = QtGui.QLabel("To System:")
-        completertosystem = QtGui.QCompleter(syslist)
-        completertosystem.setMaxVisibleItems(20)
-        completertosystem.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.toSystem = LineEdit()
         configval = self.mydb.getConfig( 'option_dft_toSystem' )
         if configval:
             self.toSystem.setText( configval )
 
-        self.toSystem.setCompleter(completertosystem)
         self.toSystem.textChanged.connect(self.triggerToSystemChanged)
 
 
@@ -144,6 +133,7 @@ class Widget(QtGui.QWidget):
         configval = self.mydb.getConfig( 'option_dft_toStation' )
         if configval:
             self.toStation.setText( configval )
+        self.toStation.textChanged.connect(self.triggerToStationChanged)
 
         self.showOptions = QtGui.QCheckBox("Show Options")
         self.showOptions.setChecked(True)
@@ -220,13 +210,14 @@ class Widget(QtGui.QWidget):
 
 
         vGroupBox.setLayout(layout)
+
         self.triggerFromSystemChanged()
+        self.triggerFromStationChanged()
         self.triggerToSystemChanged()
+        self.triggerToStationChanged()
+        
         return vGroupBox
 
-    def openCompleter(self, event):
-        print("openCompleter", type(event) )
-        
     def getIconFromsvg(self, svgfile):
         svg_renderer = QtSvg.QSvgRenderer(svgfile)
         image = QtGui.QImage(48, 48, QtGui.QImage.Format_ARGB32)
@@ -240,9 +231,37 @@ class Widget(QtGui.QWidget):
         system = self.fromSystem.text()
         self.setStationComplete(system, self.fromStation)
 
+    def triggerFromStationChanged(self):
+        system = self.fromSystem.text()
+        station = self.fromStation.text()
+
+        self.setSystemComplete(station, self.fromSystem)
+
+    def triggerToStationChanged(self):
+        system = self.toSystem.text()
+        station = self.toStation.text()
+
+        self.setSystemComplete(station, self.toSystem)
+
+
     def triggerToSystemChanged(self):
         system = self.toSystem.text()
         self.setStationComplete(system, self.toStation)
+
+    def setSystemComplete(self, station, editor):
+
+        rawSysList = self.mydb.getSystemsWithStationName(station)
+
+        mylist = []
+        for system in rawSysList:
+            mylist.append(system["System"])
+
+        completer = QtGui.QCompleter(mylist)
+        completer.ModelSorting(QtGui.QCompleter.CaseSensitivelySortedModel)
+        completer.setMaxVisibleItems(20)
+        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        editor.setCompleter(completer)
+
 
     def setStationComplete(self, system, editor):
         rawsystemlist = self.mydb.getStationsFromSystem(system)
