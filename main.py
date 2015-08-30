@@ -50,7 +50,6 @@ import gui
 from PySide import QtCore, QtGui
 
 
-
 class MainWindow(QtGui.QMainWindow):
 
     mydb = None
@@ -58,6 +57,7 @@ class MainWindow(QtGui.QMainWindow):
     location = None
     multiHopRouteWidget = []
     dealsFromToWidget = []
+    shipyardFinderWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -71,6 +71,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.mydb = elite.db(guiMode=True)
         self.mydb.startStreamUpdater()
+
         self.dbworker =  gui.dbworker.new(self)
 
         self.location = elite.location(self.mydb)
@@ -79,7 +80,11 @@ class MainWindow(QtGui.QMainWindow):
         self.createActions()
         self.createMenus()
         self.createTimer()
-        
+
+        self.addTool( gui.multihoproute, self.multiHopRouteWidget)
+        self.addTool( gui.deals_from_to, self.dealsFromToWidget)
+        self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
+
         self.setStatusBar("Welcomme to mEDI's Elite Tools")
 
         self.setMinimumSize(640,400)
@@ -98,41 +103,38 @@ class MainWindow(QtGui.QMainWindow):
         print("statusBar msg: %s" % msg)
         self.statusBar().showMessage(msg)
 
-    def multiHopRoute(self):
+    def addTool(self, tool, toolsList):
+    
+        def createDockWidget():
+        
+            myWidget = tool.tool(self)
+    
+            toolsList.append(myWidget)
+        
+            widget = myWidget.getWideget()
+    
+            pos = len(toolsList)
+            title = "%s %d" % (tool.__toolname__, pos)
+            self.addMyDockWidget( widget, title )    
+        
+    
+        ''' tool to tools menu '''    
+        myAct = QtGui.QAction(tool.__toolname__, self,
+                statusTip=tool.__statusTip__, triggered=createDockWidget)
+    
+        self.toolsMenu.addAction(myAct)
 
-        mhr_widget = gui.multihoproute.Widget(self)
-        self.multiHopRouteWidget.append(mhr_widget)
 
-        widget = mhr_widget.getWideget()
+    def addMyDockWidget(self, widget, title):
 
-        pos = len(self.multiHopRouteWidget)
-        dock = QtGui.QDockWidget("Multi Hop Route %d" % pos, self)
+        dock = QtGui.QDockWidget(title, self)
+
         dock.setAllowedAreas( QtCore.Qt.AllDockWidgetAreas)
         dock.DockWidgetFeature(QtGui.QDockWidget.AllDockWidgetFeatures )
-
         dock.setWidget(widget)
-
+    
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
-
-        self.viewMenu.addAction(dock.toggleViewAction())
-
-
-    def dealsFromToDockWidget(self):
-
-        mhr_widget = gui.deals_from_to.Widget(self)
-        self.dealsFromToWidget.append(mhr_widget)
-
-        widget = mhr_widget.getWideget()
-
-        pos = len(self.dealsFromToWidget)
-        dock = QtGui.QDockWidget("Deals From To %d" % pos, self)
-        dock.setAllowedAreas( QtCore.Qt.AllDockWidgetAreas)
-        dock.DockWidgetFeature(QtGui.QDockWidget.AllDockWidgetFeatures )
-
-        dock.setWidget(widget)
-
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
-
+    
         self.viewMenu.addAction(dock.toggleViewAction())
 
 
@@ -142,11 +144,8 @@ class MainWindow(QtGui.QMainWindow):
         self.exitAct = QtGui.QAction("E&xit", self, shortcut="Ctrl+Q",
                 statusTip="Exit", triggered=self.close)
 
-        self.multiHopRouteAct = QtGui.QAction("Multi Hop Route", self,
-                statusTip="Open A Multi Hop Route Window", triggered=self.multiHopRoute)
 
-        self.dealsFromToDockWidgetAct = QtGui.QAction("Deals From To", self,
-                statusTip="Open A Deals From to Window", triggered=self.dealsFromToDockWidget)
+
 
         self.aboutWebsideAct = QtGui.QAction("Webside", self,
                 statusTip="Open Webside",
@@ -175,8 +174,6 @@ class MainWindow(QtGui.QMainWindow):
         self.fileMenu.addAction(self.exitAct)
 
         self.toolsMenu = self.menuBar().addMenu("&Tools")
-        self.toolsMenu.addAction(self.multiHopRouteAct)
-        self.toolsMenu.addAction(self.dealsFromToDockWidgetAct)
 
         self.toolsMenu.addSeparator()
 

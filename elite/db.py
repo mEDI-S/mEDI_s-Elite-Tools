@@ -867,6 +867,37 @@ class db(object):
         cur.close()
         return result
 
+    def getAllShipnames(self):
+        cur = self.cursor()
+        
+        cur.execute("""select id, Name FROM ships order by Name """)
+
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+    def getShipyardWithShip(self,shipID,systemID=None):
+
+        cur = self.cursor()
+
+        if systemID:
+            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            systemA = cur.fetchone()
+        else:
+            systemA = {"posX":0.0, "posY":0.0, "posZ":0.0}
+
+
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist FROM shipyard
+                    left JOIN systems on systems.id = shipyard.SystemID
+                    left JOIN stations on stations.id = shipyard.StationID
+               /*     left JOIN ships on ships.id = shipyard.ShipID */
+                where 
+                ShipID=? 
+                """ , (systemA["posX"],systemA["posY"],systemA["posZ"],shipID,))
+        result = cur.fetchall()
+
+        cur.close()
+        return result
         
     def getSystemPaths(self):
         print("getSystemPaths")

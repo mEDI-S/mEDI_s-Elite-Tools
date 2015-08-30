@@ -13,14 +13,16 @@ from datetime import datetime, timedelta
 
 import gui.guitools as guitools
 
+__toolname__ = "Deals From To Finder"
+__statusTip__ = "Open A %s Window" % __toolname__
 
-class Widget(QtGui.QWidget):
+class tool(QtGui.QWidget):
     main = None
     mydb = elite.db
     route = None
 
     def __init__(self, main):
-        super(Widget, self).__init__(main)
+        super(tool, self).__init__(main)
 
         self.main = main
         self.mydb = main.mydb
@@ -407,3 +409,6 @@ class Widget(QtGui.QWidget):
 
         for i in range(0, len(self.headerList) ):
             self.dealsview.resizeColumnToContents(i)
+
+
+

@@ -12,6 +12,8 @@ import timeit
 import gui.guitools as guitools
 
 
+__toolname__ = "Multi Hop Route Finder"
+__statusTip__ = "Open A %s Window" % __toolname__
 
 
 class RouteTreeInfoItem(object):
@@ -281,14 +283,14 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 
 
-class Widget(QtGui.QWidget):
+class tool(QtGui.QWidget):
     main = None
     mydb = None
     route = None
     activeRoutePointer = None
 
     def __init__(self, main):
-        super(Widget, self).__init__(main)
+        super(tool, self).__init__(main)
 
         self.main = main
         self.mydb = main.mydb
@@ -436,10 +438,9 @@ class Widget(QtGui.QWidget):
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.routeview)
 
-        self.guitools.setSystemComplete("", self.locationlineEdit)
-
-
         vGroupBox.setLayout(layout)
+
+        self.guitools.setSystemComplete("", self.locationlineEdit)
 
         return vGroupBox
 
