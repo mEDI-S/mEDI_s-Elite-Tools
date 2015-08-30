@@ -5,20 +5,13 @@ Created on 27.08.2015
 
 @author: mEDI
 '''
-from PySide import QtCore, QtGui,QtSvg
+from PySide import QtCore, QtGui
 import PySide
 import elite
 import timeit
 from datetime import datetime, timedelta
 
-
-class LineEdit(QtGui.QLineEdit):
-    def __init__(self, parent=None):
-        QtGui.QLineEdit.__init__(self, parent)
-
-    def focusInEvent(self, event):
-        QtGui.QLineEdit.focusInEvent(self, event)
-        self.completer().complete()
+import gui.guitools as guitools
 
 
 class Widget(QtGui.QWidget):
@@ -31,6 +24,7 @@ class Widget(QtGui.QWidget):
 
         self.main = main
         self.mydb = main.mydb
+        self.guitools = guitools.guitools(self)
         self.createActions()
         self.createTimer()
 
@@ -103,7 +97,7 @@ class Widget(QtGui.QWidget):
 
 
         fromsystemlabel = QtGui.QLabel("From System:")
-        self.fromSystem = LineEdit()
+        self.fromSystem = guitools.LineEdit()
         configval = self.mydb.getConfig( 'option_dft_fromSystem' )
         if configval:
             self.fromSystem.setText( configval )
@@ -111,7 +105,7 @@ class Widget(QtGui.QWidget):
         self.fromSystem.textChanged.connect(self.triggerFromSystemChanged)
 
         fromstationlabel = QtGui.QLabel("Station:")
-        self.fromStation = LineEdit()
+        self.fromStation = guitools.LineEdit()
 
         configval = self.mydb.getConfig( 'option_dft_fromStation' )
         if configval:
@@ -120,7 +114,7 @@ class Widget(QtGui.QWidget):
 
 
         tosystemlabel = QtGui.QLabel("To System:")
-        self.toSystem = LineEdit()
+        self.toSystem = guitools.LineEdit()
         configval = self.mydb.getConfig( 'option_dft_toSystem' )
         if configval:
             self.toSystem.setText( configval )
@@ -129,7 +123,7 @@ class Widget(QtGui.QWidget):
 
 
         tostationlabel = QtGui.QLabel("Station:")
-        self.toStation = LineEdit()
+        self.toStation = guitools.LineEdit()
         configval = self.mydb.getConfig( 'option_dft_toStation' )
         if configval:
             self.toStation.setText( configval )
@@ -143,12 +137,12 @@ class Widget(QtGui.QWidget):
         self.searchbutton.clicked.connect(self.searchDeals)
 
         self.locationButton = QtGui.QToolButton()
-        self.locationButton.setIcon(self.getIconFromsvg("img/location.svg"))
+        self.locationButton.setIcon(self.guitools.getIconFromsvg("img/location.svg"))
         self.locationButton.clicked.connect(self.setCurentLocation)
         self.locationButton.setToolTip("Current Location")
 
         self.switchButton = QtGui.QToolButton()
-        self.switchButton.setIcon(self.getIconFromsvg("img/switchTopBottom.svg"))
+        self.switchButton.setIcon(self.guitools.getIconFromsvg("img/switchTopBottom.svg"))
         self.switchButton.clicked.connect(self.switchLocations)
         self.switchButton.setToolTip("Switch Location")
 
@@ -218,64 +212,28 @@ class Widget(QtGui.QWidget):
         
         return vGroupBox
 
-    def getIconFromsvg(self, svgfile):
-        svg_renderer = QtSvg.QSvgRenderer(svgfile)
-        image = QtGui.QImage(48, 48, QtGui.QImage.Format_ARGB32)
-        image.fill(0x00000000)
-        svg_renderer.render(QtGui.QPainter(image))
-        pixmap = QtGui.QPixmap.fromImage(image)
-        icon = QtGui.QIcon(pixmap)
-        return icon
 
     def triggerFromSystemChanged(self):
         system = self.fromSystem.text()
-        self.setStationComplete(system, self.fromStation)
+        self.guitools.setStationComplete(system, self.fromStation)
 
     def triggerFromStationChanged(self):
         system = self.fromSystem.text()
         station = self.fromStation.text()
 
-        self.setSystemComplete(station, self.fromSystem)
+        self.guitools.setSystemComplete(station, self.fromSystem)
 
     def triggerToStationChanged(self):
         system = self.toSystem.text()
         station = self.toStation.text()
 
-        self.setSystemComplete(station, self.toSystem)
+        self.guitools.setSystemComplete(station, self.toSystem)
 
 
     def triggerToSystemChanged(self):
         system = self.toSystem.text()
-        self.setStationComplete(system, self.toStation)
+        self.guitools.setStationComplete(system, self.toStation)
 
-    def setSystemComplete(self, station, editor):
-
-        rawSysList = self.mydb.getSystemsWithStationName(station)
-
-        mylist = []
-        for system in rawSysList:
-            mylist.append(system["System"])
-
-        completer = QtGui.QCompleter(mylist)
-        completer.ModelSorting(QtGui.QCompleter.CaseSensitivelySortedModel)
-        completer.setMaxVisibleItems(20)
-        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        editor.setCompleter(completer)
-
-
-    def setStationComplete(self, system, editor):
-        rawsystemlist = self.mydb.getStationsFromSystem(system)
-
-        mylist = []
-        for system in rawsystemlist:
-            mylist.append(system[1])
-
-        completer = QtGui.QCompleter(mylist)
-        completer.ModelSorting(QtGui.QCompleter.CaseSensitivelySortedModel)
-        completer.setMaxVisibleItems(20)
-        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
-        editor.setCompleter(completer)
 
     def dealslistContextMenuEvent(self, event):
 
