@@ -12,6 +12,15 @@ import timeit
 from datetime import datetime, timedelta
 
 
+class LineEdit(QtGui.QLineEdit):
+    def __init__(self, parent=None):
+        QtGui.QLineEdit.__init__(self, parent)
+
+    def focusInEvent(self, event):
+        QtGui.QLineEdit.focusInEvent(self, event)
+        self.completer().complete()
+
+
 class Widget(QtGui.QWidget):
     main = None
     mydb = elite.db
@@ -101,7 +110,7 @@ class Widget(QtGui.QWidget):
         completer = QtGui.QCompleter(syslist)
         completer.setMaxVisibleItems(20)
         completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self.fromSystem = QtGui.QLineEdit()
+        self.fromSystem = LineEdit()
         configval = self.mydb.getConfig( 'option_dft_fromSystem' )
         if configval:
             self.fromSystem.setText( configval )
@@ -110,7 +119,8 @@ class Widget(QtGui.QWidget):
         self.fromSystem.textChanged.connect(self.triggerFromSystemChanged)
 
         fromstationlabel = QtGui.QLabel("Station:")
-        self.fromStation = QtGui.QLineEdit()
+        self.fromStation = LineEdit()
+
         configval = self.mydb.getConfig( 'option_dft_fromStation' )
         if configval:
             self.fromStation.setText( configval )
@@ -120,7 +130,7 @@ class Widget(QtGui.QWidget):
         completertosystem = QtGui.QCompleter(syslist)
         completertosystem.setMaxVisibleItems(20)
         completertosystem.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self.toSystem = QtGui.QLineEdit()
+        self.toSystem = LineEdit()
         configval = self.mydb.getConfig( 'option_dft_toSystem' )
         if configval:
             self.toSystem.setText( configval )
@@ -130,7 +140,7 @@ class Widget(QtGui.QWidget):
 
 
         tostationlabel = QtGui.QLabel("Station:")
-        self.toStation = QtGui.QLineEdit()
+        self.toStation = LineEdit()
         configval = self.mydb.getConfig( 'option_dft_toStation' )
         if configval:
             self.toStation.setText( configval )
@@ -214,6 +224,9 @@ class Widget(QtGui.QWidget):
         self.triggerToSystemChanged()
         return vGroupBox
 
+    def openCompleter(self, event):
+        print("openCompleter", type(event) )
+        
     def getIconFromsvg(self, svgfile):
         svg_renderer = QtSvg.QSvgRenderer(svgfile)
         image = QtGui.QImage(48, 48, QtGui.QImage.Format_ARGB32)
@@ -304,7 +317,7 @@ class Widget(QtGui.QWidget):
         indexes = self.dealsview.selectionModel().selectedIndexes()
  
         id = indexes[self.headerList.index("PriceID")].data()
-        print(id)
+
         if id:
             msg = "Warning: fake items are ignored everywhere and no longer displayed\n"
             msg += "\nSet\n   From Station: %s\n   Item: %s\nas Facke" % (indexes[self.headerList.index("From")].data(), indexes[self.headerList.index("Item")].data() )
