@@ -67,7 +67,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
         self.setWindowTitle("mEDI's Elite Tools")
-        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
+        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks | QtGui.QMainWindow.AllowTabbedDocks)
 
         self.mydb = elite.db(guiMode=True)
         self.mydb.startStreamUpdater()
