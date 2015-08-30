@@ -873,16 +873,36 @@ class db(object):
 
         if sys.platform=='win32':
             from PySide import QtCore
-            ''' Elite Dangerous (steam install) log path '''
+            InstallLocation = None
+            ''' Elite Dangerous (steam install) path '''
             #HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320\InstallLocation
             settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320",QtCore.QSettings.NativeFormat)
-            InstallLocation = settings.value("InstallLocation")
-            logPath = os.path.join(InstallLocation ,'Products\FORC-FDEV-D-1010\Logs')
-            if os.path.isdir(logPath):
-                self.setConfig('EliteLogDir', logPath)
-                #print("set %s" % logPath)
-                
-            
+            if settings:
+                InstallLocation = settings.value("InstallLocation")
+
+
+            ''' Elite Dangerous (default install) path '''
+            #https://support.frontier.co.uk/kb/faq.php?id=108
+            if not InstallLocation:
+                path = r'C:\Program Files (x86)\Frontier'
+                if os.path.isdir(path):
+                    InstallLocation = path
+
+
+            if InstallLocation:
+                productsList = ['FORC-FDEV-D-1010','FORC-FDEV-D-1008','FORC-FDEV-D-1003','FORC-FDEV-D-1002','FORC-FDEV-D-1001','FORC-FDEV-D-1000']
+
+                for path in productsList:
+                    mypath = os.path.join(InstallLocation,'Products', path, 'Logs')
+                    if os.path.isdir( mypath ):
+                        logPath = mypath
+                        break
+    
+                if os.path.isdir(logPath):
+                    self.setConfig('EliteLogDir', logPath)
+                    #print("set %s" % logPath)
+
+
             ''' EDMarketConnector settings import '''
             #HKEY_CURRENT_USER\Software\Marginal\EDMarketConnector\outdir
             settings = QtCore.QSettings("Marginal", "EDMarketConnector")
