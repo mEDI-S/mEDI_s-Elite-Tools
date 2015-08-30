@@ -9,6 +9,8 @@ from PySide import QtCore, QtGui
 import elite
 import timeit
 
+import gui.guitools as guitools
+
 
 
 
@@ -293,6 +295,7 @@ class Widget(QtGui.QWidget):
         self.createActions()
         self.initRoute()
         self.createTimer()
+        self.guitools = guitools.guitools(self)
 
     def getWideget(self):
 
@@ -392,9 +395,10 @@ class Widget(QtGui.QWidget):
 
 
         locationLabel = QtGui.QLabel("Location:")
-        self.locationlineEdit = QtGui.QLineEdit()
+        self.locationlineEdit = guitools.LineEdit()
         self.locationlineEdit.setText( self.main.location.getLocation() )
         self.locationlineEdit.textChanged.connect(self.triggerLocationChanged)
+
 
         locationGroupBox = QtGui.QGroupBox()
         locationGroupBox.setFlat(True)
@@ -432,6 +436,7 @@ class Widget(QtGui.QWidget):
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.routeview)
 
+        self.guitools.setSystemComplete("", self.locationlineEdit)
 
 
         vGroupBox.setLayout(layout)
@@ -575,6 +580,8 @@ class Widget(QtGui.QWidget):
         print("triggerLocationChanged")
         location = self.locationlineEdit.text()
         routeModel = self.routeview.model()
+
+        if not routeModel: return
 
         if location and routeModel:
             for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
