@@ -218,23 +218,27 @@ class tool(QtGui.QWidget):
     def triggerFromSystemChanged(self):
         system = self.fromSystem.text()
         self.guitools.setStationComplete(system, self.fromStation)
+        self.searchDeals()
 
     def triggerFromStationChanged(self):
         system = self.fromSystem.text()
         station = self.fromStation.text()
 
         self.guitools.setSystemComplete(station, self.fromSystem)
+        self.searchDeals()
 
     def triggerToStationChanged(self):
         system = self.toSystem.text()
         station = self.toStation.text()
 
         self.guitools.setSystemComplete(station, self.toSystem)
+        self.searchDeals()
 
 
     def triggerToSystemChanged(self):
         system = self.toSystem.text()
         self.guitools.setStationComplete(system, self.toStation)
+        self.searchDeals()
 
 
     def dealslistContextMenuEvent(self, event):
@@ -347,13 +351,12 @@ class tool(QtGui.QWidget):
         if not self.dealsview.header().count():
             firstrun = True
 
-        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit"]
+        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit","FromAge","ToAge"]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x,column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
 
-        self.main.lockDB()
 
         fromSystem = self.fromSystem.text()
         fromSystemID = self.mydb.getSystemIDbyName(fromSystem)
@@ -369,6 +372,11 @@ class tool(QtGui.QWidget):
             
         maxAgeDate = datetime.utcnow() - timedelta(days = self.maxAgeSpinBox.value() )
         minStock = self.minStockSpinBox.value()
+        
+        if not fromSystemID or not fromStationID or not toSystemID or not toStationID:
+            return
+
+#        self.main.lockDB()
     
         if fromStationID and toStationID:
             deals = self.mydb.getDealsFromTo( fromStationID,  toStationID, maxAgeDate , minStock )
@@ -390,6 +398,8 @@ class tool(QtGui.QWidget):
                 model.setData(model.index(0, self.headerList.index("Sell") ), deal["StationBuy"])
                 model.setData(model.index(0, self.headerList.index("Profit") ), deal["Profit"])
                 model.setData(model.index(0, self.headerList.index("Stock") ), deal["Stock"])
+                model.setData(model.index(0, self.headerList.index("FromAge") ), guitools.convertDateimeToAgeStr(deal["fromAge"]) )
+                model.setData(model.index(0, self.headerList.index("ToAge") ), guitools.convertDateimeToAgeStr(deal["toAge"]) )
 
         self.dealsview.setModel(model)
 
@@ -405,7 +415,7 @@ class tool(QtGui.QWidget):
 
             self.dealsview.hideColumn(self.headerList.index("PriceID"))
 
-        self.main.unlockDB()
+ #       self.main.unlockDB()
 
         for i in range(0, len(self.headerList) ):
             self.dealsview.resizeColumnToContents(i)
