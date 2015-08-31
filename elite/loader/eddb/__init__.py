@@ -16,10 +16,7 @@ def updateAll(mydb):
         ''' omly update max all 6h or next dey >5 plus random anti ddos  
             "not all clients start update at same time
             hope it work ;)" '''
-
-        if lastImport.day == datetime.now().day and lastImport.hour < 5 and (random.randint(1, 10) == 1 or datetime.now().hour > 6):
-            pass
-        elif lastImport < datetime.now() - timedelta(hours=12):
+        if lastImport < datetime.utcnow().replace(hour=3,minute=10)  and (datetime.utcnow().hour > 5 or random.randint(1, 10) == 1  ):
             pass
         else:
             return
@@ -38,4 +35,4 @@ def updateAll(mydb):
     eddb_stations.update()
     del eddb_stations
 
-    mydb.setConfig( 'lastEDDBimport', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
+    mydb.setConfig( 'lastEDDBimport', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") )
