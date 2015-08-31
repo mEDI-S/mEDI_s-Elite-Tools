@@ -1,3 +1,13 @@
+# -*- coding: UTF8
+
+'''
+usage:
+c:\Python34_32\python.exe setup.py build
+
+http://cx-freeze.readthedocs.org/en/latest/distutils.html
+'''
+
+
 from cx_Freeze import setup, Executable
 import os
 import sys
@@ -13,12 +23,6 @@ __builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 __ZIPFILE__ = "mediselitetools.7z"
 __toolname__ = "mEDI s Elite Tools"
 
-'''
-usage:
-c:\Python34_32\python.exe setup.py build
-
-http://cx-freeze.readthedocs.org/en/latest/distutils.html
-'''
 
 VERSION_PY = """# This file is originally generated from Git information by running 'setup.py
 __buildid__ = '%s'
@@ -80,10 +84,6 @@ includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
 for f in os.listdir(imgPath):
     includeFilesList.append( [os.path.join(imgPath,f), os.path.join(imgPath,f) ] )
 
-# Dependencies are automatically detected, but it might need
-# fine tuning.
-#from . import (constants, error, message, context,
-#                      socket, utils, _poll, _version, _device )
 
 buildOptions = dict(
 #                    packages = ["PySide"],
@@ -130,7 +130,7 @@ if os.path.isfile(clonedDBpath):
     db = elite.db(guiMode=True, DBPATH=clonedDBpath)
 
     db.setConfig('initRun', 1)
-
+    db.optimizeDatabase()
     db.close()
 
 
