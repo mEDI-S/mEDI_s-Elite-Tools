@@ -14,7 +14,7 @@ import sys
 import shutil
 import subprocess
 import elite
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 __version__ = "0.1"
@@ -130,7 +130,13 @@ if os.path.isfile(clonedDBpath):
     db = elite.db(guiMode=True, DBPATH=clonedDBpath)
 
     db.setConfig('initRun', 1)
-    db.optimizeDatabase()
+    
+    lastOptimize = db.getConfig( 'lastOptimizeDatabase' )
+    if lastOptimize:
+        lastOptimize = datetime.strptime(lastOptimize , "%Y-%m-%d %H:%M:%S")
+        if lastOptimize + timedelta(days=1) < datetime.now():
+            db.optimizeDatabase()
+
     db.close()
 
 
