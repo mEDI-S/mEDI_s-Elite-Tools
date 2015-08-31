@@ -152,7 +152,6 @@ class db(object):
 
         if optimize:
             self.optimizeDatabase()
-            self.setConfig( 'lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
             
     def initDB(self):
         print("create/update db")
@@ -254,9 +253,9 @@ class db(object):
         for table in result:
             print("analyze %s" % table["name"])
             cur.execute( "analyze '%s'" %  table["name"] )
-
         self.con.commit()
         cur.close()
+        self.setConfig( 'lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
         
     def cursor( self ):
         cur = self.con.cursor()
