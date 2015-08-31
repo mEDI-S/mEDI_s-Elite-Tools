@@ -109,7 +109,11 @@ class tool(QtGui.QWidget):
 
     def searchShip(self):
 
-        self.headerList = ["System","Station","Distance"]
+        firstrun = False
+        if not self.shipsview.header().count():
+            firstrun = True
+
+        self.headerList = ["System", "Station", "Distance", "Age"]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x,column in enumerate(self.headerList):
@@ -129,10 +133,12 @@ class tool(QtGui.QWidget):
             model.setData(model.index(0, self.headerList.index("System") ), shipyard["System"])
             model.setData(model.index(0, self.headerList.index("Station") ), shipyard["Station"])
             model.setData(model.index(0, self.headerList.index("Distance") ), shipyard["dist"])
+            model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(shipyard["age"]) )
 
         self.shipsview.setModel(model)
 
-        self.shipsview.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
+        if firstrun:
+            self.shipsview.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
 
         for i in range(0, len(self.headerList) ):
             self.shipsview.resizeColumnToContents(i)

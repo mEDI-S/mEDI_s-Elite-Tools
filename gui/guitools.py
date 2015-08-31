@@ -4,6 +4,7 @@ Created on 30.08.2015
 @author: mEDI
 '''
 from PySide import QtCore, QtGui,QtSvg
+from datetime import datetime, timedelta
 
 
 class guitools(object):
@@ -59,3 +60,13 @@ class LineEdit(QtGui.QLineEdit):
         QtGui.QLineEdit.focusInEvent(self, event)
         self.completer().complete()
 
+
+def convertDateimeToAgeStr(dt=datetime.utcnow() ):
+    age = datetime.utcnow() - dt
+
+    if age.days >= 1:
+        return "%dd" % age.days
+    elif age.seconds/60/60 >= 1:
+        return "%dh" % (age.seconds/60/60)
+    else:
+        return "%dm" % (age.seconds/60)

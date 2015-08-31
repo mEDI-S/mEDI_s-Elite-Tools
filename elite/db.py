@@ -533,7 +533,8 @@ class db(object):
                             priceA.id AS priceAid, priceB.id AS priceBid, priceA.Stock AS Stock,
                              items.name AS itemName,
                              stationA.Station AS fromStation,
-                             stationB.Station AS toStation
+                             stationB.Station AS toStation,
+                             priceA.modified AS fromAge, priceB.modified AS toAge
                              
                     FROM price AS priceA
 
@@ -887,7 +888,9 @@ class db(object):
             systemA = {"posX":0.0, "posY":0.0, "posZ":0.0}
 
 
-        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist FROM shipyard
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
+                    ,shipyard.modifydate as age
+                     FROM shipyard
                     left JOIN systems on systems.id = shipyard.SystemID
                     left JOIN stations on stations.id = shipyard.StationID
                /*     left JOIN ships on ships.id = shipyard.ShipID */
