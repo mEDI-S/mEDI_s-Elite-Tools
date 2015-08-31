@@ -51,6 +51,18 @@ class route(object):
         if option in self.options:
             return self.options[option]
 
+    def getStationA(self,routeId,hopID):
+        if hopID == 0:
+            return self.deals[routeId]["path"][hopID]["StationA"]
+
+        return self.deals[routeId]["path"][hopID-1]["StationB"]
+
+    def getSystemA(self,routeId,hopID):
+        if hopID == 0:
+            return self.deals[routeId]["path"][hopID]["SystemA"]
+
+        return self.deals[routeId]["path"][hopID-1]["SystemB"]
+            
     def limitCalc(self, accuracy=0):
         ''' ["normal","fast","nice","slow","all"] '''
         maxResults = 100000 # normal

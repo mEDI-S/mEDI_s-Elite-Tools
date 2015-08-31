@@ -120,6 +120,16 @@ class RouteTreeItem(object):
     def childCount(self):
         return len(self.childItems)
 
+    def childPos(self, child):
+        if isinstance( child, RouteTreeHopItem):
+            return self.childItems.index(child )
+        elif isinstance( child, list) and isinstance( child[0], QtCore.QModelIndex):
+            return self.childItems.index(child[0].internalPointer())
+            #print("target", type(child[0]))
+
+    def getListIndex(self):
+        return self.itemData[0]-1
+
     def columnCount(self):
         return len(self.itemData)
 
@@ -451,6 +461,8 @@ class tool(QtGui.QWidget):
         indexes = self.routeview.selectionModel().selectedIndexes()
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
             menu.addAction(self.markFakeItemAct)
+            if self.main.dealsFromToWidget:
+                menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
         elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
         else:
@@ -607,6 +619,9 @@ class tool(QtGui.QWidget):
         self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self,
                 statusTip="Start a helper job to set automatly the next routehop to clipboard", triggered=self.clipbordRouteHelper)
 
+        self.addRouteHopAsTargetSystemInDealsFromToFinderAct = QtGui.QAction("Set System as To in (Deals From To Finder 1)", self,
+                statusTip="Set System as To in Deals Finder", triggered=self.addRouteHopAsTargetSystemInDealsFromToFinder)
+
 
     def clipbordRouteHelper(self):
         indexes = self.routeview.selectionModel().selectedIndexes()
@@ -695,4 +710,20 @@ class tool(QtGui.QWidget):
                     self.mydb.setFakePrice(id)
                     self.main.unlockDB()
                 
+    def addRouteHopAsTargetSystemInDealsFromToFinder(self):
 
+        indexes = self.routeview.selectionModel().selectedIndexes()
+        
+        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
+
+            routeId = indexes[0].internalPointer().parent().getListIndex()
+            hopID =  indexes[0].internalPointer().parent().childPos( indexes )
+
+            toStation = self.route.getStationA(routeId,hopID)
+            toSystem = self.route.getSystemA(routeId,hopID)
+            #TODO: set it only in first Deals window current
+            if toSystem and toStation:
+                self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
+                self.main.dealsFromToWidget[0].toStation.setText(toStation)
+
+            
