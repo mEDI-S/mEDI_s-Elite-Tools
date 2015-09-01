@@ -42,7 +42,7 @@ try:
     if __file__:
         pass
 except:
-    #sys.stdout = StreamToLogger( logging.getLogger('STDOUT'), logging.INFO)
+    sys.stdout = StreamToLogger( logging.getLogger('STDOUT'), logging.INFO)
     sys.stderr = StreamToLogger( logging.getLogger('STDERR'), logging.ERROR)
 
 import elite
