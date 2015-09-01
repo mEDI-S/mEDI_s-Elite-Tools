@@ -34,7 +34,7 @@ class tool(QtGui.QWidget):
 
         gridLayout = QtGui.QGridLayout()
 
-        self.autoUpdateLocation = QtGui.QCheckBox("Location Update")
+        self.autoUpdateLocation = QtGui.QCheckBox("Auto Switch/Location")
         self.autoUpdateLocation.setChecked(False)
         self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
         gridLayout.addWidget(self.autoUpdateLocation, 1, 0)

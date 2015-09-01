@@ -128,7 +128,8 @@ class RouteTreeItem(object):
             #print("target", type(child[0]))
 
     def getListIndex(self):
-        return self.itemData[0]-1
+        if isinstance( self.itemData[0], int):
+            return self.itemData[0]-1
 
     def columnCount(self):
         return len(self.itemData)
@@ -298,6 +299,7 @@ class tool(QtGui.QWidget):
     mydb = None
     route = None
     activeRoutePointer = None
+    connectedDealsFromToWindows = None
 
     def __init__(self, main):
         super(tool, self).__init__(main)
@@ -462,12 +464,20 @@ class tool(QtGui.QWidget):
         indexes = self.routeview.selectionModel().selectedIndexes()
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
             menu.addAction(self.markFakeItemAct)
+
             if self.main.dealsFromToWidget:
                 menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
 
         elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
+            if self.main.dealsFromToWidget:
+                self.connectToDealsFromToWindowsAct.setChecked(False)
+                menu.addAction(self.connectToDealsFromToWindowsAct)
+                if self.connectedDealsFromToWindows:
+                    self.connectToDealsFromToWindowsAct.setChecked(True)
+                    menu.addAction(self.disconnectFromDealsFromToWindowAct)
+
         else:
             print(type(indexes[0].internalPointer()))
 
@@ -528,7 +538,7 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_mhr_showOptions', self.showOptions.isChecked() )
 
     def startRouteSearch(self):
-
+        self.activeRoutePointer = None
         self.main.lockDB()
 
         starttime = timeit.default_timer()
@@ -592,11 +602,13 @@ class tool(QtGui.QWidget):
             print("stop update location timer")
             self.autoUpdateLocationTimer.stop()
 
+        
     def triggerLocationChanged(self):
+        print("triggerLocationChanged")
         self.setLocationColors()
+        self.updateConnectedDealsFromToWindow()
 
     def setLocationColors(self):
-        print("triggerLocationChanged")
         location = self.locationlineEdit.text()
         routeModel = self.routeview.model()
 
@@ -622,7 +634,7 @@ class tool(QtGui.QWidget):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
                 statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
 
-        self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self,
+        self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self, checkable=True,
                 statusTip="Start a helper job to set automatly the next routehop to clipboard", triggered=self.clipbordRouteHelper)
 
         self.addRouteHopAsTargetSystemInDealsFromToFinderAct = QtGui.QAction("Set as To in (Deals From To Finder 1)", self,
@@ -631,9 +643,14 @@ class tool(QtGui.QWidget):
         self.addRouteHopAsFromSystemInDealsFromToFinderAct = QtGui.QAction("Set as From in (Deals From To Finder 1)", self,
                 statusTip="Set System/Station as From in Deals Finder", triggered=self.addRouteHopAsFromSystemInDealsFromToFinder)
 
+        self.connectToDealsFromToWindowsAct = QtGui.QAction("Connect Route to (Deals From To Finder 1)", self, checkable=True,
+                statusTip="Update (Deals From To Finder 1) with current Route position", triggered=self.connectToDealsFromToWindows)
+
+        self.disconnectFromDealsFromToWindowAct = QtGui.QAction("Disconnect (Deals From To Finder 1)", self,
+                statusTip="Disconnect From (Deals From To Finder 1) window", triggered=self.disconnectFromDealsFromToWindow)
 
 
-    def clipbordRouteHelper(self):
+    def setActiveRoutePointer(self):
         indexes = self.routeview.selectionModel().selectedIndexes()
  
         if isinstance( indexes[0].internalPointer(), RouteTreeItem):
@@ -641,13 +658,15 @@ class tool(QtGui.QWidget):
                 self.activeRoutePointer.activeRoute = None
             self.activeRoutePointer = indexes[0].internalPointer()
             self.activeRoutePointer.activeRoute = True
-#            print("bla?", type(self.activeRoutePointer), type(indexes[0] ))
+
+    def clipbordRouteHelper(self):
+        self.setActiveRoutePointer()
 
         self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
         self.timer_setNextRouteHopToClipbord.start(1000*60)
         self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
 
-
+        self.clipbordRouteHelperAct.setChecked(True)
         self.triggerLocationChanged()
         self.setNextRouteHopToClipbord(init=True)
         
@@ -665,29 +684,18 @@ class tool(QtGui.QWidget):
             #stop timer and job do other tool use the clipbord
             print("setNextRouteHopToClipbord stop job")
             self.timer_setNextRouteHopToClipbord.stop()
+            self.clipbordRouteHelperAct.setChecked(False)
             return
 
-        for cid in range( 0, self.activeRoutePointer.childCount() ):
-            child = self.activeRoutePointer.child(cid)
-            if isinstance( child, RouteTreeHopItem):
-#                    print(cid, type(child))
-#                    print(child.dbresult)
-#                print(child.dbresult["SystemB"])
+        child = self.getCurrentHopFromActiveRoute()
+        if child:
+            system = child.dbresult["SystemB"]
 
-                if child.dbresult["SystemB"] == location:
-                    if self.activeRoutePointer.childCount() > cid+1:
-                        child = self.activeRoutePointer.child(cid+1)
-                    else: #start system is next hop
-                        child = self.activeRoutePointer.child( 0 )
+            if system != clipbordText:
+                self.main.clipboard.setText( system )
+                self.lastClipboardEntry = system
+                print("setNextRouteHopToClipbord set clipboard to", system)
 
-                    system = child.dbresult["SystemB"]
-
-                    if system != clipbordText:
-                        self.main.clipboard.setText( system )
-                        self.lastClipboardEntry = system
-                        print("setNextRouteHopToClipbord set clipboard to", system)
-
-                    break
         if not self.lastClipboardEntry:
             # not in route? set the first hop to clipboard
             child = self.activeRoutePointer.child( 0 )
@@ -756,3 +764,64 @@ class tool(QtGui.QWidget):
             self.main.dealsFromToWidget[0].fromSystem.setText(system)
             self.main.dealsFromToWidget[0].fromStation.setText(station)
 
+    def connectToDealsFromToWindows(self):
+        if self.main.dealsFromToWidget:
+            self.setActiveRoutePointer()
+            self.triggerLocationChanged()
+
+            self.connectedDealsFromToWindows = self.main.dealsFromToWidget[0]
+            self.connectedDealsFromToWindows.autoUpdateLocation.setChecked(False)
+
+            self.updateConnectedDealsFromToWindow(init=True)
+
+    def disconnectFromDealsFromToWindow(self):
+        self.connectedDealsFromToWindows = None
+
+    def getCurrentHopFromActiveRoute(self):
+        location = self.main.location.getLocation()
+
+        for cid in range( 0, self.activeRoutePointer.childCount() ):
+            child = self.activeRoutePointer.child(cid)
+            if isinstance( child, RouteTreeHopItem):
+
+                if child.dbresult["SystemB"] == location:
+                    if self.activeRoutePointer.childCount() > cid+1:
+                        child = self.activeRoutePointer.child(cid+1)
+                    else: #start system is next hop
+                        child = self.activeRoutePointer.child( 0 )
+                    return child
+
+    def updateConnectedDealsFromToWindow(self, init=None):
+        if not self.connectedDealsFromToWindows or  not self.activeRoutePointer:
+            return
+
+        routeId = self.activeRoutePointer.getListIndex()
+        
+        currentHop = self.getCurrentHopFromActiveRoute()
+        if currentHop == None and init:
+            ''' is init and im not inside the route set only the To part from first hop '''
+            systemA = self.route.getSystemA(routeId, 0)
+            stationA = self.route.getStationA(routeId, 0)
+
+            self.connectedDealsFromToWindows.toSystem.setText(systemA)
+            self.connectedDealsFromToWindows.toStation.setText(stationA)
+            return
+
+        hopID =  self.activeRoutePointer.childPos( currentHop )
+
+        if routeId == None or hopID == None:
+            return
+
+        systemA = self.route.getSystemA(routeId, hopID)
+        stationA = self.route.getStationA(routeId, hopID)
+
+        systemB = self.route.getSystemB(routeId, hopID)
+        stationB = self.route.getStationB(routeId, hopID)
+
+        self.connectedDealsFromToWindows.fromSystem.setText(systemA)
+        self.connectedDealsFromToWindows.fromStation.setText(stationA)
+
+        self.connectedDealsFromToWindows.toSystem.setText(systemB)
+        self.connectedDealsFromToWindows.toStation.setText(stationB)
+
+        

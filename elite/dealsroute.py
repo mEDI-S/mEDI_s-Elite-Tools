@@ -57,11 +57,17 @@ class route(object):
 
         return self.deals[routeId]["path"][hopID-1]["StationB"]
 
+    def getStationB(self,routeId,hopID):
+        return self.deals[routeId]["path"][hopID]["StationB"]
+
     def getSystemA(self,routeId,hopID):
         if hopID == 0:
             return self.deals[routeId]["path"][hopID]["SystemA"]
 
         return self.deals[routeId]["path"][hopID-1]["SystemB"]
+
+    def getSystemB(self,routeId,hopID):
+        return self.deals[routeId]["path"][hopID]["SystemB"]
             
     def limitCalc(self, accuracy=0):
         ''' ["normal","fast","nice","slow","all"] '''
