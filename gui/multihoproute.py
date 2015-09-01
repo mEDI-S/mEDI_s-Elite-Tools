@@ -463,6 +463,8 @@ class tool(QtGui.QWidget):
             menu.addAction(self.markFakeItemAct)
             if self.main.dealsFromToWidget:
                 menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
+                menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
+
         elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
         else:
@@ -619,8 +621,12 @@ class tool(QtGui.QWidget):
         self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self,
                 statusTip="Start a helper job to set automatly the next routehop to clipboard", triggered=self.clipbordRouteHelper)
 
-        self.addRouteHopAsTargetSystemInDealsFromToFinderAct = QtGui.QAction("Set System as To in (Deals From To Finder 1)", self,
-                statusTip="Set System as To in Deals Finder", triggered=self.addRouteHopAsTargetSystemInDealsFromToFinder)
+        self.addRouteHopAsTargetSystemInDealsFromToFinderAct = QtGui.QAction("Set as To in (Deals From To Finder 1)", self,
+                statusTip="Set System/Station as To in Deals Finder", triggered=self.addRouteHopAsTargetSystemInDealsFromToFinder)
+
+        self.addRouteHopAsFromSystemInDealsFromToFinderAct = QtGui.QAction("Set as From in (Deals From To Finder 1)", self,
+                statusTip="Set System/Station as From in Deals Finder", triggered=self.addRouteHopAsFromSystemInDealsFromToFinder)
+
 
 
     def clipbordRouteHelper(self):
@@ -709,21 +715,40 @@ class tool(QtGui.QWidget):
                     self.main.lockDB()
                     self.mydb.setFakePrice(id)
                     self.main.unlockDB()
-                
-    def addRouteHopAsTargetSystemInDealsFromToFinder(self):
 
+    def getSelectedRouteHopID(self):
         indexes = self.routeview.selectionModel().selectedIndexes()
         
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
 
             routeId = indexes[0].internalPointer().parent().getListIndex()
             hopID =  indexes[0].internalPointer().parent().childPos( indexes )
+            print(routeId, hopID)
+            return (routeId, hopID)
+        return (None, None)
 
-            toStation = self.route.getStationA(routeId,hopID)
-            toSystem = self.route.getSystemA(routeId,hopID)
-            #TODO: set it only in first Deals window current
-            if toSystem and toStation:
-                self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
-                self.main.dealsFromToWidget[0].toStation.setText(toStation)
+    def addRouteHopAsTargetSystemInDealsFromToFinder(self):
 
-            
+        (routeId, hopID) = self.getSelectedRouteHopID()
+        if routeId == None or hopID == None:
+            return
+
+        toStation = self.route.getStationA(routeId,hopID)
+        toSystem = self.route.getSystemA(routeId,hopID)
+        #TODO: set it only in first Deals window current
+        if toSystem and toStation:
+            self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
+            self.main.dealsFromToWidget[0].toStation.setText(toStation)
+
+    def addRouteHopAsFromSystemInDealsFromToFinder(self):
+
+        (routeId, hopID) = self.getSelectedRouteHopID()
+        if routeId == None or hopID == None: return
+
+        station = self.route.getStationA(routeId,hopID)
+        system = self.route.getSystemA(routeId,hopID)
+        #TODO: set it only in first Deals window current
+        if system and station:
+            self.main.dealsFromToWidget[0].fromSystem.setText(system)
+            self.main.dealsFromToWidget[0].fromStation.setText(station)
+
