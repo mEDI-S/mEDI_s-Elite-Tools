@@ -418,7 +418,8 @@ class tool(QtGui.QWidget):
         layout = QtGui.QHBoxLayout()
 
         self.showOptions = QtGui.QCheckBox("Show Options")
-        self.showOptions.setChecked(True)
+        if self.mydb.getConfig("option_mhr_showOptions") != 0:
+            self.showOptions.setChecked(True)
         self.showOptions.stateChanged.connect( self.optionsGroupBoxToggleViewAction )
 
         self.searchbutton = QtGui.QPushButton("Search")
@@ -451,7 +452,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setLayout(layout)
 
         self.guitools.setSystemComplete("", self.locationlineEdit)
-
+        self.optionsGroupBoxToggleViewAction()
         return vGroupBox
 
     def routelistContextMenuEvent(self, event):
@@ -473,10 +474,11 @@ class tool(QtGui.QWidget):
         menu.exec_(self.routeview.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
-        if not self.optionsGroupBox.isHidden():
-            self.optionsGroupBox.hide()
-        else:
+        if self.showOptions.isChecked():
             self.optionsGroupBox.show()
+        else:
+            self.optionsGroupBox.hide()
+            
 
     def initRoute(self):
         ''' init the route on start and set saved options'''
@@ -522,6 +524,8 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_maxStarDist', self.maxStartDistSpinBox.value() )
         self.mydb.setConfig( 'option_minTradeProfit', self.minProfitSpinBox.value() )
         self.mydb.setConfig( 'option_searchLimit', self.searchLimitOption.currentIndex() )
+
+        self.mydb.setConfig( 'option_mhr_showOptions', self.showOptions.isChecked() )
 
     def startRouteSearch(self):
 

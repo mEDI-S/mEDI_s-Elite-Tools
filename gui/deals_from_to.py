@@ -132,7 +132,8 @@ class tool(QtGui.QWidget):
         self.toStation.textChanged.connect(self.triggerToStationChanged)
 
         self.showOptions = QtGui.QCheckBox("Show Options")
-        self.showOptions.setChecked(True)
+        if self.mydb.getConfig("option_dft_showOptions") != 0:
+            self.showOptions.setChecked(True)
         self.showOptions.stateChanged.connect( self.optionsGroupBoxToggleViewAction )
 
         self.searchbutton = QtGui.QPushButton("Search")
@@ -211,7 +212,9 @@ class tool(QtGui.QWidget):
         self.triggerFromStationChanged()
         self.triggerToSystemChanged()
         self.triggerToStationChanged()
-        
+
+        self.optionsGroupBoxToggleViewAction()
+                
         return vGroupBox
 
 
@@ -251,10 +254,10 @@ class tool(QtGui.QWidget):
         menu.exec_(self.dealsview.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
-        if not self.optionsGroupBox.isHidden():
-            self.optionsGroupBox.hide()
-        else:
+        if self.showOptions.isChecked():
             self.optionsGroupBox.show()
+        else:
+            self.optionsGroupBox.hide()
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
@@ -336,7 +339,9 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_dft_maxAgeDate', self.maxAgeSpinBox.value() )
         self.mydb.setConfig( 'option_dft_minStock', self.minStockSpinBox.value() )
         self.mydb.setConfig( 'option_dft_minProfit', self.minProfitSpinBox.value() )
-        
+
+        self.mydb.setConfig( 'option_dft_showOptions', self.showOptions.isChecked() )
+
         sectionPosList = []
         for i in range( self.dealsview.header().count() ):
             sectionPosList.append( self.dealsview.header().logicalIndex( i ) )
