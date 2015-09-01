@@ -307,6 +307,9 @@ class MainWindow(QtGui.QMainWindow):
 
                 if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
                     self.openUrl(url_update)
+            else:
+                reply = QtGui.QMessageBox.information(self,
+                        "No new version available", "Congratulation, you are already using the latest version")
 
 
 if __name__ == '__main__':
