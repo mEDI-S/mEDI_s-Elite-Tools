@@ -76,19 +76,14 @@ class _updateDBchild(QtCore.QThread):
             self.close()
             return
 
-#        self.sendMsg("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
-#        starttime2 = timeit.default_timer()
-
         self.mydb.calcDealsInDistancesCacheQueue()
 
         if self._active != True:
             self.close()
             return
 
-#        self.sendMsg("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime2, 2))
-
         self.mydb.sendProcessMsg = None
-        self.sendProcessMsg( "finished update %ss" % round(timeit.default_timer() - starttime, 2) )
+        self.sendProcessMsg( "%s finished %ss" % ( datetime.now().strftime("%H:%M:%S"), round(timeit.default_timer() - starttime, 2) ) )
 
         self.close()
 
@@ -124,8 +119,8 @@ class new(object):
         
         self._updatedb.setPriority(QtCore.QThread.LowPriority)
         self._updatedb.setTerminationEnabled(True)
-        self.main.setStatusBar("Update database started (%s)" % datetime.now().strftime("%H:%M:%S"))
 
+        return True
 
     def waitQuit(self):
         starttime = timeit.default_timer()
