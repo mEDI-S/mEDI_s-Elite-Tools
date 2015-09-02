@@ -86,11 +86,14 @@ class route(object):
             maxResults = 1000000
         elif accuracy == 3:
             maxResults = 4000000
-            
+
+        if self.forceHops:
+            maxResults = maxResults*2
         self.options["resultLimit"] = round( maxResults**(1.0 / self.options["tradingHops"] )) #max results = 1000000 = resultLimit^tradingHops
 
         if accuracy == 4:
             self.options["resultLimit"] = 999999
+
 
     def setMaxAgeDate(self):
         self.maxAgeDate = datetime.utcnow() - timedelta(days = self.options["maxAge"] )
@@ -100,6 +103,8 @@ class route(object):
 
         self.findStartDeal()
         self.findHops()
+        if self.forceHops:
+            self.delToShortRoutes()
         self.findBackToStartDeals()
         self.calcRating()
 
@@ -109,6 +114,7 @@ class route(object):
         for deal in startdeals:
             self.deals.append({ "profit":0, "time":0 , "path":[deal],"backToStartDeal":None })
 
+
     def findHops(self):
         for deep in range( 1, self.options["tradingHops"] ):
             print("deep", deep+1)
@@ -116,15 +122,30 @@ class route(object):
                 if deep == len(deal["path"]):
                     delsX = self.mydb.getBestDealsFromStationInDistance(deal["path"][ len(deal["path"])-1 ]["StationBID"], self.options["maxDist"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"])
                     for dealX in delsX:
+                        ''' if same item in route already exist?'''
+                        ifExists = None
+                        for dealQ in deal["path"]:
+                            if dealX["priceAid"] == dealQ["priceAid"]:
+                                ifExists = True
+                                break
                         
-                        dealnew = deal.copy()
-                        dealnew["path"] = list(deal["path"]) #deepcopy do not work
-                         
-                        dealnew["path"].append(dealX)
-                        self.deals.append(dealnew)
-                elif self.forceHops and deep == self.forceHops and len(deal["path"]) < self.forceHops:
+                        if not ifExists:
+                            dealnew = deal.copy()
+                            dealnew["path"] = list(deal["path"]) #deepcopy do not work
+                             
+                            dealnew["path"].append(dealX)
+                            self.deals.append(dealnew)
+
+                elif self.forceHops :
                     self.deals.remove(deal)
 
+    def delToShortRoutes(self):
+        if not self.forceHops: return
+        
+        for deal in self.deals[:]:
+            if len(deal["path"]) < self.forceHops:
+                self.deals.remove(deal)
+                
     def findBackToStartDeals(self):
         for deal in self.deals:
             backdeals = self.mydb.getDealsFromTo( deal["path"][ len(deal["path"])-1 ]["StationBID"],  deal["path"][0]["StationAID"], self.maxAgeDate, 1000)
