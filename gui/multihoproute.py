@@ -573,14 +573,16 @@ class tool(QtGui.QWidget):
         self.route.calcDefaultOptions()
         
         self.route.limitCalc( self.searchLimitOption.currentIndex() ) #options (normal, fast, nice, slow, all)
-        
-        self.route.calcRoute()
-        
-        #self.route.printList()
 
         forceHops = None
         if self.forceMaxHops.isChecked():
             forceHops = self.maxHopsspinBox.value()
+
+        self.route.forceHops = forceHops
+        self.route.calcRoute()
+        
+        #self.route.printList()
+
 
         routeModel = RouteTreeModel(self.route, None, forceHops)
 

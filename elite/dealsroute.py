@@ -16,7 +16,8 @@ class route(object):
 
     mydb=None
     deals = []
-
+    forceHops = None
+    
     options = {}
     options["startSystem"] = None
     options["tradingHops"] = 2  # +1 for the back hop
@@ -121,6 +122,8 @@ class route(object):
                          
                         dealnew["path"].append(dealX)
                         self.deals.append(dealnew)
+                elif self.forceHops and deep == self.forceHops and len(deal["path"]) < self.forceHops:
+                    self.deals.remove(deal)
 
     def findBackToStartDeals(self):
         for deal in self.deals:
