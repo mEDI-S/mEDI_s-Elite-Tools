@@ -58,7 +58,10 @@ class route(object):
         return self.deals[routeId]["path"][hopID-1]["StationB"]
 
     def getStationB(self,routeId,hopID):
-        return self.deals[routeId]["path"][hopID]["StationB"]
+        if hopID < len(self.deals[routeId]["path"]):
+            return self.deals[routeId]["path"][hopID]["StationB"]
+        else: #  back to start
+            return self.deals[routeId]["path"][0]["StationA"]
 
     def getSystemA(self,routeId,hopID):
         if hopID == 0:
@@ -67,7 +70,10 @@ class route(object):
         return self.deals[routeId]["path"][hopID-1]["SystemB"]
 
     def getSystemB(self,routeId,hopID):
-        return self.deals[routeId]["path"][hopID]["SystemB"]
+        if hopID < len(self.deals[routeId]["path"]):
+            return self.deals[routeId]["path"][hopID]["SystemB"]
+        else: #  back to start
+            return self.deals[routeId]["path"][0]["SystemA"]
             
     def limitCalc(self, accuracy=0):
         ''' ["normal","fast","nice","slow","all"] '''
