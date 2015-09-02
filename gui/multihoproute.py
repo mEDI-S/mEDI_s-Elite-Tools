@@ -128,8 +128,8 @@ class RouteTreeItem(object):
             #print("target", type(child[0]))
 
     def getListIndex(self):
-        if isinstance( self.itemData[0], int):
-            return self.itemData[0]-1
+        if isinstance( self.itemData[1], int):
+            return self.itemData[1]-1
 
     def columnCount(self):
         return len(self.itemData)
@@ -156,7 +156,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, route, parent=None, forceHops=None):
         super(RouteTreeModel, self).__init__(parent)
         self.route = route
-        self.rootItem = RouteTreeItem(("Nr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
+        self.rootItem = RouteTreeItem(("Nr.","idxNr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
         self.forceHops = forceHops
         self.setupModelData(route.deals, self.rootItem)
 
@@ -240,18 +240,18 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
     def setupModelData(self, deals, parent):
         parents = [parent]
-
+        count = 0
         for i, deal in enumerate(deals):
 
             if self.forceHops and len(deal["path"]) < self.forceHops:
                 continue
-
-            if i >= 100: break
+            count += 1
+            if count >= 100: break
 
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
             
-            columnData = [i+1 , deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
+            columnData = [count, i+1, deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
 
 
@@ -596,6 +596,8 @@ class tool(QtGui.QWidget):
 
         for i in range(0, 5):
             self.routeview.resizeColumnToContents(i)
+
+        self.routeview.hideColumn(1)
 
         self.triggerLocationChanged()
         self.routeview.show()
