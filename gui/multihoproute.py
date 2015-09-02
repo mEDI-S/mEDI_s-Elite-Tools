@@ -226,11 +226,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent):
-        if parent.column() > 0:
+    def rowCount(self, parent=None):
+
+        if parent != None and parent.column() > 0:
             return 0
 
-        if not parent.isValid():
+        if parent == None or not parent.isValid():
             parentItem = self.rootItem
         else:
             parentItem = parent.internalPointer()
@@ -637,8 +638,8 @@ class tool(QtGui.QWidget):
         location = self.locationlineEdit.text()
         routeModel = self.routeview.model()
 
-        if not routeModel: return
-
+        if not routeModel or not routeModel.rowCount(): return
+        
         if location and routeModel:
             for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
                 route = routeModel.index( rid, 0).internalPointer()
