@@ -14,7 +14,20 @@ databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
 mutex = QtCore.QMutex()
 statusbarMsg = None
+processCount = 0
+processPos = 0
+processMsg = None
 
+class statusMsg(object):
+    processCount = 0
+    processPos = 0
+    msg = None
+    processMsg = None
+    def __init__(self, msg=None, processPos=None, processCount=None):
+        self.processCount = processCount
+        self.processPos = processPos
+        self.msg = msg
+    
 class _updateDBchild(QtCore.QThread):
     '''
     updatedb child job
@@ -23,6 +36,16 @@ class _updateDBchild(QtCore.QThread):
         global statusbarMsg
         mutex.lock()
         statusbarMsg = newmsg
+        mutex.unlock()
+    
+    def sendProcessMsg(self, newmsg, pos=None, count=None):
+        global processMsg, processPos, processCount
+        mutex.lock()
+
+        processMsg = newmsg
+        if pos: processPos = pos
+        if count: processCount = count
+
         mutex.unlock()
         
     def run(self):
@@ -37,17 +60,24 @@ class _updateDBchild(QtCore.QThread):
         databaseLock = True
         mutex.unlock()
 
+        self.sendProcessMsg( "open db" ,0 ,0)
+
         starttime = timeit.default_timer()
 
         self.mydb = elite.db(guiMode=True)
-        self.mydb.updateData()
+
+        self.sendProcessMsg( "Start Update", 0, self.mydb.loaderCount )
+
+        self.mydb.sendProcessMsg = self.sendProcessMsg
+
+        self.mydb.updateData( )
 
         if self._active != True:
             self.close()
             return
 
-        self.sendMsg("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
-        starttime = timeit.default_timer()
+#        self.sendMsg("Update database finished (%ss) rebuild cache now " % round(timeit.default_timer() - starttime, 2))
+#        starttime2 = timeit.default_timer()
 
         self.mydb.calcDealsInDistancesCacheQueue()
 
@@ -55,7 +85,10 @@ class _updateDBchild(QtCore.QThread):
             self.close()
             return
 
-        self.sendMsg("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime, 2))
+#        self.sendMsg("rebuild cache finished (%ss) " % round(timeit.default_timer() - starttime2, 2))
+
+        self.mydb.sendProcessMsg = None
+        self.sendProcessMsg( "finished update %ss" % round(timeit.default_timer() - starttime, 2) )
 
         self.close()
 
@@ -120,15 +153,18 @@ class new(object):
         mutex.unlock()
 
     def getStatusbarMsg(self):
-        global statusbarMsg
+        global statusbarMsg, processMsg, processPos, processCount
         msg = None
 
         mutex.lock()
 
-        if statusbarMsg:
+        if processMsg:
+            msg = statusMsg(processMsg, processPos, processCount)
+            processMsg = None
+        elif statusbarMsg:
             msg = statusbarMsg
             statusbarMsg = None
-
+            
         mutex.unlock()
 
         return msg

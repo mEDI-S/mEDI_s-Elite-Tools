@@ -81,6 +81,8 @@ class MainWindow(QtGui.QMainWindow):
         self.createMenus()
         self.createTimer()
 
+        self.addProgressBarStatusBar()
+        
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
@@ -124,6 +126,39 @@ class MainWindow(QtGui.QMainWindow):
     
         self.toolsMenu.addAction(myAct)
 
+    def addProgressBarStatusBar(self):
+        DEFAULT_STYLE = """
+                        QProgressBar{
+                            border: 2px solid grey;
+                            border-radius: 5px;
+                            text-align: center;
+                            height: 5px;
+                        }
+                        
+                        QProgressBar::chunk {
+                            background-color: lightblue;
+                            width: 10px;
+                            margin: 1px;
+                        }
+                        """
+
+        self.statusBarProgressBar = QtGui.QProgressBar()
+        self.statusBarProgressBar.setStyleSheet(DEFAULT_STYLE)
+#        self.statusBarProgressBar.setRange(0, 1)
+        self.statusBarProgressBar.setFormat("%v/%m")
+#        self.statusBarProgressBar.setValue(5)
+
+        self.statusBarProgressBarLabel = QtGui.QLabel("                      ")
+        gridLayout = QtGui.QGridLayout()
+        gridLayout.setContentsMargins(0,0,0,0)
+        gridLayout.addWidget(self.statusBarProgressBarLabel, 0, 0)
+        gridLayout.addWidget(self.statusBarProgressBar, 0, 1, 0,2 )
+
+        GroupBox = QtGui.QGroupBox()
+        GroupBox.setStyleSheet("border:0;margin:0;padding:0")
+        GroupBox.setLayout(gridLayout)
+
+        self.statusBar().addPermanentWidget(GroupBox)
 
     def addMyDockWidget(self, widget, title):
 
@@ -205,7 +240,14 @@ class MainWindow(QtGui.QMainWindow):
         if self.dbworker:
             msg = self.dbworker.getStatusbarMsg()
             if msg:
-                self.setStatusBar( msg )
+                if isinstance(msg, gui.dbworker.statusMsg):
+                    self.statusBarProgressBarLabel.setText(msg.msg)
+                    if msg.processCount: self.statusBarProgressBar.setRange(0, msg.processCount)
+                    if msg.processPos: self.statusBarProgressBar.setValue(msg.processPos)
+
+                else:
+                    self.setStatusBar( msg )
+
         self.childMsgPullTimer.start()
 
     def updateDB(self):

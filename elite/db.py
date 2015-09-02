@@ -18,6 +18,8 @@ import elite.loader.eddb
 import elite.loader.raresimport
 import elite.loader.eddn
 
+__loaderCount__ = 5
+
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db","my.db")
@@ -31,7 +33,9 @@ class db(object):
     __systemIDCache = {}
     __itemIDCache = {}
     __streamUpdater = []
-
+    loaderCount = __loaderCount__
+    sendProcessMsg=None
+    
     def __init__(self, guiMode=None, DBPATH=__DBPATH__):
 
         self.guiMode = guiMode
@@ -122,24 +126,36 @@ class db(object):
     def updateData(self):
         '''
         update price date from all sources
-        '''        
+        '''
+        myPos = 0
         if self._active != True: return
 
+        myPos += 1
+        if self.sendProcessMsg: self.sendProcessMsg("Update: EDDB", myPos, self.loaderCount)
         elite.loader.eddb.updateAll(self)
         if self._active != True: return
 
+        myPos += 1
+        if self.sendProcessMsg: self.sendProcessMsg("Update: EDMC", myPos, self.loaderCount)
         elite.loader.EDMarakedConnector.loader(self).update()
         if self._active != True: return
 
+        myPos += 1
+        if self.sendProcessMsg: self.sendProcessMsg("Update: Maddavo", myPos, self.loaderCount)
         elite.loader.maddavo.updateAll(self)
         if self._active != True: return
 
+        myPos += 1
+        if self.sendProcessMsg: self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
         elite.loader.bpc.prices.loader(self).importData()
         if self._active != True: return
 
+        myPos += 1
+        if self.sendProcessMsg: self.sendProcessMsg("Update: EDDN", myPos, self.loaderCount)
         if self.__streamUpdater:
             for client in self.__streamUpdater:
                 client.update()
+
 
         lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
         optimize = None
@@ -151,8 +167,12 @@ class db(object):
             optimize = True
 
         if optimize:
+            myPos += 1
+            if self.sendProcessMsg: self.sendProcessMsg("Optimize DB", myPos, self.loaderCount)
             self.optimizeDatabase()
-            
+
+        if myPos > self.loaderCount: self.loaderCount = myPos
+
     def initDB(self):
         print("create/update db")
         '''
@@ -569,9 +589,11 @@ class db(object):
 
         cur = self.cursor()
 
-        for system in systemIDlist:
+        for myPos, system in enumerate(systemIDlist):
             if self._active != True: return
-            
+
+            if self.sendProcessMsg: self.sendProcessMsg("rebuild cache", myPos+1, len(systemIDlist))
+
             systemID = system["id"]
 
             cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems ( systemID, dist ) values (?, ? )", (systemID, dist )) 
