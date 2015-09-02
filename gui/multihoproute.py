@@ -151,11 +151,13 @@ class RouteTreeItem(object):
 
 
 class RouteTreeModel(QtCore.QAbstractItemModel):
-    def __init__(self, route, parent=None):
+    forceHops = None
+
+    def __init__(self, route, parent=None, forceHops=None):
         super(RouteTreeModel, self).__init__(parent)
         self.route = route
         self.rootItem = RouteTreeItem(("Nr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
-
+        self.forceHops = forceHops
         self.setupModelData(route.deals, self.rootItem)
 
     def columnCount(self, parent):
@@ -240,6 +242,10 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         parents = [parent]
 
         for i, deal in enumerate(deals):
+
+            if self.forceHops and len(deal["path"]) < self.forceHops:
+                continue
+
             if i >= 100: break
 
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
@@ -315,10 +321,18 @@ class tool(QtGui.QWidget):
 
         gridLayout = QtGui.QGridLayout()
 
+
+        self.forceMaxHops = QtGui.QCheckBox("Force Max Hops")
+        if self.mydb.getConfig("option_mhr_forceMaxHops"):
+            self.forceMaxHops.setChecked(True)
+        self.forceMaxHops.setToolTip("Show only routes with Max Hops+Back Hop")
+        gridLayout.addWidget(self.forceMaxHops, 1, 0)
+
+
         self.autoUpdateLocation = QtGui.QCheckBox("Location Update")
         self.autoUpdateLocation.setChecked(True)
         self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
-        gridLayout.addWidget(self.autoUpdateLocation, 1, 0)
+        gridLayout.addWidget(self.autoUpdateLocation, 3, 0)
 
         label = QtGui.QLabel("Max Hops:")
         self.maxHopsspinBox = QtGui.QSpinBox()
@@ -536,6 +550,8 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_searchLimit', self.searchLimitOption.currentIndex() )
 
         self.mydb.setConfig( 'option_mhr_showOptions', self.showOptions.isChecked() )
+        self.mydb.setConfig( 'option_mhr_forceMaxHops', self.forceMaxHops.isChecked() )
+
 
     def startRouteSearch(self):
         self.activeRoutePointer = None
@@ -562,7 +578,12 @@ class tool(QtGui.QWidget):
         
         #self.route.printList()
 
-        routeModel = RouteTreeModel(self.route)
+        forceHops = None
+        if self.forceMaxHops.isChecked():
+            forceHops = self.maxHopsspinBox.value()
+
+        routeModel = RouteTreeModel(self.route, None, forceHops)
+
         self.routeview.setModel(routeModel) #QtCore.QModelIndex()
 
         for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
