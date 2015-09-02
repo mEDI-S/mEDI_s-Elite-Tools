@@ -6,6 +6,8 @@ Created on 19.08.2015
 @author: mEDI
 '''
 
+__defauktUpdateTime__ = 1000*30
+
 import logging
 import sys
 
@@ -228,7 +230,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createTimer(self):
         self.updateDBtimer = QtCore.QTimer()
-        self.updateDBtimer.start(1000*60)
+        self.updateDBtimer.start(__defauktUpdateTime__)
         self.updateDBtimer.timeout.connect(self.updateDB)
 
         self.childMsgPullTimer = QtCore.QTimer()
@@ -253,9 +255,11 @@ class MainWindow(QtGui.QMainWindow):
     def updateDB(self):
         self.updateDBtimer.stop()
 
-        self.dbworker.updateDB()
-
-        self.updateDBtimer.start()
+        status = self.dbworker.updateDB()
+        if status:
+            self.updateDBtimer.start(__defauktUpdateTime__)
+        else:
+            self.updateDBtimer.start(__defauktUpdateTime__*4)
 
     def lockDB(self):
         self.dbworker.lockDB()
