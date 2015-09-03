@@ -128,8 +128,8 @@ class RouteTreeItem(object):
             #print("target", type(child[0]))
 
     def getListIndex(self):
-        if isinstance( self.itemData[1], int):
-            return self.itemData[1]-1
+        if isinstance( self.itemData[0], int): #via displayed Nr.
+            return self.itemData[0]-1
 
     def columnCount(self):
         return len(self.itemData)
@@ -149,6 +149,10 @@ class RouteTreeItem(object):
 
         return 0
 
+    def getInternalRoutePointer(self):
+        if isinstance( self.itemData[1], dict):
+            return self.itemData[1]
+
 
 class RouteTreeModel(QtCore.QAbstractItemModel):
     forceHops = None
@@ -161,7 +165,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         self.setupModelData(route.deals, self.rootItem)
 
     def cleanModel(self):
-        self.rootItem  = RouteTreeItem(("Nr.","idxNr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
+        self.rootItem  = RouteTreeItem(("Nr.","routeidx","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -181,7 +185,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                 if item.activeRoute:
                     return QtGui.QColor(QtCore.Qt.cyan)
             elif isinstance( item, RouteTreeInfoItem):
-                return QtGui.QColor(QtCore.Qt.red)
+                return QtGui.QColor(255, 0, 0, 64)
 
         if role != QtCore.Qt.DisplayRole:
             return None
@@ -270,17 +274,14 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def setupModelData(self, deals, parent):
         parents = [parent]
         count = 0
-        for i, deal in enumerate(deals):
+        for routeId, deal in enumerate(deals):
 
-            if self.forceHops and len(deal["path"]) < self.forceHops:
-                continue
-            count += 1
-            if count >= 100: break
+            if routeId >= 100: break
 
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
             
-            columnData = [count, i+1, deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
+            columnData = [routeId+1, deal, deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
 
 
@@ -288,9 +289,14 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             #follow is a child
             parents.append(parents[-1].child(parents[-1].childCount() - 1))
         
-            for x,d in enumerate(deal["path"]):
+            for hopID,d in enumerate(deal["path"]):
                 #print(d.keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (before["SystemB"], before["StationB"], before["StarDist"] , d["itemName"],d["StationSell"], d["StationBuy"],  d["profit"], d["dist"],d["SystemB"],d["StationB"] )
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(routeId, hopID), 
+                                                                                                self.route.getStationA(routeId, hopID),
+                                                                                                before["StarDist"] , d["itemName"],d["StationSell"],
+                                                                                                d["StationBuy"],  d["profit"], d["dist"],
+                                                                                                self.route.getSystemB(routeId, hopID),
+                                                                                                self.route.getStationB(routeId, hopID) )
 
 
                 parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
@@ -298,26 +304,38 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 
                 if before["refuel"] != 1:
-                    columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
+                    columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(routeId, hopID)
                     parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
                 
                 before = d
 
         
             backdist = self.route.mydb.getDistanceFromTo(deal["path"][0]["SystemAID"] , deal["path"][ len(deal["path"])-1 ]["SystemBID"])
+
+            hopID += 1
         
             if deal["backToStartDeal"]:
                 #print(deal["backToStartDeal"].keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (before["SystemB"], deal["backToStartDeal"]["fromStation"] , before["StarDist"], deal["backToStartDeal"]["itemName"], deal["backToStartDeal"]["StationSell"],deal["backToStartDeal"]["StationBuy"],  deal["backToStartDeal"]["profit"], backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"] ) 
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(routeId, hopID),
+                                                                                                self.route.getStationA(routeId, hopID),
+                                                                                                before["StarDist"], deal["backToStartDeal"]["itemName"],
+                                                                                                deal["backToStartDeal"]["StationSell"],
+                                                                                                deal["backToStartDeal"]["StationBuy"],
+                                                                                                deal["backToStartDeal"]["profit"],
+                                                                                                backdist, self.route.getSystemB(routeId, hopID), self.route.getStationB(routeId, hopID) ) 
                 temp = { "SystemB":deal["path"][0]["SystemA"], "SystemA":before["SystemB"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
                 parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], temp))
             else:
-                columnData = "no back deal (%s ly) ->%s : %s" % (backdist, deal["path"][0]["SystemA"], deal["path"][0]["StationA"]  )
+                columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(routeId, hopID),
+                                                                                   self.route.getStationA(routeId, hopID),
+                                                                                   before["StarDist"], backdist,
+                                                                                   self.route.getSystemB(routeId, hopID),
+                                                                                   self.route.getStationB(routeId, hopID)  )
                 parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
 
         
             if before["refuel"] != 1:
-                columnData = "\tWarning: %s have no refuel!?" % before["StationB"]
+                columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(routeId, hopID)
                 parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
         
             # not more a child
@@ -506,11 +524,10 @@ class tool(QtGui.QWidget):
 
         indexes = self.routeview.selectionModel().selectedIndexes()
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
-            menu.addAction(self.markFakeItemAct)
-
             if self.main.dealsFromToWidget:
-                menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
+                menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
+            menu.addAction(self.markFakeItemAct)
 
         elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
@@ -619,6 +636,7 @@ class tool(QtGui.QWidget):
         self.routeview.setModel(routeModel)
 #        routeModel.layoutChanged.emit()
         self.routeview.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
+        self.routeview.hideColumn(1)
 
         self.triggerLocationChanged()
         self.routeview.show()
@@ -640,9 +658,7 @@ class tool(QtGui.QWidget):
         for i in range(0, 5):
             self.routeview.resizeColumnToContents(i)
 
-        self.routeview.hideColumn(1)
-        #self.route.printList()
-
+        self.triggerLocationChanged()
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
@@ -795,8 +811,11 @@ class tool(QtGui.QWidget):
 
             routeId = indexes[0].internalPointer().parent().getListIndex()
             hopID =  indexes[0].internalPointer().parent().childPos( indexes )
-            print(routeId, hopID)
-            return (routeId, hopID)
+
+#            routeDeal = indexes[0].internalPointer().parent().getInternalRoutePointer()
+#            print(self.route.deals.index(routeDeal), routeId )
+#            return (routeId, hopID)
+
         return (None, None)
 
     def addRouteHopAsTargetSystemInDealsFromToFinder(self):
