@@ -254,7 +254,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             self.cleanModel()
             self.setupModelData(self.route.deals, self.rootItem)
         elif col==3:
-            self.route.sortDealsByProfitH(order)
+            self.route.sortDealsByProfit(order)
             self.cleanModel()
             self.setupModelData(self.route.deals, self.rootItem)
         elif col==4:
@@ -641,6 +641,7 @@ class tool(QtGui.QWidget):
             self.routeview.resizeColumnToContents(i)
 
         self.routeview.hideColumn(1)
+        #self.route.printList()
 
 
     def createTimer(self):
