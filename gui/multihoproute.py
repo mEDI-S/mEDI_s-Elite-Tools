@@ -165,7 +165,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         self.setupModelData(route.deals, self.rootItem)
 
     def cleanModel(self):
-        self.rootItem  = RouteTreeItem(("Nr.","routeidx","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
+        self.rootItem  = RouteTreeItem(("Nr.","routeidx","Profit/h", "Profit","Ø Profit","StartDist","Laps/h","LapTime", "Status"))
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -262,10 +262,14 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             self.cleanModel()
             self.setupModelData(self.route.deals, self.rootItem)
         elif col==4:
+            self.route.sortDealsByProfitAverage(order)
+            self.cleanModel()
+            self.setupModelData(self.route.deals, self.rootItem)
+        elif col==5:
             self.route.sortDealsByStartDist(order)
             self.cleanModel()
             self.setupModelData(self.route.deals, self.rootItem)
-        elif col==6:
+        elif col==7:
             self.route.sortDealsByLapTime(order)
             self.cleanModel()
             self.setupModelData(self.route.deals, self.rootItem)
@@ -281,7 +285,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
             
-            columnData = [routeId+1, deal, deal["profitHour"], deal["profit"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
+            columnData = [routeId+1, deal, deal["profitHour"], deal["profit"], deal["profitAverage"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
 
 

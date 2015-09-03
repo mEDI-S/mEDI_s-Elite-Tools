@@ -174,7 +174,7 @@ class route(object):
             lapsInHour = int(3600 / deal["time"])  # round down
         
             profitHour = int(3600.0 / deal["time"] * deal["profit"]) #hmm mit lapsInHour oder mit hochrechnung rechnen?
-        
+            deal["profitAverage"] = deal["profit"] / (len(deal["path"]) + 1)
             deal["profitHour"] = profitHour
             deal["lapsInHour"] = lapsInHour
 
@@ -185,6 +185,9 @@ class route(object):
 
     def sortDealsByProfit(self, order=True):            
         self.deals = sorted(self.deals , key=lambda deal: deal["profit"], reverse=order)
+
+    def sortDealsByProfitAverage(self, order=True):            
+        self.deals = sorted(self.deals , key=lambda deal: deal["profitAverage"], reverse=order)
 
     def sortDealsByLapTime(self, order=True):            
         self.deals = sorted(self.deals , key=lambda deal: deal["time"], reverse=order)
