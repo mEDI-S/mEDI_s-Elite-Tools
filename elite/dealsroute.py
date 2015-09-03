@@ -180,9 +180,17 @@ class route(object):
 
         self.sortDealsByProfitH()
 
-    def sortDealsByProfitH(self):            
-        self.deals = sorted(self.deals , key=lambda deal: deal["profitHour"], reverse=True)
+    def sortDealsByProfitH(self, order=True):            
+        self.deals = sorted(self.deals , key=lambda deal: deal["profitHour"], reverse=order)
 
+    def sortDealsByProfit(self, order=True):            
+        self.deals = sorted(self.deals , key=lambda deal: deal["profit"], reverse=order)
+
+    def sortDealsByLapTime(self, order=True):            
+        self.deals = sorted(self.deals , key=lambda deal: deal["time"], reverse=order)
+
+    def sortDealsByStartDist(self, order=True):            
+        self.deals = sorted(self.deals , key=lambda deal: deal["path"][0]["startDist"], reverse=order)
 
     def printList(self):
         print("routes found", len(self.deals))

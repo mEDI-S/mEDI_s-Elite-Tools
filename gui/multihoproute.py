@@ -8,7 +8,7 @@ Created on 19.08.2015
 from PySide import QtCore, QtGui
 import elite
 import timeit
-
+import time
 import gui.guitools as guitools
 
 
@@ -156,9 +156,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, route, parent=None, forceHops=None):
         super(RouteTreeModel, self).__init__(parent)
         self.route = route
-        self.rootItem = RouteTreeItem(("Nr.","idxNr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
+        self.cleanModel()
         self.forceHops = forceHops
         self.setupModelData(route.deals, self.rootItem)
+
+    def cleanModel(self):
+        self.rootItem  = RouteTreeItem(("Nr.","idxNr.","Profit/h", "Profit","StartDist","Laps/h","LapTime", "Status"))
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -238,6 +241,31 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
+    def sort(self,col, order):
+        print(col, order)
+        if order == QtCore.Qt.SortOrder.DescendingOrder:
+            order=True
+        else:
+            order=False
+
+        self.layoutAboutToBeChanged.emit()
+        if col==2:
+            self.route.sortDealsByProfitH(order)
+            self.cleanModel()
+            self.setupModelData(self.route.deals, self.rootItem)
+        elif col==3:
+            self.route.sortDealsByProfitH(order)
+            self.cleanModel()
+            self.setupModelData(self.route.deals, self.rootItem)
+        elif col==4:
+            self.route.sortDealsByStartDist(order)
+            self.cleanModel()
+            self.setupModelData(self.route.deals, self.rootItem)
+        elif col==6:
+            self.route.sortDealsByLapTime(order)
+            self.cleanModel()
+            self.setupModelData(self.route.deals, self.rootItem)
+        self.layoutChanged.emit()
 
     def setupModelData(self, deals, parent):
         parents = [parent]
@@ -265,9 +293,6 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (before["SystemB"], before["StationB"], before["StarDist"] , d["itemName"],d["StationSell"], d["StationBuy"],  d["profit"], d["dist"],d["SystemB"],d["StationB"] )
 
 
-#                Item =  QtGui.QTreeWidgetItem()
-#                Item.setText(0,columnData)
-#                parents[-1].appendChild(Item)
                 parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
 
 
@@ -297,7 +322,6 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         
             # not more a child
             parents.pop()
-
 
 
 
@@ -453,7 +477,10 @@ class tool(QtGui.QWidget):
         self.optionsGroupBox = QtGui.QGroupBox("Options")
         self.optionsGroupBox.setLayout(gridLayout)
 
+
         self.routeview = QtGui.QTreeView()
+        self.routeview.setAlternatingRowColors(True)
+        self.routeview.setSortingEnabled(True)
 
         self.routeview.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.routeview.customContextMenuRequested.connect(self.routelistContextMenuEvent)
@@ -470,6 +497,7 @@ class tool(QtGui.QWidget):
 
         self.guitools.setSystemComplete("", self.locationlineEdit)
         self.optionsGroupBoxToggleViewAction()
+
         return vGroupBox
 
     def routelistContextMenuEvent(self, event):
@@ -586,10 +614,21 @@ class tool(QtGui.QWidget):
 #        self.route.printList()
 
 
-        routeModel = RouteTreeModel(self.route, None, forceHops)
+        routeModel = RouteTreeModel(self.route, self, forceHops)
+        QtCore.QObject.connect(routeModel, QtCore.SIGNAL ('layoutChanged()'), self.routeModellayoutChanged)
+        self.routeview.setModel(routeModel)
+#        routeModel.layoutChanged.emit()
+        self.routeview.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
 
-        self.routeview.setModel(routeModel) #QtCore.QModelIndex()
+        self.triggerLocationChanged()
+        self.routeview.show()
 
+        self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
+
+        self.main.unlockDB()
+
+    def routeModellayoutChanged(self):
+        routeModel = self.routeview.model()
         for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
             #rid item count
             for cid in range( 0, routeModel.rowCount(routeModel.index(rid,0)) ):
@@ -603,12 +642,6 @@ class tool(QtGui.QWidget):
 
         self.routeview.hideColumn(1)
 
-        self.triggerLocationChanged()
-        self.routeview.show()
-
-        self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
-
-        self.main.unlockDB()
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
@@ -702,7 +735,6 @@ class tool(QtGui.QWidget):
         if not self.activeRoutePointer:
             return
         
-        location = self.main.location.getLocation()
         clipbordText = self.main.clipboard.text()
 
         if init:
@@ -851,4 +883,3 @@ class tool(QtGui.QWidget):
         self.connectedDealsFromToWindows.toSystem.setText(systemB)
         self.connectedDealsFromToWindows.toStation.setText(stationB)
 
-        
