@@ -359,10 +359,10 @@ class tool(QtGui.QWidget):
 
         self.main = main
         self.mydb = main.mydb
-        self.createActions()
         self.initRoute()
-        self.createTimer()
         self.guitools = guitools.guitools(self)
+        self.createTimer()
+        self.createActions()
 
     def getWideget(self):
 
@@ -500,12 +500,14 @@ class tool(QtGui.QWidget):
         self.optionsGroupBox.setLayout(gridLayout)
 
 
-        self.routeview = QtGui.QTreeView()
-        self.routeview.setAlternatingRowColors(True)
-        self.routeview.setSortingEnabled(True)
+        self.listView = QtGui.QTreeView()
+        self.listView.setAlternatingRowColors(True)
+        self.listView.setSortingEnabled(True)
+        self.listView.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.listView.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
 
-        self.routeview.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.routeview.customContextMenuRequested.connect(self.routelistContextMenuEvent)
+        self.listView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listView.customContextMenuRequested.connect(self.routelistContextMenuEvent)
 
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
@@ -513,7 +515,7 @@ class tool(QtGui.QWidget):
 
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(locationGroupBox)
-        layout.addWidget(self.routeview)
+        layout.addWidget(self.listView)
 
         vGroupBox.setLayout(layout)
 
@@ -526,7 +528,9 @@ class tool(QtGui.QWidget):
 
         menu = QtGui.QMenu(self)
 
-        indexes = self.routeview.selectionModel().selectedIndexes()
+        menu.addAction(self.copyAct)
+
+        indexes = self.listView.selectionModel().selectedIndexes()
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
             if self.main.dealsFromToWidget:
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
@@ -545,7 +549,7 @@ class tool(QtGui.QWidget):
         else:
             print(type(indexes[0].internalPointer()))
 
-        menu.exec_(self.routeview.viewport().mapToGlobal(event))
+        menu.exec_(self.listView.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
         if self.showOptions.isChecked():
@@ -637,30 +641,30 @@ class tool(QtGui.QWidget):
 
         routeModel = RouteTreeModel(self.route, self, forceHops)
         QtCore.QObject.connect(routeModel, QtCore.SIGNAL ('layoutChanged()'), self.routeModellayoutChanged)
-        self.routeview.setModel(routeModel)
+        self.listView.setModel(routeModel)
 #        routeModel.layoutChanged.emit()
-        self.routeview.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
-        self.routeview.hideColumn(1)
+        self.listView.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
+        self.listView.hideColumn(1)
 
         self.triggerLocationChanged()
-        self.routeview.show()
+        self.listView.show()
 
         self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
 
         self.main.unlockDB()
 
     def routeModellayoutChanged(self):
-        routeModel = self.routeview.model()
+        routeModel = self.listView.model()
         for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
             #rid item count
             for cid in range( 0, routeModel.rowCount(routeModel.index(rid,0)) ):
                 #cid child item count
-                self.routeview.setFirstColumnSpanned(cid, routeModel.index(rid,0) , True)        
+                self.listView.setFirstColumnSpanned(cid, routeModel.index(rid,0) , True)        
 
-        self.routeview.expandToDepth(1)
+        self.listView.expandToDepth(1)
 
         for i in range(0, 5):
-            self.routeview.resizeColumnToContents(i)
+            self.listView.resizeColumnToContents(i)
 
         self.triggerLocationChanged()
 
@@ -691,7 +695,7 @@ class tool(QtGui.QWidget):
 
     def setLocationColors(self):
         location = self.locationlineEdit.text()
-        routeModel = self.routeview.model()
+        routeModel = self.listView.model()
 
         if not routeModel or not routeModel.rowCount(): return
         
@@ -709,7 +713,7 @@ class tool(QtGui.QWidget):
                                 child.setBGColor( QtGui.QColor(QtCore.Qt.yellow) )
                         else:
                             child.setBGColor(None)
-        self.routeview.dataChanged(routeModel.index( 0, 0), routeModel.index( rid, 0))
+        self.listView.dataChanged(routeModel.index( 0, 0), routeModel.index( rid, 0))
 
     def createActions(self):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
@@ -730,9 +734,10 @@ class tool(QtGui.QWidget):
         self.disconnectFromDealsFromToWindowAct = QtGui.QAction("Disconnect (Deals From To Finder 1)", self,
                 statusTip="Disconnect From (Deals From To Finder 1) window", triggered=self.disconnectFromDealsFromToWindow)
 
+        self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
 
     def setActiveRoutePointer(self):
-        indexes = self.routeview.selectionModel().selectedIndexes()
+        indexes = self.listView.selectionModel().selectedIndexes()
  
         if isinstance( indexes[0].internalPointer(), RouteTreeItem):
             if self.activeRoutePointer:
@@ -789,7 +794,7 @@ class tool(QtGui.QWidget):
     def markFakeItem(self):
         print("markFakeItem")
 
-        indexes = self.routeview.selectionModel().selectedIndexes()
+        indexes = self.listView.selectionModel().selectedIndexes()
  
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
             id = indexes[0].internalPointer().getPiceID()
@@ -809,7 +814,7 @@ class tool(QtGui.QWidget):
                     self.main.unlockDB()
 
     def getSelectedRouteHopID(self):
-        indexes = self.routeview.selectionModel().selectedIndexes()
+        indexes = self.listView.selectionModel().selectedIndexes()
         
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
 
@@ -818,7 +823,7 @@ class tool(QtGui.QWidget):
 
 #            routeDeal = indexes[0].internalPointer().parent().getInternalRoutePointer()
 #            print(self.route.deals.index(routeDeal), routeId )
-#            return (routeId, hopID)
+            return (routeId, hopID)
 
         return (None, None)
 

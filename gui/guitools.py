@@ -52,6 +52,28 @@ class guitools(object):
         completer.setCompletionMode(QtGui.QCompleter.UnfilteredPopupCompletion)
         editor.setCompleter(completer)
 
+    def copyToClipboard(self):
+        ''' copy a multi select column/row to clipboard'''
+        indexes = self.parent.listView.selectedIndexes()
+        clip = []
+        lastRowCount = None
+        for item in indexes:
+            if lastRowCount == None:
+                lastRowCount = item.row()
+            elif lastRowCount != item.row():
+                lastRowCount = item.row()
+                clip.append( "\n" )
+    
+            if item.data():
+                if isinstance( item.data(), str):
+                    clip.append( item.data() )
+                else:
+                    clip.append( str(item.data()) )
+#                    print(type(item.data()))
+        if clip:
+            string = ", ".join(clip)
+            self.parent.main.clipboard.setText( string.replace(", \n, ", "\n") )
+
 class LineEdit(QtGui.QLineEdit):
     def __init__(self, parent=None):
         QtGui.QLineEdit.__init__(self, parent)
@@ -70,3 +92,4 @@ def convertDateimeToAgeStr(dt=datetime.utcnow() ):
         return "%dh" % (age.seconds/60/60)
     else:
         return "%dm" % (age.seconds/60)
+

@@ -24,7 +24,8 @@ class tool(QtGui.QWidget):
         self.main = main
         self.mydb = main.mydb
         self.guitools = guitools.guitools(self)
-
+        self.createActions()
+        
     def getWideget(self):
 
 
@@ -73,16 +74,21 @@ class tool(QtGui.QWidget):
         locationGroupBox.setLayout(layout)
 
 
-        self.shipsview = QtGui.QTreeView()
+        self.listView = QtGui.QTreeView()
 
-        self.proxyModel = QtGui.QSortFilterProxyModel()
-        self.proxyModel.setDynamicSortFilter(True)
+#        self.proxyModel = QtGui.QSortFilterProxyModel()
+#        self.proxyModel.setDynamicSortFilter(True)
 
-        self.shipsview.setRootIsDecorated(False)
-        self.shipsview.setAlternatingRowColors(True)
-        self.shipsview.setModel(self.proxyModel)
-        self.shipsview.setSortingEnabled(True)
+        self.listView.setRootIsDecorated(False)
+        self.listView.setAlternatingRowColors(True)
+#        self.listView.setModel(self.proxyModel)
+        self.listView.setSortingEnabled(True)
 
+        self.listView.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.listView.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
+
+        self.listView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listView.customContextMenuRequested.connect(self.myContextMenuEvent)
 
 
         vGroupBox = QtGui.QGroupBox()
@@ -91,7 +97,7 @@ class tool(QtGui.QWidget):
         layout = QtGui.QVBoxLayout()
 
         layout.addWidget(locationGroupBox)
-        layout.addWidget(self.shipsview)
+        layout.addWidget(self.listView)
 
 
 
@@ -102,6 +108,17 @@ class tool(QtGui.QWidget):
         return vGroupBox
 
 
+    def myContextMenuEvent(self, event):
+        menu = QtGui.QMenu(self)
+
+        menu.addAction(self.copyAct)
+
+        menu.exec_(self.listView.viewport().mapToGlobal(event))
+
+    def createActions(self):
+        self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
+
+
 
     def setCurentLocation(self):
         self.locationlineEdit.setText( self.main.location.getLocation() )
@@ -110,7 +127,7 @@ class tool(QtGui.QWidget):
     def searchShip(self):
 
         firstrun = False
-        if not self.shipsview.header().count():
+        if not self.listView.header().count():
             firstrun = True
 
         self.headerList = ["System","StarDist", "Station", "Distance", "Age"]
@@ -136,10 +153,10 @@ class tool(QtGui.QWidget):
             model.setData(model.index(0, self.headerList.index("Distance") ), shipyard["dist"])
             model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(shipyard["age"]) )
 
-        self.shipsview.setModel(model)
+        self.listView.setModel(model)
 
         if firstrun:
-            self.shipsview.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
+            self.listView.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
 
         for i in range(0, len(self.headerList) ):
-            self.shipsview.resizeColumnToContents(i)
+            self.listView.resizeColumnToContents(i)

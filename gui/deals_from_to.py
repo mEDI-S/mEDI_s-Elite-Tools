@@ -183,26 +183,28 @@ class tool(QtGui.QWidget):
         self.searchGroupBox = QtGui.QGroupBox("Search")
         self.searchGroupBox.setLayout(searchgridLayout)
 
-        self.dealsview = QtGui.QTreeView()
+        self.listView = QtGui.QTreeView()
 
         self.proxyModel = QtGui.QSortFilterProxyModel()
         self.proxyModel.setDynamicSortFilter(True)
 
-        self.dealsview.setRootIsDecorated(False)
-        self.dealsview.setAlternatingRowColors(True)
-        self.dealsview.setModel(self.proxyModel)
-        self.dealsview.setSortingEnabled(True)
+        self.listView.setRootIsDecorated(False)
+        self.listView.setAlternatingRowColors(True)
+        self.listView.setModel(self.proxyModel)
+        self.listView.setSortingEnabled(True)
+        self.listView.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.listView.setSelectionBehavior(QtGui.QAbstractItemView.SelectItems)
 
 
-        self.dealsview.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.dealsview.customContextMenuRequested.connect(self.dealslistContextMenuEvent)
+        self.listView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listView.customContextMenuRequested.connect(self.dealslistContextMenuEvent)
 
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(self.searchGroupBox)
-        layout.addWidget(self.dealsview)
+        layout.addWidget(self.listView)
 
 
 
@@ -247,11 +249,12 @@ class tool(QtGui.QWidget):
     def dealslistContextMenuEvent(self, event):
 
         menu = QtGui.QMenu(self)
+        menu.addAction(self.copyAct)
 
-        indexes = self.dealsview.selectionModel().selectedIndexes()
+        indexes = self.listView.selectionModel().selectedIndexes()
         menu.addAction(self.markFakeItemAct)
 
-        menu.exec_(self.dealsview.viewport().mapToGlobal(event))
+        menu.exec_(self.listView.viewport().mapToGlobal(event))
 
     def optionsGroupBoxToggleViewAction(self):
         if self.showOptions.isChecked():
@@ -294,13 +297,14 @@ class tool(QtGui.QWidget):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
                 statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
 
+        self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
 
 
         
 
     def markFakeItem(self):
 
-        indexes = self.dealsview.selectionModel().selectedIndexes()
+        indexes = self.listView.selectionModel().selectedIndexes()
  
         id = indexes[self.headerList.index("PriceID")].data()
 
@@ -343,8 +347,8 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_dft_showOptions', self.showOptions.isChecked() )
 
         sectionPosList = []
-        for i in range( self.dealsview.header().count() ):
-            sectionPosList.append( self.dealsview.header().logicalIndex( i ) )
+        for i in range( self.listView.header().count() ):
+            sectionPosList.append( self.listView.header().logicalIndex( i ) )
 
         sectionPos = ",".join( map( str, sectionPosList ) )
         self.mydb.setConfig( 'option_dft.header.sectionPos', sectionPos )
@@ -353,7 +357,7 @@ class tool(QtGui.QWidget):
     def searchDeals(self):
         #self.saveOptions()
         firstrun = False
-        if not self.dealsview.header().count():
+        if not self.listView.header().count():
             firstrun = True
 
         self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit","FromAge","ToAge"]
@@ -406,7 +410,7 @@ class tool(QtGui.QWidget):
                 model.setData(model.index(0, self.headerList.index("FromAge") ), guitools.convertDateimeToAgeStr(deal["fromAge"]) )
                 model.setData(model.index(0, self.headerList.index("ToAge") ), guitools.convertDateimeToAgeStr(deal["toAge"]) )
 
-        self.dealsview.setModel(model)
+        self.listView.setModel(model)
 
 
         if firstrun:
@@ -414,16 +418,16 @@ class tool(QtGui.QWidget):
             if sectionPos:
                 sectionPosList = sectionPos.strip().split( ',' )
                 for i,pos in  enumerate(sectionPosList):    
-                    self.dealsview.header().moveSection( self.dealsview.header().visualIndex( int(pos) ) , i )
+                    self.listView.header().moveSection( self.listView.header().visualIndex( int(pos) ) , i )
 
-            self.dealsview.sortByColumn( self.headerList.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder )
+            self.listView.sortByColumn( self.headerList.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder )
 
-            self.dealsview.hideColumn(self.headerList.index("PriceID"))
+            self.listView.hideColumn(self.headerList.index("PriceID"))
 
  #       self.main.unlockDB()
 
         for i in range(0, len(self.headerList) ):
-            self.dealsview.resizeColumnToContents(i)
+            self.listView.resizeColumnToContents(i)
 
 
 
