@@ -9,6 +9,7 @@ import timeit
 from datetime import datetime
 import sys
 from PySide import QtCore, QtGui
+import threading
 
 databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
@@ -28,10 +29,12 @@ class statusMsg(object):
         self.processPos = processPos
         self.msg = msg
     
-class _updateDBchild(QtCore.QThread):
+class _updateDBchild(threading.Thread):
     '''
     updatedb child job
     '''
+    name  = "updateDBchild"
+
     def sendMsg(self, newmsg):
         global statusbarMsg
         mutex.lock()
@@ -87,6 +90,7 @@ class _updateDBchild(QtCore.QThread):
 
         self.close()
 
+
     def close(self):
         global databaseLock
         self.mydb.close()
@@ -94,7 +98,8 @@ class _updateDBchild(QtCore.QThread):
         databaseLock = None
         mutex.unlock()
 
-    def terminate(self):
+
+    def stop(self):
         self._active = False
         self.mydb._active = False
         
@@ -107,32 +112,39 @@ class new(object):
     def __init__(self, newmain):
 
         self.main = newmain
+
+    
+    def start(self):
+        if self._updatedb:
+            self.waitQuit()
+
         self._updatedb = _updateDBchild()
+        self._updatedb.daemon=True
+        self._updatedb.setName("updateDBchildThread")
+        self._updatedb.start()
 
     def updateDB(self):
 
 
-        if self._updatedb.isRunning():
+        if self._updatedb and self._updatedb.is_alive():
             return
 
-        self._updatedb.start()
+        self.start()
         
-        self._updatedb.setPriority(QtCore.QThread.LowPriority)
-        self._updatedb.setTerminationEnabled(True)
-
         return True
 
+    def stop(self):
+        if self._updatedb and self._updatedb.is_alive():
+            self._updatedb.stop()
+
     def waitQuit(self):
-        starttime = timeit.default_timer()
 
-        if self._updatedb.isRunning():
-            self.main.setStatusBar("wait updateDB")
+        if self._updatedb and self._updatedb.is_alive():
 
-            self._updatedb.terminate()
+            self._updatedb.stop()
 
-            while self._updatedb.isRunning():
-                print("wait of update %ss" % round(timeit.default_timer() - starttime, 2))
-                self._updatedb.wait(1000)
+            while self._updatedb.is_alive():
+                self._updatedb.join(0.10)
 
     def lockDB(self):
         mutex.lock()
