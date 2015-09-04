@@ -253,7 +253,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         return parentItem.childCount()
 
     def sort(self,col, order):
-        print(col, order)
+        #print(col, order)
         if order == QtCore.Qt.SortOrder.DescendingOrder:
             order=True
         else:
@@ -684,10 +684,8 @@ class tool(QtGui.QWidget):
         if self.autoUpdateLocation.isChecked():
 
             self.autoUpdateLocationTimer.stop()
-            starttime = timeit.default_timer()
 
             self.locationlineEdit.setText( self.main.location.getLocation() )
-            print("location updatet %ss" % round(timeit.default_timer() - starttime, 2) )
 
             self.autoUpdateLocationTimer.start()
         else:
@@ -696,7 +694,6 @@ class tool(QtGui.QWidget):
 
         
     def triggerLocationChanged(self):
-        print("triggerLocationChanged")
         self.setLocationColors()
         self.updateConnectedDealsFromToWindow()
 
@@ -799,7 +796,6 @@ class tool(QtGui.QWidget):
         self.timer_setNextRouteHopToClipbord.start()
     
     def markFakeItem(self):
-        print("markFakeItem")
 
         indexes = self.listView.selectionModel().selectedIndexes()
  
