@@ -127,6 +127,7 @@ class loader(object):
 
         self.__childTask = _child(self.data)
         self.__childTask.daemon=True
+        self.__childTask.setName("EDDNchildThread")
         self.__childTask.start()
 
     def stop(self):
