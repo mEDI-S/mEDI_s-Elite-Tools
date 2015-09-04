@@ -260,7 +260,7 @@ class db(object):
         '''
         cur = self.cursor()
 
-        cur.execute( "select * from sqlite_master order by rootpage" )
+        cur.execute( "select * from sqlite_master where type = 'table' or type = 'index' order by type" )
         result = cur.fetchall()
 
         for table in result:
@@ -898,6 +898,7 @@ class db(object):
 
         cur.close()
         return result
+
     def getShipyardWithShip(self,shipID,systemID=None):
 
         cur = self.cursor()
