@@ -102,6 +102,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.clipboard = QtGui.QClipboard()
 
+        self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
 
     def setStatusBar(self, msg):
         print("statusBar msg: %s" % msg)

@@ -94,6 +94,7 @@ buildOptions = dict(
 #                    includes = [],
                     optimize = 2,
                     compressed =  True,
+                    icon = "img/logo.ico",
                     replace_paths = "*=",
                     #bundle_files = 1
                     include_files = includeFilesList,
