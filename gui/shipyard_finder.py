@@ -113,7 +113,7 @@ class tool(QtGui.QWidget):
         if not self.shipsview.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Station", "Distance", "Age"]
+        self.headerList = ["System","StarDist", "Station", "Distance", "Age"]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x,column in enumerate(self.headerList):
@@ -131,6 +131,7 @@ class tool(QtGui.QWidget):
             model.insertRow(0)
             
             model.setData(model.index(0, self.headerList.index("System") ), shipyard["System"])
+            model.setData(model.index(0, self.headerList.index("StarDist") ), shipyard["StarDist"])
             model.setData(model.index(0, self.headerList.index("Station") ), shipyard["Station"])
             model.setData(model.index(0, self.headerList.index("Distance") ), shipyard["dist"])
             model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(shipyard["age"]) )
