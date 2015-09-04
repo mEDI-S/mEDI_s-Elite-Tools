@@ -233,9 +233,9 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         childItem = index.internalPointer()
         parentItem = childItem.parent()
 
-        if parentItem == self.rootItem:
+        if parentItem ==  None:
             return QtCore.QModelIndex()
-        elif parentItem ==  None:
+        elif parentItem == self.rootItem:
             return QtCore.QModelIndex()
             
         return self.createIndex(parentItem.row(), 0, parentItem)
