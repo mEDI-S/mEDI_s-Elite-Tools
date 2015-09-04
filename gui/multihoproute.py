@@ -17,6 +17,7 @@ __statusTip__ = "Open A %s Window" % __toolname__
 
 
 class RouteTreeInfoItem(object):
+    parentItem = None
     def __init__(self, data, parent=None):
         self.parentItem = parent
         self.itemData = data
@@ -55,6 +56,7 @@ class RouteTreeInfoItem(object):
 
 
 class RouteTreeHopItem(object):
+    parentItem = None
     def __init__(self, data, parent=None, dbresult=None):
         self.parentItem = parent
         self.itemData = data
@@ -93,7 +95,8 @@ class RouteTreeHopItem(object):
             return self.dbresult["priceAid"]
         
     def parent(self):
-        return self.parentItem
+        if self.parentItem:
+            return self.parentItem
 
     def row(self):
         if self.parentItem:
@@ -105,6 +108,7 @@ class RouteTreeHopItem(object):
 
 
 class RouteTreeItem(object):
+    parentItem = None
     def __init__(self, data, parent=None):
         self.parentItem = parent
         self.itemData = data
@@ -141,7 +145,8 @@ class RouteTreeItem(object):
             return None
 
     def parent(self):
-        return self.parentItem
+        if self.parentItem:
+            return self.parentItem
 
     def row(self):
         if self.parentItem:
@@ -230,7 +235,9 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         if parentItem == self.rootItem:
             return QtCore.QModelIndex()
-
+        elif parentItem ==  None:
+            return QtCore.QModelIndex()
+            
         return self.createIndex(parentItem.row(), 0, parentItem)
 
     def rowCount(self, parent=None):
