@@ -29,6 +29,7 @@ class route(object):
     options["minTradeProfit"] = 1000  # only to minimize results (speedup)
     options["minStock"] = 50000  # > 10000 = stable route > 50000 = extrem stable route and faster results
     options["resultLimit"] = None # calculated by self.limitCalc()
+    options["padsize"] = None # None = Any, allow a list
 
     maxAgeDate = None # calculated by setMaxAgeDate()
     elitetime = None
@@ -109,7 +110,7 @@ class route(object):
         self.calcRating()
 
     def findStartDeal(self):
-        startdeals = self.mydb.getBestDealsinDistance( self.options["startSystem"], self.options["maxDist"], self.options["maxSearchRange"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"])
+        startdeals = self.mydb.getBestDealsinDistance( self.options["startSystem"], self.options["maxDist"], self.options["maxSearchRange"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"], self.options["padsize"])
 
         for deal in startdeals:
             self.deals.append({ "profit":0, "time":0 , "path":[deal],"backToStartDeal":None })
@@ -120,7 +121,7 @@ class route(object):
             print("deep", deep+1)
             for deal in self.deals[:]:
                 if deep == len(deal["path"]):
-                    delsX = self.mydb.getBestDealsFromStationInDistance(deal["path"][ len(deal["path"])-1 ]["StationBID"], self.options["maxDist"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"])
+                    delsX = self.mydb.getBestDealsFromStationInDistance(deal["path"][ len(deal["path"])-1 ]["StationBID"], self.options["maxDist"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"], self.options["padsize"])
                     for dealX in delsX:
                         ''' if same item in route already exist?'''
                         ifExists = None

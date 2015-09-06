@@ -666,7 +666,7 @@ class db(object):
 
         result = cur.fetchone()
 
-    def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50):
+    def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50, onlyLpads=None):
         if isinstance(system,int):
             systemID = system
         else:
@@ -678,6 +678,10 @@ class db(object):
         cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
+        padsizePart = ""
+        if onlyLpads:
+            padsizePart = " AND stationA.max_pad_size = 'L' "
+            
         # use a temp table to build a startsystem list
         cur.execute("DROP TABLE IF EXISTS TEAMP_selectSystemA ")
         cur.execute("""CREATE TEMPORARY TABLE TEAMP_selectSystemA AS select systemA.id AS id, systemA.posX AS posX, systemA.posY AS posY, systemA.posZ AS posZ, systemA.System AS System, systemA.startDist AS startDist
@@ -694,10 +698,11 @@ class db(object):
                         AND priceA.Stock>=?
                         AND systemA.permit != 1
                         AND stationA.StarDist <= ?
-
+                        %s
                     group by systemA.id
                     
-                        """    , ( systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist)  ) 
+                        """ % (padsizePart)   ,
+                         ( systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist)  ) 
 
         # check the dealsIndistance cache
         cur.execute( """select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
@@ -710,6 +715,10 @@ class db(object):
         systemList = cur.fetchall()
         if systemList:
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
+
+        padsizePart = ""
+        if onlyLpads:
+            padsizePart = " AND stationB.max_pad_size = 'L' "
 
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.id, priceB.id,
@@ -749,12 +758,13 @@ class db(object):
                         AND  priceB.StationBuy > priceA.StationSell 
                         AND priceB.StationBuy-priceA.StationSell >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                        %s
 
                     order by profit DESC
 
                         limit ?
 
-                        """    , ( distance, maxAgeDate, minStock, maxStarDist, maxAgeDate, maxStarDist, minProfit, resultLimit)  ) #  
+                        """ % (padsizePart)   , ( distance, maxAgeDate, minStock, maxStarDist, maxAgeDate, maxStarDist, minProfit, resultLimit)  ) #  
 
         result = cur.fetchall()
 
@@ -762,7 +772,7 @@ class db(object):
         return result
 
 
-    def getBestDealsFromStationInDistance(self,stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock, reslultLimit=20):
+    def getBestDealsFromStationInDistance(self,stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock, reslultLimit=20, onlyLpads=None):
 
         cur = self.cursor()
 
@@ -782,6 +792,11 @@ class db(object):
         systemList = cur.fetchall()
         if systemList:
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
+
+        padsizePart = ""
+        if onlyLpads:
+            padsizePart = " AND stationB.max_pad_size = 'L' "
+
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID, priceA.id AS priceAid, priceB.StationBuy, priceA.StationSell,
                         systemB.System AS SystemB, priceB.SystemID AS SystemBID , priceB.id AS priceBid, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
@@ -815,9 +830,13 @@ class db(object):
                         AND priceB.StationBuy > priceA.StationSell
                         AND profit >= ? 
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+
+                        %s
+                        
                         order by profit DESC
                         limit ?
-                        """    , ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
+                        """ % (padsizePart) ,
+                        ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
         
         result = cur.fetchall()
 

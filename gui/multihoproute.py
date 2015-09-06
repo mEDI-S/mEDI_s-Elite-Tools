@@ -382,6 +382,12 @@ class tool(QtGui.QWidget):
         self.forceMaxHops.setToolTip("Show only routes with Max Hops+Back Hop")
         gridLayout.addWidget(self.forceMaxHops, 1, 0)
 
+        self.onlyLpadsize = QtGui.QCheckBox("Only L Pads")
+        if self.mydb.getConfig("option_mhr_onlyLpadsize"):
+            self.onlyLpadsize.setChecked(True)
+        self.onlyLpadsize.setToolTip("Find only stations with a large landingpad")
+        gridLayout.addWidget(self.onlyLpadsize, 2, 0)
+
 
         self.autoUpdateLocation = QtGui.QCheckBox("Location Update")
         self.autoUpdateLocation.setChecked(True)
@@ -613,6 +619,7 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_mhr_showOptions', self.showOptions.isChecked() )
         self.mydb.setConfig( 'option_mhr_forceMaxHops', self.forceMaxHops.isChecked() )
 
+        self.mydb.setConfig( 'option_mhr_onlyLpadsize', self.onlyLpadsize.isChecked() )
 
     def startRouteSearch(self):
         self.activeRoutePointer = None
@@ -630,7 +637,11 @@ class tool(QtGui.QWidget):
         self.route.setOption( "maxAge", self.maxAgeSpinBox.value() )
         self.route.setOption( "minTradeProfit", self.minProfitSpinBox.value() )
 
-        
+        if self.onlyLpadsize.isChecked():
+            self.route.setOption( "padsize", ["L"] )
+        else:
+            self.route.setOption( "padsize", None )
+            
         self.route.calcDefaultOptions()
 
         forceHops = None
