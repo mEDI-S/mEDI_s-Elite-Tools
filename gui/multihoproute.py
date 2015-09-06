@@ -685,7 +685,13 @@ class tool(QtGui.QWidget):
 
             self.autoUpdateLocationTimer.stop()
 
-            self.locationlineEdit.setText( self.main.location.getLocation() )
+            location = self.main.location.getLocation()
+            if not location:
+                print("stop update location")
+                self.autoUpdateLocation.setChecked(False)
+                return
+
+            self.locationlineEdit.setText( location )
 
             self.autoUpdateLocationTimer.start()
         else:
