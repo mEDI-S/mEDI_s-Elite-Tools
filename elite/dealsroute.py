@@ -175,7 +175,7 @@ class route(object):
             lapsInHour = int(3600 / deal["time"])  # round down
         
             profitHour = int(3600.0 / deal["time"] * deal["profit"]) #hmm mit lapsInHour oder mit hochrechnung rechnen?
-            deal["profitAverage"] = deal["profit"] / (len(deal["path"]) + 1)
+            deal["profitAverage"] = round(deal["profit"] / (len(deal["path"]) + 1),0)
             deal["profitHour"] = profitHour
             deal["lapsInHour"] = lapsInHour
 
