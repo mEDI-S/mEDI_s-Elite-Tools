@@ -129,7 +129,20 @@ class RouteTreeItem(object):
             return self.childItems.index(child )
         elif isinstance( child, list) and isinstance( child[0], QtCore.QModelIndex):
             return self.childItems.index(child[0].internalPointer())
-            #print("target", type(child[0]))
+
+
+    def hopPos(self, child):
+        if isinstance( child, list) and isinstance( child[0], QtCore.QModelIndex):
+            child = child[0].internalPointer()
+
+        if isinstance( child, RouteTreeHopItem):
+            pos = -1
+            for item in self.childItems:
+                if isinstance( item, RouteTreeHopItem):
+                    pos += 1
+                if item == child:
+                    return pos
+
 
     def getListIndex(self):
         if isinstance( self.itemData[0], int): #via displayed Nr.
@@ -838,11 +851,11 @@ class tool(QtGui.QWidget):
         
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
 
-            routeId = indexes[0].internalPointer().parent().getListIndex()
-            hopID =  indexes[0].internalPointer().parent().childPos( indexes )
-
-#            routeDeal = indexes[0].internalPointer().parent().getInternalRoutePointer()
-#            print(self.route.deals.index(routeDeal), routeId )
+            hopID =  indexes[0].internalPointer().parent().hopPos( indexes )
+            
+            routeDeal = indexes[0].internalPointer().parent().getInternalRoutePointer()
+            routeId = self.route.deals.index(routeDeal)
+            
             return (routeId, hopID)
 
         return (None, None)
