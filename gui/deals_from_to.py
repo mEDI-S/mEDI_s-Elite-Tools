@@ -45,6 +45,7 @@ class tool(QtGui.QWidget):
         self.minProfitSpinBox.setRange(0, 10000)
         self.minProfitSpinBox.setSuffix("cr")
         self.minProfitSpinBox.setSingleStep(100)
+        self.minProfitSpinBox.setAlignment(QtCore.Qt.AlignRight)
         minTradeProfit = self.mydb.getConfig( 'option_dft_minProfit' )
         if minTradeProfit:
             self.minProfitSpinBox.setValue( minTradeProfit )
@@ -56,6 +57,7 @@ class tool(QtGui.QWidget):
         self.maxAgeSpinBox = QtGui.QSpinBox()
         self.maxAgeSpinBox.setRange(1, 1000)
         self.maxAgeSpinBox.setSuffix("Day")
+        self.maxAgeSpinBox.setAlignment(QtCore.Qt.AlignRight)
         configval = self.mydb.getConfig( 'option_dft_maxAgeDate' )
         if configval:
             self.maxAgeSpinBox.setValue( configval )
@@ -73,6 +75,7 @@ class tool(QtGui.QWidget):
         self.maxStartDistSpinBox.setRange(10, 7000000)
         self.maxStartDistSpinBox.setSuffix("ls")
         self.maxStartDistSpinBox.setSingleStep(10)
+        self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
         maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
         if maxStarDist:
             self.maxStartDistSpinBox.setValue( maxStarDist )
@@ -87,6 +90,7 @@ class tool(QtGui.QWidget):
         self.minStockSpinBox = QtGui.QSpinBox()
         self.minStockSpinBox.setRange(0, 1000000)
         self.minStockSpinBox.setSingleStep(100)
+        self.minStockSpinBox.setAlignment(QtCore.Qt.AlignRight)
         configval = self.mydb.getConfig( 'option_dft_minStock' )
         if configval:
             self.minStockSpinBox.setValue( configval )
@@ -360,7 +364,7 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit","FromAge","ToAge"]
+        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit","FromAge","ToAge",""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x,column in enumerate(self.headerList):
@@ -404,14 +408,20 @@ class tool(QtGui.QWidget):
                 model.setData(model.index(0, self.headerList.index("To") ), deal["toStation"])
                 model.setData(model.index(0, self.headerList.index("Item") ), deal["itemName"])
                 model.setData(model.index(0, self.headerList.index("Buy") ), deal["StationSell"])
+                model.item(0, self.headerList.index("Buy")).setTextAlignment(QtCore.Qt.AlignRight)
                 model.setData(model.index(0, self.headerList.index("Sell") ), deal["StationBuy"])
+                model.item(0, self.headerList.index("Sell")).setTextAlignment(QtCore.Qt.AlignRight)
                 model.setData(model.index(0, self.headerList.index("Profit") ), deal["Profit"])
+                model.item(0, self.headerList.index("Profit")).setTextAlignment(QtCore.Qt.AlignRight)
                 model.setData(model.index(0, self.headerList.index("Stock") ), deal["Stock"])
+                model.item(0, self.headerList.index("Stock")).setTextAlignment(QtCore.Qt.AlignRight)
                 model.setData(model.index(0, self.headerList.index("FromAge") ), guitools.convertDateimeToAgeStr(deal["fromAge"]) )
+                model.item(0, self.headerList.index("FromAge")).setTextAlignment(QtCore.Qt.AlignCenter)
                 model.setData(model.index(0, self.headerList.index("ToAge") ), guitools.convertDateimeToAgeStr(deal["toAge"]) )
+                model.item(0, self.headerList.index("ToAge")).setTextAlignment(QtCore.Qt.AlignCenter)
+
 
         self.listView.setModel(model)
-
 
         if firstrun:
             sectionPos  = self.mydb.getConfig( 'option_dft.header.sectionPos' )

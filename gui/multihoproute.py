@@ -172,6 +172,7 @@ class RouteTreeItem(object):
             return self.itemData[1]
 
 
+
 class RouteTreeModel(QtCore.QAbstractItemModel):
     forceHops = None
 
@@ -205,6 +206,16 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             elif isinstance( item, RouteTreeInfoItem):
                 return QtGui.QColor(255, 0, 0, 64)
 
+        if role == QtCore.Qt.TextAlignmentRole:
+            item = index.internalPointer()
+            if isinstance( item, RouteTreeItem):
+                if index.column() == 0:
+                    return QtCore.Qt.AlignCenter
+                elif index.column() > 0 and index.column() < 5: #all profit = align right
+                    return QtCore.Qt.AlignRight
+                else:
+                    return QtCore.Qt.AlignCenter
+                    
         if role != QtCore.Qt.DisplayRole:
             return None
 
@@ -222,7 +233,9 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.rootItem.data(section)
-        return None
+
+        if role == QtCore.Qt.TextAlignmentRole:
+            return QtCore.Qt.AlignCenter
 
     def index(self, row, column, parent=QtCore.QModelIndex() ):
         if not self.hasIndex(row, column, parent):
@@ -410,6 +423,7 @@ class tool(QtGui.QWidget):
         label = QtGui.QLabel("Max Hops:")
         self.maxHopsspinBox = QtGui.QSpinBox()
         self.maxHopsspinBox.setRange(1, 20)
+        self.maxHopsspinBox.setAlignment(QtCore.Qt.AlignRight)
         self.maxHopsspinBox.setValue( self.route.getOption("tradingHops"))
         gridLayout.addWidget(label, 1, 1)
         gridLayout.addWidget(self.maxHopsspinBox, 1, 2)
@@ -418,6 +432,7 @@ class tool(QtGui.QWidget):
         self.searchRangeSpinBox = QtGui.QSpinBox()
         self.searchRangeSpinBox.setRange(0, 1000)
         self.searchRangeSpinBox.setSuffix("ly")
+        self.searchRangeSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.searchRangeSpinBox.setValue( self.route.getOption("maxSearchRange") )
         gridLayout.addWidget(label, 1, 3)
         gridLayout.addWidget(self.searchRangeSpinBox, 1, 4)
@@ -427,6 +442,7 @@ class tool(QtGui.QWidget):
         self.maxAgeSpinBox = QtGui.QSpinBox()
         self.maxAgeSpinBox.setRange(1, 1000)
         self.maxAgeSpinBox.setSuffix("Day")
+        self.maxAgeSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.maxAgeSpinBox.setValue( self.route.getOption("maxAge") )
         gridLayout.addWidget(label, 1, 5)
         gridLayout.addWidget(self.maxAgeSpinBox, 1, 6)
@@ -437,6 +453,7 @@ class tool(QtGui.QWidget):
         self.minProfitSpinBox.setRange(1000, 10000)
         self.minProfitSpinBox.setSuffix("cr")
         self.minProfitSpinBox.setSingleStep(100)
+        self.minProfitSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.minProfitSpinBox.setValue( self.route.getOption("minTradeProfit") )
         gridLayout.addWidget(label, 2, 1)
         gridLayout.addWidget(self.minProfitSpinBox, 2, 2)
@@ -447,6 +464,7 @@ class tool(QtGui.QWidget):
         self.maxDistSpinBox.setRange(0, 1000)
         self.maxDistSpinBox.setSuffix("ly")
         self.maxDistSpinBox.setSingleStep(1)
+        self.maxDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.maxDistSpinBox.setValue( self.route.getOption("maxDist") )
         gridLayout.addWidget(label, 2, 3)
         gridLayout.addWidget(self.maxDistSpinBox, 2, 4)
@@ -456,7 +474,8 @@ class tool(QtGui.QWidget):
         self.maxStartDistSpinBox = QtGui.QSpinBox()
         self.maxStartDistSpinBox.setRange(10, 7000000)
         self.maxStartDistSpinBox.setSuffix("ls")
-        self.maxStartDistSpinBox.setSingleStep(10)
+        self.maxStartDistSpinBox.setSingleStep(100)
+        self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.maxStartDistSpinBox.setValue( self.route.getOption("maxStarDist") )
         gridLayout.addWidget(label, 2, 5)
         gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
@@ -481,6 +500,7 @@ class tool(QtGui.QWidget):
         self.maxJumpDistSpinBox.setRange(0, 1000)
         self.maxJumpDistSpinBox.setSuffix("ly")
         self.maxJumpDistSpinBox.setSingleStep(1)
+        self.maxJumpDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.maxJumpDistSpinBox.setValue( self.route.getOption("maxJumpDistance") )
         gridLayout.addWidget(label, 3, 3)
         gridLayout.addWidget(self.maxJumpDistSpinBox, 3, 4)
@@ -490,6 +510,7 @@ class tool(QtGui.QWidget):
         self.minStockSpinBox = QtGui.QSpinBox()
         self.minStockSpinBox.setRange(1000, 1000000)
         self.minStockSpinBox.setSingleStep(100)
+        self.minStockSpinBox.setAlignment(QtCore.Qt.AlignRight)
         self.minStockSpinBox.setValue( self.route.getOption("minStock") )
         gridLayout.addWidget(label, 3, 5)
         gridLayout.addWidget(self.minStockSpinBox, 3, 6)
@@ -674,6 +695,7 @@ class tool(QtGui.QWidget):
         QtCore.QObject.connect(routeModel, QtCore.SIGNAL ('layoutChanged()'), self.routeModellayoutChanged)
         self.listView.setModel(routeModel)
 #        routeModel.layoutChanged.emit()
+
         self.listView.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
         self.listView.hideColumn(1)
 

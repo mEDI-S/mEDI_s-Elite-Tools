@@ -130,7 +130,7 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System","StarDist", "Station", "Distance", "Age"]
+        self.headerList = ["System","StarDist", "Station", "Distance", "Age", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x,column in enumerate(self.headerList):
@@ -146,12 +146,16 @@ class tool(QtGui.QWidget):
 
         for shipyard in shipyards:
             model.insertRow(0)
-            
             model.setData(model.index(0, self.headerList.index("System") ), shipyard["System"])
             model.setData(model.index(0, self.headerList.index("StarDist") ), shipyard["StarDist"])
+            model.item(0, self.headerList.index("StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
+
             model.setData(model.index(0, self.headerList.index("Station") ), shipyard["Station"])
-            model.setData(model.index(0, self.headerList.index("Distance") ), shipyard["dist"])
+            model.setData(model.index(0, self.headerList.index("Distance") ),  shipyard["dist"])
+            model.item(0, self.headerList.index("Distance")).setTextAlignment(QtCore.Qt.AlignRight)
+
             model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(shipyard["age"]) )
+            model.item(0, self.headerList.index("Age")).setTextAlignment(QtCore.Qt.AlignCenter)
 
         self.listView.setModel(model)
 
