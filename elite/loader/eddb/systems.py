@@ -68,18 +68,26 @@ class loader(object):
             totalCount += 1
             modified = datetime.fromtimestamp(system["updated_at"])
 
+            powerID = None
+            if system["power_control_faction"]:
+                powerID = self.mydb.getPowerID( system["power_control_faction"] )
+                if not powerID:
+                    cur.execute( "insert or IGNORE into powers (Name) values (?) ", ( system["power_control_faction"] ,))
+                    powerID = self.mydb.getPowerID( system["power_control_faction"] )
+
+
             if system["name"].lower() not in systemCache:
                 insertCount += 1
-                cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, modified) values (?,?,?,?,?,?) ",
-                                        (system["name"] , float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], modified))
+                cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, modified) values (?,?,?,?,?,?,?) ",
+                                        (system["name"] , float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, modified))
 
             elif system["name"].lower() in systemCache and systemCache[ system["name"].lower() ][1] < modified:
                 updateCount += 1
-                updateSystem.append([system["name"], float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], modified, systemCache[ system["name"].lower() ][0] ]) 
+                updateSystem.append([system["name"], float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, modified, systemCache[ system["name"].lower() ][0] ]) 
 
-
+                
         if updateSystem:
-            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, modified=? where id is ?" , updateSystem)
+            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, power_control=?, modified=? where id is ?" , updateSystem)
 
         if updateCount or insertCount:
             print("update", updateCount, "insert", insertCount, "from", totalCount, "systems")

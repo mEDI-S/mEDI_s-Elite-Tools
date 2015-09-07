@@ -79,6 +79,7 @@ class db(object):
             self.setConfig('initRun', 0)
             
         if not self.guiMode:
+            self.initDB()
             self.updateData()
     
 
@@ -183,7 +184,7 @@ class db(object):
 
 
         #systems
-        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, modified timestamp)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, modified timestamp)" )
 #        self.con.execute( "create UNIQUE index  IF NOT EXISTS systems_unique_System on systems (System)" )
 
         #stations
@@ -224,6 +225,9 @@ class db(object):
         self.con.execute( "CREATE TABLE IF NOT EXISTS ships (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
         self.con.execute( "CREATE TABLE IF NOT EXISTS shipyard (SystemID INT,StationID INT ,ShipID INT, Price INT, modifydate timestamp)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS shipyard_unique_systemID_StationID_ShipID on shipyard (systemID, StationID, ShipID)" )
+
+        #powers
+        self.con.execute( "CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
 
         # trigger to controll the dynamic cache
         self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
@@ -879,6 +883,7 @@ class db(object):
 
         cur.close()
         return result
+
     def getAllSystems(self):
         cur = self.cursor()
         
@@ -1001,6 +1006,45 @@ class db(object):
                     
     def close(self):
         self.con.close()
+
+    def getPowerID(self, power):
+        power = power.lower()
+
+        cur = self.cursor()
+        cur.execute( "select id from powers where LOWER(Name)=? limit 1", ( power, ) )
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
+
+    def getAllPowers(self):
+        cur = self.cursor()
+        
+        cur.execute("""select id, Name FROM powers order by Name """)
+
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+
+    def getSystemsWithPower(self, powerID, systemID=None):
+        cur = self.cursor()
+
+        if systemID:
+            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            systemA = cur.fetchone()
+        else:
+            systemA = {"posX":0.0, "posY":0.0, "posZ":0.0}
+
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
+                     FROM systems
+                where 
+                power_control=? 
+                """ , (systemA["posX"], systemA["posY"], systemA["posZ"], powerID,))
+        result = cur.fetchall()
+
+        cur.close()
+        return result
 
 if __name__ == '__main__':
     #mydb = db()

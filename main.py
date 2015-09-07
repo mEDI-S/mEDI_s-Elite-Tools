@@ -60,6 +60,7 @@ class MainWindow(QtGui.QMainWindow):
     multiHopRouteWidget = []
     dealsFromToWidget = []
     shipyardFinderWidget = []
+    powerControlFinderWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -88,6 +89,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
+        self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
 
         self.setStatusBar("Welcomme to mEDI's Elite Tools")
 
