@@ -34,6 +34,13 @@ class tool(QtGui.QWidget):
 
         gridLayout = QtGui.QGridLayout()
 
+
+        gridLayout.setColumnStretch(1, 1)
+        gridLayout.setColumnStretch(3, 2)
+        gridLayout.setColumnStretch(4, 1)
+        gridLayout.setColumnStretch(6, 2)
+
+
         self.autoUpdateLocation = QtGui.QCheckBox("Auto Switch/Location")
         self.autoUpdateLocation.setChecked(False)
         self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
@@ -49,8 +56,8 @@ class tool(QtGui.QWidget):
         minTradeProfit = self.mydb.getConfig( 'option_dft_minProfit' )
         if minTradeProfit:
             self.minProfitSpinBox.setValue( minTradeProfit )
-        gridLayout.addWidget(label, 1, 1)
-        gridLayout.addWidget(self.minProfitSpinBox, 1, 2)
+        gridLayout.addWidget(label, 1, 2)
+        gridLayout.addWidget(self.minProfitSpinBox, 1, 3)
 
 
         label = QtGui.QLabel("Max Data Age:")
@@ -63,26 +70,8 @@ class tool(QtGui.QWidget):
             self.maxAgeSpinBox.setValue( configval )
         else:
             self.maxAgeSpinBox.setValue( 14 )
-        gridLayout.addWidget(label, 1, 3)
-        gridLayout.addWidget(self.maxAgeSpinBox, 1, 4)
-
-
-
-
-
-        label = QtGui.QLabel("Max Star Dist:")
-        self.maxStartDistSpinBox = QtGui.QSpinBox()
-        self.maxStartDistSpinBox.setRange(10, 7000000)
-        self.maxStartDistSpinBox.setSuffix("ls")
-        self.maxStartDistSpinBox.setSingleStep(10)
-        self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
-        if maxStarDist:
-            self.maxStartDistSpinBox.setValue( maxStarDist )
-        gridLayout.addWidget(label, 2, 3)
-        gridLayout.addWidget(self.maxStartDistSpinBox, 2, 4)
-
-
+        gridLayout.addWidget(label, 1, 5)
+        gridLayout.addWidget(self.maxAgeSpinBox, 1, 6)
 
 
 
@@ -96,10 +85,22 @@ class tool(QtGui.QWidget):
             self.minStockSpinBox.setValue( configval )
         else:
             self.minStockSpinBox.setValue( 100 )
-        gridLayout.addWidget(label, 2, 1)
-        gridLayout.addWidget(self.minStockSpinBox, 2, 2)
+        gridLayout.addWidget(label, 2, 2)
+        gridLayout.addWidget(self.minStockSpinBox, 2, 3)
 
 
+
+        label = QtGui.QLabel("Max Star Dist:")
+        self.maxStartDistSpinBox = QtGui.QSpinBox()
+        self.maxStartDistSpinBox.setRange(10, 7000000)
+        self.maxStartDistSpinBox.setSuffix("ls")
+        self.maxStartDistSpinBox.setSingleStep(10)
+        self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
+        maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
+        if maxStarDist:
+            self.maxStartDistSpinBox.setValue( maxStarDist )
+        gridLayout.addWidget(label, 2, 5)
+        gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
 
 
         fromsystemlabel = QtGui.QLabel("From System:")
