@@ -39,10 +39,6 @@ class RouteTreeInfoItem(object):
         if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
             if column == 0:
                 return self.itemData
-
-    def getPiceID(self):
-        if isinstance( self.itemData, list):
-            return self.itemData[1]["priceAid"]
         
     def parent(self):
         return self.parentItem
@@ -57,11 +53,10 @@ class RouteTreeInfoItem(object):
 
 class RouteTreeHopItem(object):
     parentItem = None
-    def __init__(self, data, parent=None, dbresult=None):
+    def __init__(self, data, parent=None):
         self.parentItem = parent
         self.itemData = data
         self.childItems = []
-        self.dbresult = dbresult
         self._BGColor = None
         
     def appendChild(self, item):
@@ -82,6 +77,7 @@ class RouteTreeHopItem(object):
 
     def BGColor(self):
         return self._BGColor
+
     def setBGColor(self, BGColor):
         self._BGColor = BGColor
 
@@ -89,11 +85,7 @@ class RouteTreeHopItem(object):
         if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
             if column == 0:
                 return self.itemData
-
-    def getPiceID(self):
-        if self.itemData:
-            return self.dbresult["priceAid"]
-        
+     
     def parent(self):
         if self.parentItem:
             return self.parentItem
@@ -349,7 +341,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                                                                                                 self.route.getStationB(deal, hopID) )
 
 
-                parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
+                parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1]))
 
 
 
@@ -375,8 +367,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                                                                                                 backdist,
                                                                                                 self.route.getSystemB(deal, hopID),
                                                                                                 self.route.getStationB(deal, hopID) ) 
-                temp = { "SystemB":deal["path"][0]["SystemA"], "SystemA":before["SystemB"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
-                parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], temp))
+                parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1]))
             else:
                 columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(deal, hopID),
                                                                                    self.route.getStationA(deal, hopID),
@@ -820,13 +811,16 @@ class tool(QtGui.QWidget):
         if location and self.listView.model():
             for rid in range(0,self.listView.model().rowCount(QtCore.QModelIndex())):
                 if self.layoutLock: return
-                route = self.listView.model().index( rid, 0).internalPointer()
-                for cid in range( 0, route.childCount() ):
-                    child = route.child(cid)
+                guiRroute = self.listView.model().index( rid, 0).internalPointer()
+                hopID = -1
+                for cid in range( 0, guiRroute.childCount() ):
+                    child = guiRroute.child(cid)
                     #print(child)
                     if isinstance( child, RouteTreeHopItem):
-                        if child.dbresult["SystemA"].lower() == location.lower():
-                            if route.activeRoute:
+                        hopID += 1
+                        deal = child.parent().getInternalRoutePointer()
+                        if self.route.getSystemA(deal, hopID).lower() == location.lower():
+                            if deal["activeRoute"]:
                                 child.setBGColor( QtGui.QColor(QtCore.Qt.green) )
                             else:
                                 child.setBGColor( QtGui.QColor(QtCore.Qt.yellow) )
