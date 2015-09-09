@@ -14,7 +14,7 @@ import gui.guitools as guitools
 
 __toolname__ = "Multi Hop Route Finder"
 __statusTip__ = "Open A %s Window" % __toolname__
-
+_debug = None
 
 class RouteTreeInfoItem(object):
     parentItem = None
@@ -109,12 +109,13 @@ class RouteTreeHopItem(object):
 
 class RouteTreeItem(object):
     parentItem = None
+    childItems = []
     def __init__(self, data, parent=None):
+        self.childItems = []
         self.parentItem = parent
         self.itemData = data
-        self.childItems = []
         self.activeRoute = None
-   
+
     def appendChild(self, item):
         self.childItems.append(item)
 
@@ -152,10 +153,12 @@ class RouteTreeItem(object):
         return len(self.itemData)
 
     def data(self, column):
-        try:
+        if isinstance(self.itemData, list) and column < len(self.itemData):
             return self.itemData[column]
-        except IndexError:
-            return None
+        elif isinstance(self.itemData, tuple) and column < len(self.itemData):
+            return self.itemData[column]
+        elif column != 8:
+            print(type(self.itemData), column)
 
     def parent(self):
         if self.parentItem:
@@ -181,17 +184,19 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         self.route = route
         self.cleanModel()
         self.forceHops = forceHops
-        self.setupModelData(route.deals, self.rootItem)
+        self.setupModelData( )
 
     def cleanModel(self):
+        if _debug: print("cleanModel")
+           
         self.rootItem  = RouteTreeItem(("Nr.","routeidx","Profit/h", "Profit","Ø Profit","StartDist","Laps/h","LapTime", "Status"))
 
     def columnCount(self, parent):
         if parent.isValid():
             return parent.internalPointer().columnCount()
-        else:
+        elif self.rootItem:
             return self.rootItem.columnCount()
-
+            
     def data(self, index, role):
         if not index.isValid():
             return None
@@ -201,7 +206,8 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             if isinstance( item, RouteTreeHopItem):
                 return item.BGColor() #yellow or green https://srinikom.github.io/pyside-docs/PySide/QtGui/QColor.html
             elif isinstance( item, RouteTreeItem):
-                if item.activeRoute:
+                pointer = item.getInternalRoutePointer()
+                if pointer and pointer["activeRoute"]:
                     return QtGui.QColor(QtCore.Qt.cyan)
             elif isinstance( item, RouteTreeInfoItem):
                 return QtGui.QColor(255, 0, 0, 64)
@@ -221,8 +227,8 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 
         item = index.internalPointer()
-
-        return item.data(index.column())
+        if isinstance( index, QtCore.QModelIndex) and not self.route.locked:
+            return item.data(index.column())
 
     def flags(self, index):
         if not index.isValid():
@@ -253,12 +259,14 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
 
     def parent(self, index):
-        if not index.isValid():
+        if not index.isValid() or self.route.locked:
             return QtCore.QModelIndex()
-
         childItem = index.internalPointer()
-        parentItem = childItem.parent()
-
+        if childItem:
+            parentItem = childItem.parent()
+        else:
+            return QtCore.QModelIndex()
+            
         if parentItem ==  None:
             return QtCore.QModelIndex()
         elif parentItem == self.rootItem:
@@ -279,46 +287,51 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         return parentItem.childCount()
 
     def sort(self,col, order):
+        if _debug: print("sort")
         #print(col, order)
+        if self.route.locked: return
         if order == QtCore.Qt.SortOrder.DescendingOrder:
             order=True
         else:
             order=False
-
         self.layoutAboutToBeChanged.emit()
+        self.modelAboutToBeReset.emit()
         if col==2:
             self.route.sortDealsByProfitH(order)
             self.cleanModel()
-            self.setupModelData(self.route.deals, self.rootItem)
+            self.setupModelData( )
         elif col==3:
             self.route.sortDealsByProfit(order)
             self.cleanModel()
-            self.setupModelData(self.route.deals, self.rootItem)
+            self.setupModelData()
         elif col==4:
             self.route.sortDealsByProfitAverage(order)
             self.cleanModel()
-            self.setupModelData(self.route.deals, self.rootItem)
+            self.setupModelData( )
         elif col==5:
             self.route.sortDealsByStartDist(order)
             self.cleanModel()
-            self.setupModelData(self.route.deals, self.rootItem)
+            self.setupModelData( )
         elif col==7:
             self.route.sortDealsByLapTime(order)
             self.cleanModel()
-            self.setupModelData(self.route.deals, self.rootItem)
+            self.setupModelData( )
+        self.modelReset.emit()
         self.layoutChanged.emit()
 
-    def setupModelData(self, deals, parent):
-        parents = [parent]
-        count = 0
-        for routeId, deal in enumerate(deals):
+    def setupModelData(self):
+        if _debug: print("setupModelData")
+        parents = [self.rootItem]
+
+        for routeId, deal in enumerate( self.route.deals ):
 
             if routeId >= 100: break
-
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
+
             
             columnData = [routeId+1, deal, deal["profitHour"], deal["profit"], deal["profitAverage"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
+
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
 
 
@@ -328,12 +341,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         
             for hopID,d in enumerate(deal["path"]):
                 #print(d.keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(routeId, hopID), 
-                                                                                                self.route.getStationA(routeId, hopID),
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID), 
+                                                                                                self.route.getStationA(deal, hopID),
                                                                                                 before["StarDist"] , d["itemName"],d["StationSell"],
                                                                                                 d["StationBuy"],  d["profit"], d["dist"],
-                                                                                                self.route.getSystemB(routeId, hopID),
-                                                                                                self.route.getStationB(routeId, hopID) )
+                                                                                                self.route.getSystemB(deal, hopID),
+                                                                                                self.route.getStationB(deal, hopID) )
 
 
                 parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1], d))
@@ -341,7 +354,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 
                 if before["refuel"] != 1:
-                    columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(routeId, hopID)
+                    columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(deal, hopID)
                     parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
                 
                 before = d
@@ -353,26 +366,28 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         
             if deal["backToStartDeal"]:
                 #print(deal["backToStartDeal"].keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(routeId, hopID),
-                                                                                                self.route.getStationA(routeId, hopID),
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
+                                                                                                self.route.getStationA(deal, hopID),
                                                                                                 before["StarDist"], deal["backToStartDeal"]["itemName"],
                                                                                                 deal["backToStartDeal"]["StationSell"],
                                                                                                 deal["backToStartDeal"]["StationBuy"],
                                                                                                 deal["backToStartDeal"]["profit"],
-                                                                                                backdist, self.route.getSystemB(routeId, hopID), self.route.getStationB(routeId, hopID) ) 
+                                                                                                backdist,
+                                                                                                self.route.getSystemB(deal, hopID),
+                                                                                                self.route.getStationB(deal, hopID) ) 
                 temp = { "SystemB":deal["path"][0]["SystemA"], "SystemA":before["SystemB"], "priceAid":deal["backToStartDeal"]["priceAid"] } # TODO: bad hack
                 parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1], temp))
             else:
-                columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(routeId, hopID),
-                                                                                   self.route.getStationA(routeId, hopID),
+                columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(deal, hopID),
+                                                                                   self.route.getStationA(deal, hopID),
                                                                                    before["StarDist"], backdist,
-                                                                                   self.route.getSystemB(routeId, hopID),
-                                                                                   self.route.getStationB(routeId, hopID)  )
+                                                                                   self.route.getSystemB(deal, hopID),
+                                                                                   self.route.getStationB(deal, hopID)  )
                 parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
 
         
             if before["refuel"] != 1:
-                columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(routeId, hopID)
+                columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(deal, hopID)
                 parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
         
             # not more a child
@@ -386,7 +401,11 @@ class tool(QtGui.QWidget):
     route = None
     activeRoutePointer = None
     connectedDealsFromToWindows = None
-
+    layoutLock = None
+    sortingIsOk = None
+    enabelSortingTimer = None
+    
+#    _debug = True
     def __init__(self, main):
         super(tool, self).__init__(main)
 
@@ -656,7 +675,8 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig( 'option_mhr_onlyLpadsize', self.onlyLpadsize.isChecked() )
 
     def startRouteSearch(self):
-        self.activeRoutePointer = None
+        self.unsetActiveRoutePointer()
+
         self.main.lockDB()
 
         starttime = timeit.default_timer()
@@ -691,35 +711,69 @@ class tool(QtGui.QWidget):
 #        self.route.printList()
 
 
-        routeModel = RouteTreeModel(self.route, self, forceHops)
-        QtCore.QObject.connect(routeModel, QtCore.SIGNAL ('layoutChanged()'), self.routeModellayoutChanged)
-        self.listView.setModel(routeModel)
+        self.routeModel = RouteTreeModel(self.route, self, forceHops)
+        
+        QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL ('layoutAboutToBeChanged()'), self.routeModellayoutAboutToBeChanged)
+        QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL ('layoutChanged()'), self.routeModellayoutChanged)
+        QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL ('modelAboutToBeReset()'), self.routeModelmodelAboutToBeReset)
+        QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL ('modelReset()'), self.routeModemodelReset)
+
+        self.listView.setModel(self.routeModel)
 #        routeModel.layoutChanged.emit()
 
         self.listView.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
         self.listView.hideColumn(1)
 
-        self.triggerLocationChanged()
         self.listView.show()
 
         self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
 
         self.main.unlockDB()
+        self.triggerLocationChanged()
+
+    def routeModelmodelAboutToBeReset(self):
+        if _debug: print("routeModelmodelAboutToBeReset")
+
+        if self.listView.isSortingEnabled():
+            self.listView.setSortingEnabled(False)
+
+    def routeModemodelReset(self):
+        if _debug: print("routeModelmodelAboutToBeReset")
+
+        if not self.listView.isSortingEnabled() and not self.enabelSortingTimer:
+            ''' disabel sorting for 1 sek TODO: find the pointer problem'''
+            self.enabelSortingTimer = True
+            QtCore.QTimer.singleShot(1000, self.enabelSorting)
+            self.sortingIsOk = True
+
+    def enabelSorting(self):
+        self.listView.setSortingEnabled(True)
+        self.enabelSortingTimer = None
+
+    def routeModellayoutAboutToBeChanged(self):
+        if _debug: print("routeModellayoutAboutToBeChanged")
+        self.autoUpdateLocationTimer.stop()
+        self.layoutLock = True
 
     def routeModellayoutChanged(self):
-        routeModel = self.listView.model()
-        for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
+        if _debug: print("routeModellayoutChanged")
+
+        for rid in range(0, self.listView.model().rowCount(QtCore.QModelIndex())):
             #rid item count
-            for cid in range( 0, routeModel.rowCount(routeModel.index(rid,0)) ):
+            for cid in range( 0, self.listView.model().rowCount(self.listView.model().index(rid,0)) ):
                 #cid child item count
-                self.listView.setFirstColumnSpanned(cid, routeModel.index(rid,0) , True)        
+                self.listView.setFirstColumnSpanned(cid, self.listView.model().index(rid,0) , True)        
 
         self.listView.expandToDepth(1)
 
-        for i in range(0, 5):
-            self.listView.resizeColumnToContents(i)
+#        for i in range(0, 7):
+#            self.listView.resizeColumnToContents(i)
+
+        self.layoutLock = None
 
         self.triggerLocationChanged()
+        self.autoUpdateLocationTimer.start()
+
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
@@ -746,18 +800,27 @@ class tool(QtGui.QWidget):
 
         
     def triggerLocationChanged(self):
-        self.setLocationColors()
+        if _debug: print("triggerLocationChanged")
+
+        if self.route.locked or self.layoutLock:
+            return
+
         self.updateConnectedDealsFromToWindow()
+        self.setLocationColors()
 
     def setLocationColors(self):
+        if _debug: print("setLocationColors")
         location = self.locationlineEdit.text()
-        routeModel = self.listView.model()
 
-        if not routeModel or not routeModel.rowCount(): return
+        if self.route.locked or self.layoutLock:
+            return
+
+        if not self.listView.model() or not self.listView.model().rowCount(): return
         
-        if location and routeModel:
-            for rid in range(0,routeModel.rowCount(QtCore.QModelIndex())):
-                route = routeModel.index( rid, 0).internalPointer()
+        if location and self.listView.model():
+            for rid in range(0,self.listView.model().rowCount(QtCore.QModelIndex())):
+                if self.layoutLock: return
+                route = self.listView.model().index( rid, 0).internalPointer()
                 for cid in range( 0, route.childCount() ):
                     child = route.child(cid)
                     #print(child)
@@ -769,7 +832,8 @@ class tool(QtGui.QWidget):
                                 child.setBGColor( QtGui.QColor(QtCore.Qt.yellow) )
                         else:
                             child.setBGColor(None)
-        self.listView.dataChanged(routeModel.index( 0, 0), routeModel.index( rid, 0))
+
+        self.listView.dataChanged(self.listView.model().index( 0, 0), self.listView.model().index( self.listView.model().rowCount(QtCore.QModelIndex()) , 0))
 
     def createActions(self):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
@@ -797,9 +861,16 @@ class tool(QtGui.QWidget):
  
         if isinstance( indexes[0].internalPointer(), RouteTreeItem):
             if self.activeRoutePointer:
-                self.activeRoutePointer.activeRoute = None
-            self.activeRoutePointer = indexes[0].internalPointer()
-            self.activeRoutePointer.activeRoute = True
+                self.activeRoutePointer["activeRoute"] = None
+
+            self.activeRoutePointer = indexes[0].internalPointer().getInternalRoutePointer()
+            
+            self.activeRoutePointer["activeRoute"] = True
+
+    def unsetActiveRoutePointer(self):
+        if self.activeRoutePointer:
+            self.activeRoutePointer["activeRoute"] = None
+        self.activeRoutePointer = None
 
     def clipbordRouteHelper(self):
         self.setActiveRoutePointer()
@@ -809,11 +880,13 @@ class tool(QtGui.QWidget):
         self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
 
         self.clipbordRouteHelperAct.setChecked(True)
-        self.triggerLocationChanged()
         self.setNextRouteHopToClipbord(init=True)
+        self.triggerLocationChanged()
         
     def setNextRouteHopToClipbord(self, init=None):
         ''' helper to set next route hop to clipboard '''
+        if _debug: print("setNextRouteHopToClipbord")
+
         if not self.activeRoutePointer:
             return
         
@@ -828,68 +901,70 @@ class tool(QtGui.QWidget):
             self.clipbordRouteHelperAct.setChecked(False)
             return
 
-        child = self.getCurrentHopFromActiveRoute()
-        if child:
-            system = child.dbresult["SystemB"]
+        
+        hopID = self.getCurrentHopFromActiveRoute()
+        if hopID:
+            systemB = self.route.getSystemB(self.activeRoutePointer, hopID)
 
-            if system != clipbordText:
-                self.main.clipboard.setText( system )
-                self.lastClipboardEntry = system
-                print("setNextRouteHopToClipbord set clipboard to", system)
+            if systemB != clipbordText:
+                self.main.clipboard.setText( systemB )
+                self.lastClipboardEntry = systemB
+                print("setNextRouteHopToClipbord set clipboard to", systemB)
 
         if not self.lastClipboardEntry:
             # not in route? set the first hop to clipboard
-            child = self.activeRoutePointer.child( 0 )
-            system = child.dbresult["SystemA"]
-            self.main.clipboard.setText( system )
-            self.lastClipboardEntry = system
-            print("setNextRouteHopToClipbord set clipboard to", system)
+            system = self.route.getSystemA(self.activeRoutePointer, 0)
+            if system:
+                self.main.clipboard.setText( system )
+                self.lastClipboardEntry = system
+    
+                print("setNextRouteHopToClipbord set clipboard to", system)
 
         self.timer_setNextRouteHopToClipbord.start()
     
     def markFakeItem(self):
 
-        indexes = self.listView.selectionModel().selectedIndexes()
- 
-        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
-            id = indexes[0].internalPointer().getPiceID()
-            if id:
+        route, hopID = self.getSelectedRouteHopID()
+        priceID = self.route.getPriceID(route, hopID) 
+        if priceID:
 
-                msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
-                        "Warning", "Warning: fake items are ignored everywhere and no longer displayed",
-                        QtGui.QMessageBox.NoButton, self)
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                    "Warning", "Warning: fake items are ignored everywhere and no longer displayed",
+                    QtGui.QMessageBox.NoButton, self)
 
-                msgBox.addButton("Save as Facke", QtGui.QMessageBox.AcceptRole)
-                msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+            msgBox.addButton("Save as Facke", QtGui.QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
 
-                if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
-                    print("set %s as fakeprice" % id)
-                    self.main.lockDB()
-                    self.mydb.setFakePrice(id)
-                    self.main.unlockDB()
+            if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+                print("set %s as fakeprice" % priceID)
+                self.main.lockDB()
+                self.mydb.setFakePrice(priceID)
+                self.main.unlockDB()
 
     def getSelectedRouteHopID(self):
+        if _debug: print("getSelectedRouteHopID")
+
         indexes = self.listView.selectionModel().selectedIndexes()
         
         if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
 
             hopID =  indexes[0].internalPointer().parent().hopPos( indexes )
             
-            routeDeal = indexes[0].internalPointer().parent().getInternalRoutePointer()
-            routeId = self.route.deals.index(routeDeal)
+            route = indexes[0].internalPointer().parent().getInternalRoutePointer()
             
-            return (routeId, hopID)
+            return (route, hopID)
 
         return (None, None)
 
     def addRouteHopAsTargetSystemInDealsFromToFinder(self):
+        if _debug: print("addRouteHopAsTargetSystemInDealsFromToFinder")
 
-        (routeId, hopID) = self.getSelectedRouteHopID()
-        if routeId == None or hopID == None:
+        route, hopID = self.getSelectedRouteHopID()
+        if route == None or hopID == None:
             return
 
-        toStation = self.route.getStationA(routeId,hopID)
-        toSystem = self.route.getSystemA(routeId,hopID)
+        toStation = self.route.getStationA(route, hopID)
+        toSystem = self.route.getSystemA(route, hopID)
         #TODO: set it only in first Deals window current
         if toSystem and toStation:
             self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
@@ -897,17 +972,18 @@ class tool(QtGui.QWidget):
 
     def addRouteHopAsFromSystemInDealsFromToFinder(self):
 
-        (routeId, hopID) = self.getSelectedRouteHopID()
-        if routeId == None or hopID == None: return
+        route, hopID = self.getSelectedRouteHopID()
+        if route == None or hopID == None: return
 
-        station = self.route.getStationA(routeId,hopID)
-        system = self.route.getSystemA(routeId,hopID)
+        station = self.route.getStationA(route, hopID)
+        system = self.route.getSystemA(route, hopID)
         #TODO: set it only in first Deals window current
         if system and station:
             self.main.dealsFromToWidget[0].fromSystem.setText(system)
             self.main.dealsFromToWidget[0].fromStation.setText(station)
 
     def connectToDealsFromToWindows(self):
+        if _debug: print("connectToDealsFromToWindows")
         if self.main.dealsFromToWidget:
             self.setActiveRoutePointer()
             self.triggerLocationChanged()
@@ -921,45 +997,55 @@ class tool(QtGui.QWidget):
         self.connectedDealsFromToWindows = None
 
     def getCurrentHopFromActiveRoute(self):
+        if _debug: print("getCurrentHopFromActiveRoute")
         location = self.main.location.getLocation()
 
-        for cid in range( 0, self.activeRoutePointer.childCount() ):
-            child = self.activeRoutePointer.child(cid)
-            if isinstance( child, RouteTreeHopItem):
+        hopCount = len(self.activeRoutePointer["path"])
 
-                if child.dbresult["SystemB"] == location:
-                    if self.activeRoutePointer.childCount() > cid+1:
-                        child = self.activeRoutePointer.child(cid+1)
-                    else: #start system is next hop
-                        child = self.activeRoutePointer.child( 0 )
-                    return child
+        for i in range( 0, hopCount+1 ):
+            if not self.activeRoutePointer["lastHop"]:
+                cid = i
+            else: 
+                cid = self.activeRoutePointer["lastHop"] + i
+
+                if cid > hopCount:
+                    cid = i - self.activeRoutePointer["lastHop"]
+
+            systemA = self.route.getSystemA(self.activeRoutePointer, cid)
+
+            if systemA == location:
+                hopID = cid
+                if hopID > hopCount:
+                    hopID = 0
+                self.activeRoutePointer["lastHop"] = hopID
+                print("return", hopID)
+                return hopID
 
     def updateConnectedDealsFromToWindow(self, init=None):
+        if _debug: print("updateConnectedDealsFromToWindow")
         if not self.connectedDealsFromToWindows or  not self.activeRoutePointer:
             return
 
-        routeId = self.activeRoutePointer.getListIndex()
         
-        currentHop = self.getCurrentHopFromActiveRoute()
-        if currentHop == None and init:
+        hopID = self.getCurrentHopFromActiveRoute()
+        if hopID == None and init:
             ''' is init and im not inside the route set only the To part from first hop '''
-            systemA = self.route.getSystemA(routeId, 0)
-            stationA = self.route.getStationA(routeId, 0)
+            systemA = self.route.getSystemA(self.activeRoutePointer, 0)
+            stationA = self.route.getStationA(self.activeRoutePointer, 0)
 
             self.connectedDealsFromToWindows.toSystem.setText(systemA)
             self.connectedDealsFromToWindows.toStation.setText(stationA)
             return
 
-        hopID =  self.activeRoutePointer.childPos( currentHop )
 
-        if routeId == None or hopID == None:
+        if hopID == None:
             return
 
-        systemA = self.route.getSystemA(routeId, hopID)
-        stationA = self.route.getStationA(routeId, hopID)
+        systemA = self.route.getSystemA(self.activeRoutePointer, hopID)
+        stationA = self.route.getStationA(self.activeRoutePointer, hopID)
 
-        systemB = self.route.getSystemB(routeId, hopID)
-        stationB = self.route.getStationB(routeId, hopID)
+        systemB = self.route.getSystemB(self.activeRoutePointer, hopID)
+        stationB = self.route.getStationB(self.activeRoutePointer, hopID)
 
         self.connectedDealsFromToWindows.fromSystem.setText(systemA)
         self.connectedDealsFromToWindows.fromStation.setText(stationA)

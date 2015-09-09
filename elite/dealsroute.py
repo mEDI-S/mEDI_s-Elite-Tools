@@ -17,6 +17,7 @@ class route(object):
     mydb=None
     deals = []
     forceHops = None
+    locked = None
     
     options = {}
     options["startSystem"] = None
@@ -53,30 +54,40 @@ class route(object):
         if option in self.options:
             return self.options[option]
 
-    def getStationA(self,routeId,hopID):
+    def getStationA(self, route, hopID):
         if hopID == 0:
-            return self.deals[routeId]["path"][hopID]["StationA"]
+            return route["path"][hopID]["StationA"]
 
-        return self.deals[routeId]["path"][hopID-1]["StationB"]
+        return route["path"][hopID-1]["StationB"]
 
-    def getStationB(self,routeId,hopID):
-        if hopID < len(self.deals[routeId]["path"]):
-            return self.deals[routeId]["path"][hopID]["StationB"]
+    def getStationB(self, route, hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["StationB"]
         else: #  back to start
-            return self.deals[routeId]["path"][0]["StationA"]
+            return route["path"][0]["StationA"]
 
-    def getSystemA(self,routeId,hopID):
+    def getSystemA(self, route, hopID):
         if hopID == 0:
-            return self.deals[routeId]["path"][hopID]["SystemA"]
+            return route["path"][hopID]["SystemA"]
 
-        return self.deals[routeId]["path"][hopID-1]["SystemB"]
+        return route["path"][hopID-1]["SystemB"]
 
-    def getSystemB(self,routeId,hopID):
-        if hopID < len(self.deals[routeId]["path"]):
-            return self.deals[routeId]["path"][hopID]["SystemB"]
+    def getSystemB(self,route,hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["SystemB"]
         else: #  back to start
-            return self.deals[routeId]["path"][0]["SystemA"]
-            
+            return route["path"][0]["SystemA"]
+
+    def getRouteIDbyPointer(self, deal):
+        if not self.locked:
+            return self.deals.index(deal)
+
+    def getPriceID(self, route, hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["priceAid"]
+        else:
+            return route["backToStartDeal"]["priceAid"]
+
     def limitCalc(self, accuracy=0):
         ''' ["normal","fast","nice","slow","all"] '''
         maxResults = 100000 # normal
@@ -113,7 +124,7 @@ class route(object):
         startdeals = self.mydb.getBestDealsinDistance( self.options["startSystem"], self.options["maxDist"], self.options["maxSearchRange"], self.maxAgeDate, self.options["maxStarDist"], self.options["minTradeProfit"], self.options["minStock"], self.options["resultLimit"], self.options["padsize"])
 
         for deal in startdeals:
-            self.deals.append({ "profit":0, "time":0 , "path":[deal],"backToStartDeal":None })
+            self.deals.append({ "profit":0, "time":0 , "path":[deal], "backToStartDeal":None, "activeRoute":None, "lastHop":None})
 
 
     def findHops(self):
@@ -181,20 +192,30 @@ class route(object):
 
         self.sortDealsByProfitH()
 
-    def sortDealsByProfitH(self, order=True):            
+    def sortDealsByProfitH(self, order=True):           
+        self.locked = True 
         self.deals = sorted(self.deals , key=lambda deal: deal["profitHour"], reverse=order)
+        self.locked = None 
 
     def sortDealsByProfit(self, order=True):            
+        self.locked = True 
         self.deals = sorted(self.deals , key=lambda deal: deal["profit"], reverse=order)
+        self.locked = None 
 
     def sortDealsByProfitAverage(self, order=True):            
+        self.locked = True 
         self.deals = sorted(self.deals , key=lambda deal: deal["profitAverage"], reverse=order)
+        self.locked = None 
 
     def sortDealsByLapTime(self, order=True):            
+        self.locked = True 
         self.deals = sorted(self.deals , key=lambda deal: deal["time"], reverse=order)
+        self.locked = None 
 
     def sortDealsByStartDist(self, order=True):            
+        self.locked = True 
         self.deals = sorted(self.deals , key=lambda deal: deal["path"][0]["startDist"], reverse=order)
+        self.locked = None 
 
     def printList(self):
         print("routes found", len(self.deals))
