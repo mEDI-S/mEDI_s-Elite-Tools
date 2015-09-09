@@ -36,7 +36,7 @@ class RouteTreeInfoItem(object):
         return 1
 
     def data(self, column):
-        if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
+        if isinstance(self.itemData, str) or isinstance(self.itemData, unicode):
             if column == 0:
                 return self.itemData
         
@@ -70,10 +70,6 @@ class RouteTreeHopItem(object):
 
     def columnCount(self):
         return 1
-#        if isinstance( self.itemData, str):
-#            return 1
-#        else:
-#            return len(self.itemData)
 
     def BGColor(self):
         return self._BGColor
@@ -82,7 +78,7 @@ class RouteTreeHopItem(object):
         self._BGColor = BGColor
 
     def data(self, column):
-        if isinstance( self.itemData, str) or isinstance( self.itemData, unicode):
+        if isinstance(self.itemData, str) or isinstance(self.itemData, unicode):
             if column == 0:
                 return self.itemData
      
@@ -106,7 +102,6 @@ class RouteTreeItem(object):
         self.childItems = []
         self.parentItem = parent
         self.itemData = data
-        self.activeRoute = None
 
     def appendChild(self, item):
         self.childItems.append(item)
@@ -118,28 +113,28 @@ class RouteTreeItem(object):
         return len(self.childItems)
 
     def childPos(self, child):
-        if isinstance( child, RouteTreeHopItem):
-            return self.childItems.index(child )
-        elif isinstance( child, list) and isinstance( child[0], QtCore.QModelIndex):
+        if isinstance(child, RouteTreeHopItem):
+            return self.childItems.index(child)
+        elif isinstance(child, list) and isinstance(child[0], QtCore.QModelIndex):
             return self.childItems.index(child[0].internalPointer())
 
 
     def hopPos(self, child):
-        if isinstance( child, list) and isinstance( child[0], QtCore.QModelIndex):
+        if isinstance(child, list) and isinstance(child[0], QtCore.QModelIndex):
             child = child[0].internalPointer()
 
-        if isinstance( child, RouteTreeHopItem):
+        if isinstance(child, RouteTreeHopItem):
             pos = -1
             for item in self.childItems:
-                if isinstance( item, RouteTreeHopItem):
+                if isinstance(item, RouteTreeHopItem):
                     pos += 1
                 if item == child:
                     return pos
 
 
     def getListIndex(self):
-        if isinstance( self.itemData[0], int): #via displayed Nr.
-            return self.itemData[0]-1
+        if isinstance(self.itemData[0], int):  # via displayed Nr.
+            return self.itemData[0] - 1
 
     def columnCount(self):
         return len(self.itemData)
@@ -163,7 +158,7 @@ class RouteTreeItem(object):
         return 0
 
     def getInternalRoutePointer(self):
-        if isinstance( self.itemData[1], dict):
+        if isinstance(self.itemData[1], dict):
             return self.itemData[1]
 
 
@@ -176,12 +171,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         self.route = route
         self.cleanModel()
         self.forceHops = forceHops
-        self.setupModelData( )
+        self.setupModelData()
 
     def cleanModel(self):
         if _debug: print("cleanModel")
            
-        self.rootItem  = RouteTreeItem(("Nr.","routeidx","Profit/h", "Profit","Ø Profit","StartDist","Laps/h","LapTime", "Status"))
+        self.rootItem = RouteTreeItem(("Nr.", "routeidx", "Profit/h", "Profit", "Ø Profit", "StartDist", "Laps/h", "LapTime", "Status"))
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -195,21 +190,21 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.BackgroundColorRole:
             item = index.internalPointer()
-            if isinstance( item, RouteTreeHopItem):
-                return item.BGColor() #yellow or green https://srinikom.github.io/pyside-docs/PySide/QtGui/QColor.html
-            elif isinstance( item, RouteTreeItem):
+            if isinstance(item, RouteTreeHopItem):
+                return item.BGColor()  # yellow or green https://srinikom.github.io/pyside-docs/PySide/QtGui/QColor.html
+            elif isinstance(item, RouteTreeItem):
                 pointer = item.getInternalRoutePointer()
                 if pointer and pointer["activeRoute"]:
                     return QtGui.QColor(QtCore.Qt.cyan)
-            elif isinstance( item, RouteTreeInfoItem):
+            elif isinstance(item, RouteTreeInfoItem):
                 return QtGui.QColor(255, 0, 0, 64)
 
         if role == QtCore.Qt.TextAlignmentRole:
             item = index.internalPointer()
-            if isinstance( item, RouteTreeItem):
+            if isinstance(item, RouteTreeItem):
                 if index.column() == 0:
                     return QtCore.Qt.AlignCenter
-                elif index.column() > 0 and index.column() < 5: #all profit = align right
+                elif index.column() > 0 and index.column() < 5:  # all profit = align right
                     return QtCore.Qt.AlignRight
                 else:
                     return QtCore.Qt.AlignCenter
@@ -219,7 +214,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
 
         item = index.internalPointer()
-        if isinstance( index, QtCore.QModelIndex) and not self.route.locked:
+        if isinstance(index, QtCore.QModelIndex) and not self.route.locked:
             return item.data(index.column())
 
     def flags(self, index):
@@ -235,7 +230,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.TextAlignmentRole:
             return QtCore.Qt.AlignCenter
 
-    def index(self, row, column, parent=QtCore.QModelIndex() ):
+    def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
             return QtCore.QModelIndex()
 
@@ -259,7 +254,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         else:
             return QtCore.QModelIndex()
             
-        if parentItem ==  None:
+        if parentItem == None:
             return QtCore.QModelIndex()
         elif parentItem == self.rootItem:
             return QtCore.QModelIndex()
@@ -278,36 +273,36 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def sort(self,col, order):
+    def sort(self, col, order):
         if _debug: print("sort")
-        #print(col, order)
+        # print(col, order)
         if self.route.locked: return
         if order == QtCore.Qt.SortOrder.DescendingOrder:
-            order=True
+            order = True
         else:
-            order=False
+            order = False
         self.layoutAboutToBeChanged.emit()
         self.modelAboutToBeReset.emit()
-        if col==2:
+        if col == 2:
             self.route.sortDealsByProfitH(order)
             self.cleanModel()
-            self.setupModelData( )
-        elif col==3:
+            self.setupModelData()
+        elif col == 3:
             self.route.sortDealsByProfit(order)
             self.cleanModel()
             self.setupModelData()
-        elif col==4:
+        elif col == 4:
             self.route.sortDealsByProfitAverage(order)
             self.cleanModel()
-            self.setupModelData( )
-        elif col==5:
+            self.setupModelData()
+        elif col == 5:
             self.route.sortDealsByStartDist(order)
             self.cleanModel()
-            self.setupModelData( )
-        elif col==7:
+            self.setupModelData()
+        elif col == 7:
             self.route.sortDealsByLapTime(order)
             self.cleanModel()
-            self.setupModelData( )
+            self.setupModelData()
         self.modelReset.emit()
         self.layoutChanged.emit()
 
@@ -315,49 +310,49 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         if _debug: print("setupModelData")
         parents = [self.rootItem]
 
-        for routeId, deal in enumerate( self.route.deals ):
+        for routeId, deal in enumerate(self.route.deals):
 
             if routeId >= 100: break
             timeT = "%s:%s" % (divmod(deal["time"] * deal["lapsInHour"], 60))
             timeL = "%s:%s" % (divmod(deal["time"], 60))
 
             
-            columnData = [routeId+1, deal, deal["profitHour"], deal["profit"], deal["profitAverage"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
+            columnData = [routeId + 1, deal, deal["profitHour"], deal["profit"], deal["profitAverage"], deal["path"][0]["startDist"], "%s/%s" % (deal["lapsInHour"], timeT), timeL]
 
             parents[-1].appendChild(RouteTreeItem(columnData, parents[-1]))
 
 
             before = { "StationB":deal["path"][0]["StationA"], "SystemB":deal["path"][0]["SystemA"], "StarDist":deal["path"][0]["stationA.StarDist"], "refuel":deal["path"][0]["stationA.refuel"]  }
-            #follow is a child
+            # follow is a child
             parents.append(parents[-1].child(parents[-1].childCount() - 1))
         
-            for hopID,d in enumerate(deal["path"]):
-                #print(d.keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID), 
+            for hopID, d in enumerate(deal["path"]):
+                # print(d.keys())
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
-                                                                                                before["StarDist"] , d["itemName"],d["StationSell"],
-                                                                                                d["StationBuy"],  d["profit"], d["dist"],
+                                                                                                before["StarDist"] , d["itemName"], d["StationSell"],
+                                                                                                d["StationBuy"], d["profit"], d["dist"],
                                                                                                 self.route.getSystemB(deal, hopID),
-                                                                                                self.route.getStationB(deal, hopID) )
+                                                                                                self.route.getStationB(deal, hopID))
 
 
-                parents[-1].appendChild(RouteTreeHopItem( columnData , parents[-1]))
+                parents[-1].appendChild(RouteTreeHopItem(columnData , parents[-1]))
 
 
 
                 if before["refuel"] != 1:
                     columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(deal, hopID)
-                    parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
+                    parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
                 
                 before = d
 
         
-            backdist = self.route.mydb.getDistanceFromTo(deal["path"][0]["SystemAID"] , deal["path"][ len(deal["path"])-1 ]["SystemBID"])
+            backdist = self.route.mydb.getDistanceFromTo(deal["path"][0]["SystemAID"] , deal["path"][ len(deal["path"]) - 1 ]["SystemBID"])
 
             hopID += 1
         
             if deal["backToStartDeal"]:
-                #print(deal["backToStartDeal"].keys())
+                # print(deal["backToStartDeal"].keys())
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
                                                                                                 before["StarDist"], deal["backToStartDeal"]["itemName"],
@@ -366,15 +361,15 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                                                                                                 deal["backToStartDeal"]["profit"],
                                                                                                 backdist,
                                                                                                 self.route.getSystemB(deal, hopID),
-                                                                                                self.route.getStationB(deal, hopID) ) 
-                parents[-1].appendChild(RouteTreeHopItem( columnData, parents[-1]))
+                                                                                                self.route.getStationB(deal, hopID)) 
+                parents[-1].appendChild(RouteTreeHopItem(columnData, parents[-1]))
             else:
                 columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(deal, hopID),
                                                                                    self.route.getStationA(deal, hopID),
                                                                                    before["StarDist"], backdist,
                                                                                    self.route.getSystemB(deal, hopID),
-                                                                                   self.route.getStationB(deal, hopID)  )
-                parents[-1].appendChild(RouteTreeInfoItem( columnData, parents[-1]))
+                                                                                   self.route.getStationB(deal, hopID))
+                parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
 
         
             if before["refuel"] != 1:
@@ -393,7 +388,6 @@ class tool(QtGui.QWidget):
     activeRoutePointer = None
     connectedDealsFromToWindows = None
     layoutLock = None
-    sortingIsOk = None
     enabelSortingTimer = None
     
 #    _debug = True
@@ -427,14 +421,14 @@ class tool(QtGui.QWidget):
 
         self.autoUpdateLocation = QtGui.QCheckBox("Location Update")
         self.autoUpdateLocation.setChecked(True)
-        self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
+        self.autoUpdateLocation.stateChanged.connect(self.updateLocation)
         gridLayout.addWidget(self.autoUpdateLocation, 3, 0)
 
         label = QtGui.QLabel("Max Hops:")
         self.maxHopsspinBox = QtGui.QSpinBox()
         self.maxHopsspinBox.setRange(1, 20)
         self.maxHopsspinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.maxHopsspinBox.setValue( self.route.getOption("tradingHops"))
+        self.maxHopsspinBox.setValue(self.route.getOption("tradingHops"))
         gridLayout.addWidget(label, 1, 1)
         gridLayout.addWidget(self.maxHopsspinBox, 1, 2)
 
@@ -443,7 +437,7 @@ class tool(QtGui.QWidget):
         self.searchRangeSpinBox.setRange(0, 1000)
         self.searchRangeSpinBox.setSuffix("ly")
         self.searchRangeSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.searchRangeSpinBox.setValue( self.route.getOption("maxSearchRange") )
+        self.searchRangeSpinBox.setValue(self.route.getOption("maxSearchRange"))
         gridLayout.addWidget(label, 1, 3)
         gridLayout.addWidget(self.searchRangeSpinBox, 1, 4)
 
@@ -453,7 +447,7 @@ class tool(QtGui.QWidget):
         self.maxAgeSpinBox.setRange(1, 1000)
         self.maxAgeSpinBox.setSuffix("Day")
         self.maxAgeSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.maxAgeSpinBox.setValue( self.route.getOption("maxAge") )
+        self.maxAgeSpinBox.setValue(self.route.getOption("maxAge"))
         gridLayout.addWidget(label, 1, 5)
         gridLayout.addWidget(self.maxAgeSpinBox, 1, 6)
 
@@ -464,7 +458,7 @@ class tool(QtGui.QWidget):
         self.minProfitSpinBox.setSuffix("cr")
         self.minProfitSpinBox.setSingleStep(100)
         self.minProfitSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.minProfitSpinBox.setValue( self.route.getOption("minTradeProfit") )
+        self.minProfitSpinBox.setValue(self.route.getOption("minTradeProfit"))
         gridLayout.addWidget(label, 2, 1)
         gridLayout.addWidget(self.minProfitSpinBox, 2, 2)
 
@@ -475,7 +469,7 @@ class tool(QtGui.QWidget):
         self.maxDistSpinBox.setSuffix("ly")
         self.maxDistSpinBox.setSingleStep(1)
         self.maxDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.maxDistSpinBox.setValue( self.route.getOption("maxDist") )
+        self.maxDistSpinBox.setValue(self.route.getOption("maxDist"))
         gridLayout.addWidget(label, 2, 3)
         gridLayout.addWidget(self.maxDistSpinBox, 2, 4)
 
@@ -486,22 +480,22 @@ class tool(QtGui.QWidget):
         self.maxStartDistSpinBox.setSuffix("ls")
         self.maxStartDistSpinBox.setSingleStep(100)
         self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.maxStartDistSpinBox.setValue( self.route.getOption("maxStarDist") )
+        self.maxStartDistSpinBox.setValue(self.route.getOption("maxStarDist"))
         gridLayout.addWidget(label, 2, 5)
         gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
 
 
         label = QtGui.QLabel("Search Accuracy:")
         self.searchLimitOption = QtGui.QComboBox()
-        searchLimitOptionsList = ["normal","fast","nice","slow","all"]
+        searchLimitOptionsList = ["normal", "fast", "nice", "slow", "all"]
         for option in searchLimitOptionsList:
-            self.searchLimitOption.addItem( option )
+            self.searchLimitOption.addItem(option)
         if self.mydb.getConfig("option_searchLimit"):
             self.searchLimitOption.setCurrentIndex(self.mydb.getConfig("option_searchLimit"))
         label.setBuddy(self.searchLimitOption)
-        #self.searchLimitOption.currentIndexChanged.connect(self.hmm)
+        # self.searchLimitOption.currentIndexChanged.connect(self.hmm)
         gridLayout.addWidget(label, 3, 1)
-        gridLayout.addWidget(self.searchLimitOption, 3, 2, 1, 1) #row,col,?,size
+        gridLayout.addWidget(self.searchLimitOption, 3, 2, 1, 1)  # row,col,?,size
 
 
 
@@ -511,7 +505,7 @@ class tool(QtGui.QWidget):
         self.maxJumpDistSpinBox.setSuffix("ly")
         self.maxJumpDistSpinBox.setSingleStep(1)
         self.maxJumpDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.maxJumpDistSpinBox.setValue( self.route.getOption("maxJumpDistance") )
+        self.maxJumpDistSpinBox.setValue(self.route.getOption("maxJumpDistance"))
         gridLayout.addWidget(label, 3, 3)
         gridLayout.addWidget(self.maxJumpDistSpinBox, 3, 4)
 
@@ -521,14 +515,14 @@ class tool(QtGui.QWidget):
         self.minStockSpinBox.setRange(1000, 1000000)
         self.minStockSpinBox.setSingleStep(100)
         self.minStockSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        self.minStockSpinBox.setValue( self.route.getOption("minStock") )
+        self.minStockSpinBox.setValue(self.route.getOption("minStock"))
         gridLayout.addWidget(label, 3, 5)
         gridLayout.addWidget(self.minStockSpinBox, 3, 6)
 
 
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = guitools.LineEdit()
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
         self.locationlineEdit.textChanged.connect(self.triggerLocationChanged)
 
 
@@ -540,7 +534,7 @@ class tool(QtGui.QWidget):
         self.showOptions = QtGui.QCheckBox("Show Options")
         if self.mydb.getConfig("option_mhr_showOptions") != 0:
             self.showOptions.setChecked(True)
-        self.showOptions.stateChanged.connect( self.optionsGroupBoxToggleViewAction )
+        self.showOptions.stateChanged.connect(self.optionsGroupBoxToggleViewAction)
 
         self.searchbutton = QtGui.QPushButton("Search")
         self.searchbutton.clicked.connect(self.startRouteSearch)
@@ -588,13 +582,13 @@ class tool(QtGui.QWidget):
         menu.addAction(self.copyAct)
 
         indexes = self.listView.selectionModel().selectedIndexes()
-        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
+        if isinstance(indexes[0].internalPointer(), RouteTreeHopItem):
             if self.main.dealsFromToWidget:
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
                 menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
             menu.addAction(self.markFakeItemAct)
 
-        elif isinstance( indexes[0].internalPointer(), RouteTreeItem):
+        elif isinstance(indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
             if self.main.dealsFromToWidget:
                 self.connectToDealsFromToWindowsAct.setChecked(False)
@@ -620,50 +614,50 @@ class tool(QtGui.QWidget):
 
         self.route = elite.dealsroute(self.mydb)
 
-        tradingHops = self.mydb.getConfig( 'option_tradingHops' )
+        tradingHops = self.mydb.getConfig('option_tradingHops')
         if tradingHops:
-            self.route.setOption( "tradingHops", tradingHops )
+            self.route.setOption("tradingHops", tradingHops)
 
-        maxJumpDistance = self.mydb.getConfig( 'option_maxJumpDistance' )
+        maxJumpDistance = self.mydb.getConfig('option_maxJumpDistance')
         if maxJumpDistance:
-            self.route.setOption( "maxJumpDistance", maxJumpDistance )
+            self.route.setOption("maxJumpDistance", maxJumpDistance)
 
-        maxDist = self.mydb.getConfig( 'option_maxDist' )
+        maxDist = self.mydb.getConfig('option_maxDist')
         if maxDist:
-            self.route.setOption( "maxDist", maxDist )
+            self.route.setOption("maxDist", maxDist)
 
-        maxSearchRange = self.mydb.getConfig( 'option_maxSearchRange' )
+        maxSearchRange = self.mydb.getConfig('option_maxSearchRange')
         if maxSearchRange:
-            self.route.setOption( "maxSearchRange", maxSearchRange )
+            self.route.setOption("maxSearchRange", maxSearchRange)
 
-        minStock = self.mydb.getConfig( 'option_minStock' )
+        minStock = self.mydb.getConfig('option_minStock')
         if minStock:
-            self.route.setOption( "minStock", minStock )
+            self.route.setOption("minStock", minStock)
 
-        maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
+        maxStarDist = self.mydb.getConfig('option_maxStarDist')
         if maxStarDist:
-            self.route.setOption( "maxStarDist", maxStarDist )
+            self.route.setOption("maxStarDist", maxStarDist)
 
-        minTradeProfit = self.mydb.getConfig( 'option_minTradeProfit' )
+        minTradeProfit = self.mydb.getConfig('option_minTradeProfit')
         if minTradeProfit:
-            self.route.setOption( "minTradeProfit", minTradeProfit )
+            self.route.setOption("minTradeProfit", minTradeProfit)
 
 
     def saveOptions(self):
-        #save last options
-        self.mydb.setConfig( 'option_tradingHops', self.maxHopsspinBox.value() )
-        self.mydb.setConfig( 'option_maxJumpDistance', self.maxJumpDistSpinBox.value() )
-        self.mydb.setConfig( 'option_maxDist', self.maxDistSpinBox.value() )
-        self.mydb.setConfig( 'option_maxSearchRange', self.searchRangeSpinBox.value() )
-        self.mydb.setConfig( 'option_minStock', self.minStockSpinBox.value() )
-        self.mydb.setConfig( 'option_maxStarDist', self.maxStartDistSpinBox.value() )
-        self.mydb.setConfig( 'option_minTradeProfit', self.minProfitSpinBox.value() )
-        self.mydb.setConfig( 'option_searchLimit', self.searchLimitOption.currentIndex() )
+        # save last options
+        self.mydb.setConfig('option_tradingHops', self.maxHopsspinBox.value())
+        self.mydb.setConfig('option_maxJumpDistance', self.maxJumpDistSpinBox.value())
+        self.mydb.setConfig('option_maxDist', self.maxDistSpinBox.value())
+        self.mydb.setConfig('option_maxSearchRange', self.searchRangeSpinBox.value())
+        self.mydb.setConfig('option_minStock', self.minStockSpinBox.value())
+        self.mydb.setConfig('option_maxStarDist', self.maxStartDistSpinBox.value())
+        self.mydb.setConfig('option_minTradeProfit', self.minProfitSpinBox.value())
+        self.mydb.setConfig('option_searchLimit', self.searchLimitOption.currentIndex())
 
-        self.mydb.setConfig( 'option_mhr_showOptions', self.showOptions.isChecked() )
-        self.mydb.setConfig( 'option_mhr_forceMaxHops', self.forceMaxHops.isChecked() )
+        self.mydb.setConfig('option_mhr_showOptions', self.showOptions.isChecked())
+        self.mydb.setConfig('option_mhr_forceMaxHops', self.forceMaxHops.isChecked())
 
-        self.mydb.setConfig( 'option_mhr_onlyLpadsize', self.onlyLpadsize.isChecked() )
+        self.mydb.setConfig('option_mhr_onlyLpadsize', self.onlyLpadsize.isChecked())
 
     def startRouteSearch(self):
         self.unsetActiveRoutePointer()
@@ -672,20 +666,20 @@ class tool(QtGui.QWidget):
 
         starttime = timeit.default_timer()
 
-        self.route.setOption( "startSystem", self.locationlineEdit.text() )
-        self.route.setOption( "tradingHops", self.maxHopsspinBox.value() )
-        self.route.setOption( "maxJumpDistance", self.maxJumpDistSpinBox.value() )
-        self.route.setOption( "maxDist", self.maxDistSpinBox.value() )
-        self.route.setOption( "maxSearchRange", self.searchRangeSpinBox.value() )
-        self.route.setOption( "minStock", self.minStockSpinBox.value() )
-        self.route.setOption( "maxStarDist", self.maxStartDistSpinBox.value() )
-        self.route.setOption( "maxAge", self.maxAgeSpinBox.value() )
-        self.route.setOption( "minTradeProfit", self.minProfitSpinBox.value() )
+        self.route.setOption("startSystem", self.locationlineEdit.text())
+        self.route.setOption("tradingHops", self.maxHopsspinBox.value())
+        self.route.setOption("maxJumpDistance", self.maxJumpDistSpinBox.value())
+        self.route.setOption("maxDist", self.maxDistSpinBox.value())
+        self.route.setOption("maxSearchRange", self.searchRangeSpinBox.value())
+        self.route.setOption("minStock", self.minStockSpinBox.value())
+        self.route.setOption("maxStarDist", self.maxStartDistSpinBox.value())
+        self.route.setOption("maxAge", self.maxAgeSpinBox.value())
+        self.route.setOption("minTradeProfit", self.minProfitSpinBox.value())
 
         if self.onlyLpadsize.isChecked():
-            self.route.setOption( "padsize", ["L"] )
+            self.route.setOption("padsize", ["L"])
         else:
-            self.route.setOption( "padsize", None )
+            self.route.setOption("padsize", None)
             
         self.route.calcDefaultOptions()
 
@@ -694,7 +688,7 @@ class tool(QtGui.QWidget):
             forceHops = self.maxHopsspinBox.value()
         self.route.forceHops = forceHops
         
-        self.route.limitCalc( self.searchLimitOption.currentIndex() ) #options (normal, fast, nice, slow, all)
+        self.route.limitCalc(self.searchLimitOption.currentIndex())  # options (normal, fast, nice, slow, all)
 
 
         self.route.calcRoute()
@@ -712,12 +706,12 @@ class tool(QtGui.QWidget):
         self.listView.setModel(self.routeModel)
 #        routeModel.layoutChanged.emit()
 
-        self.listView.sortByColumn( 2, QtCore.Qt.SortOrder.DescendingOrder )
+        self.listView.sortByColumn(2, QtCore.Qt.SortOrder.DescendingOrder)
         self.listView.hideColumn(1)
 
         self.listView.show()
 
-        self.main.setStatusBar("Route Calculated (%ss) %d routes found" % ( round(timeit.default_timer() - starttime, 2), len(self.route.deals)) )
+        self.main.setStatusBar("Route Calculated (%ss) %d routes found" % (round(timeit.default_timer() - starttime, 2), len(self.route.deals)))
 
         self.main.unlockDB()
         self.triggerLocationChanged()
@@ -735,7 +729,6 @@ class tool(QtGui.QWidget):
             ''' disabel sorting for 1 sek TODO: find the pointer problem'''
             self.enabelSortingTimer = True
             QtCore.QTimer.singleShot(1000, self.enabelSorting)
-            self.sortingIsOk = True
 
     def enabelSorting(self):
         self.listView.setSortingEnabled(True)
@@ -750,10 +743,10 @@ class tool(QtGui.QWidget):
         if _debug: print("routeModellayoutChanged")
 
         for rid in range(0, self.listView.model().rowCount(QtCore.QModelIndex())):
-            #rid item count
-            for cid in range( 0, self.listView.model().rowCount(self.listView.model().index(rid,0)) ):
-                #cid child item count
-                self.listView.setFirstColumnSpanned(cid, self.listView.model().index(rid,0) , True)        
+            # rid item count
+            for cid in range(0, self.listView.model().rowCount(self.listView.model().index(rid, 0))):
+                # cid child item count
+                self.listView.setFirstColumnSpanned(cid, self.listView.model().index(rid, 0) , True)        
 
         self.listView.expandToDepth(1)
 
@@ -768,7 +761,7 @@ class tool(QtGui.QWidget):
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
-        self.autoUpdateLocationTimer.start(1000*60)
+        self.autoUpdateLocationTimer.start(1000 * 60)
         self.autoUpdateLocationTimer.timeout.connect(self.updateLocation)
 
     def updateLocation(self):
@@ -782,7 +775,7 @@ class tool(QtGui.QWidget):
                 self.autoUpdateLocation.setChecked(False)
                 return
 
-            self.locationlineEdit.setText( location )
+            self.locationlineEdit.setText(location)
 
             self.autoUpdateLocationTimer.start()
         else:
@@ -809,25 +802,25 @@ class tool(QtGui.QWidget):
         if not self.listView.model() or not self.listView.model().rowCount(): return
         
         if location and self.listView.model():
-            for rid in range(0,self.listView.model().rowCount(QtCore.QModelIndex())):
+            for rid in range(0, self.listView.model().rowCount(QtCore.QModelIndex())):
                 if self.layoutLock: return
-                guiRroute = self.listView.model().index( rid, 0).internalPointer()
+                guiRroute = self.listView.model().index(rid, 0).internalPointer()
                 hopID = -1
-                for cid in range( 0, guiRroute.childCount() ):
+                for cid in range(0, guiRroute.childCount()):
                     child = guiRroute.child(cid)
-                    #print(child)
-                    if isinstance( child, RouteTreeHopItem):
+                    # print(child)
+                    if isinstance(child, RouteTreeHopItem):
                         hopID += 1
                         deal = child.parent().getInternalRoutePointer()
                         if self.route.getSystemA(deal, hopID).lower() == location.lower():
                             if deal["activeRoute"]:
-                                child.setBGColor( QtGui.QColor(QtCore.Qt.green) )
+                                child.setBGColor(QtGui.QColor(QtCore.Qt.green))
                             else:
-                                child.setBGColor( QtGui.QColor(QtCore.Qt.yellow) )
+                                child.setBGColor(QtGui.QColor(QtCore.Qt.yellow))
                         else:
                             child.setBGColor(None)
 
-        self.listView.dataChanged(self.listView.model().index( 0, 0), self.listView.model().index( self.listView.model().rowCount(QtCore.QModelIndex()) , 0))
+        self.listView.dataChanged(self.listView.model().index(0, 0), self.listView.model().index(self.listView.model().rowCount(QtCore.QModelIndex()) , 0))
 
     def createActions(self):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
@@ -853,7 +846,7 @@ class tool(QtGui.QWidget):
     def setActiveRoutePointer(self):
         indexes = self.listView.selectionModel().selectedIndexes()
  
-        if isinstance( indexes[0].internalPointer(), RouteTreeItem):
+        if isinstance(indexes[0].internalPointer(), RouteTreeItem):
             if self.activeRoutePointer:
                 self.activeRoutePointer["activeRoute"] = None
 
@@ -870,7 +863,7 @@ class tool(QtGui.QWidget):
         self.setActiveRoutePointer()
 
         self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
-        self.timer_setNextRouteHopToClipbord.start(1000*60)
+        self.timer_setNextRouteHopToClipbord.start(1000 * 60)
         self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
 
         self.clipbordRouteHelperAct.setChecked(True)
@@ -889,7 +882,7 @@ class tool(QtGui.QWidget):
         if init:
             self.lastClipboardEntry = None
         elif self.lastClipboardEntry != clipbordText:
-            #stop timer and job do other tool use the clipbord
+            # stop timer and job do other tool use the clipbord
             print("setNextRouteHopToClipbord stop job")
             self.timer_setNextRouteHopToClipbord.stop()
             self.clipbordRouteHelperAct.setChecked(False)
@@ -901,7 +894,7 @@ class tool(QtGui.QWidget):
             systemB = self.route.getSystemB(self.activeRoutePointer, hopID)
 
             if systemB != clipbordText:
-                self.main.clipboard.setText( systemB )
+                self.main.clipboard.setText(systemB)
                 self.lastClipboardEntry = systemB
                 print("setNextRouteHopToClipbord set clipboard to", systemB)
 
@@ -909,7 +902,7 @@ class tool(QtGui.QWidget):
             # not in route? set the first hop to clipboard
             system = self.route.getSystemA(self.activeRoutePointer, 0)
             if system:
-                self.main.clipboard.setText( system )
+                self.main.clipboard.setText(system)
                 self.lastClipboardEntry = system
     
                 print("setNextRouteHopToClipbord set clipboard to", system)
@@ -940,9 +933,9 @@ class tool(QtGui.QWidget):
 
         indexes = self.listView.selectionModel().selectedIndexes()
         
-        if isinstance( indexes[0].internalPointer(), RouteTreeHopItem):
+        if isinstance(indexes[0].internalPointer(), RouteTreeHopItem):
 
-            hopID =  indexes[0].internalPointer().parent().hopPos( indexes )
+            hopID = indexes[0].internalPointer().parent().hopPos(indexes)
             
             route = indexes[0].internalPointer().parent().getInternalRoutePointer()
             
@@ -959,7 +952,7 @@ class tool(QtGui.QWidget):
 
         toStation = self.route.getStationA(route, hopID)
         toSystem = self.route.getSystemA(route, hopID)
-        #TODO: set it only in first Deals window current
+        # TODO: set it only in first Deals window current
         if toSystem and toStation:
             self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
             self.main.dealsFromToWidget[0].toStation.setText(toStation)
@@ -971,7 +964,7 @@ class tool(QtGui.QWidget):
 
         station = self.route.getStationA(route, hopID)
         system = self.route.getSystemA(route, hopID)
-        #TODO: set it only in first Deals window current
+        # TODO: set it only in first Deals window current
         if system and station:
             self.main.dealsFromToWidget[0].fromSystem.setText(system)
             self.main.dealsFromToWidget[0].fromStation.setText(station)
@@ -996,7 +989,7 @@ class tool(QtGui.QWidget):
 
         hopCount = len(self.activeRoutePointer["path"])
 
-        for i in range( 0, hopCount+1 ):
+        for i in range(0, hopCount + 1):
             if not self.activeRoutePointer["lastHop"]:
                 cid = i
             else: 
