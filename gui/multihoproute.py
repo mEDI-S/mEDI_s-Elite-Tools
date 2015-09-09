@@ -719,16 +719,10 @@ class tool(QtGui.QWidget):
     def routeModelmodelAboutToBeReset(self):
         if _debug: print("routeModelmodelAboutToBeReset")
 
-        if self.listView.isSortingEnabled():
-            self.listView.setSortingEnabled(False)
 
     def routeModemodelReset(self):
         if _debug: print("routeModelmodelAboutToBeReset")
 
-        if not self.listView.isSortingEnabled() and not self.enabelSortingTimer:
-            ''' disabel sorting for 1 sek TODO: find the pointer problem'''
-            self.enabelSortingTimer = True
-            QtCore.QTimer.singleShot(1000, self.enabelSorting)
 
     def enabelSorting(self):
         self.listView.setSortingEnabled(True)
