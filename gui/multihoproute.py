@@ -794,7 +794,8 @@ class tool(QtGui.QWidget):
             return
 
         if not self.listView.model() or not self.listView.model().rowCount(): return
-        
+        hopID = self.getCurrentHopFromActiveRoute() # only to fill deal["lastHop"]
+
         if location and self.listView.model():
             for rid in range(0, self.listView.model().rowCount(QtCore.QModelIndex())):
                 if self.layoutLock: return
@@ -808,9 +809,11 @@ class tool(QtGui.QWidget):
                         deal = child.parent().getInternalRoutePointer()
                         if self.route.getSystemA(deal, hopID).lower() == location.lower():
                             if deal["activeRoute"]:
-                                child.setBGColor(QtGui.QColor(QtCore.Qt.green))
+                                child.setBGColor(QtGui.QColor(0, 255, 0, 128))
                             else:
-                                child.setBGColor(QtGui.QColor(QtCore.Qt.yellow))
+                                child.setBGColor(QtGui.QColor(255, 255, 128, 255))
+                        elif deal["activeRoute"] and hopID == deal["lastHop"]:
+                                child.setBGColor(QtGui.QColor(0, 255, 0, 64))
                         else:
                             child.setBGColor(None)
 
@@ -980,6 +983,9 @@ class tool(QtGui.QWidget):
 
     def getCurrentHopFromActiveRoute(self):
         if _debug: print("getCurrentHopFromActiveRoute")
+        if not self.activeRoutePointer:
+            return
+        
         location = self.main.location.getLocation()
 
         hopCount = len(self.activeRoutePointer["path"])
