@@ -890,13 +890,14 @@ class tool(QtGui.QWidget):
 
         
         hopID = self.getCurrentHopFromActiveRoute()
-        if hopID:
-            systemB = self.route.getSystemB(self.activeRoutePointer, hopID)
+        if hopID != None:
+            systemA = self.route.getSystemB(self.activeRoutePointer, hopID)
 
-            if systemB != clipbordText:
+            if systemA != clipbordText:
+                systemB = self.route.getSystemB(self.activeRoutePointer, hopID)
                 self.main.clipboard.setText(systemB)
                 self.lastClipboardEntry = systemB
-                print("setNextRouteHopToClipbord set clipboard to", systemB)
+                print("setNextRouteHopToClipbord1 set clipboard to", systemB)
 
         if not self.lastClipboardEntry:
             # not in route? set the first hop to clipboard
@@ -905,7 +906,7 @@ class tool(QtGui.QWidget):
                 self.main.clipboard.setText(system)
                 self.lastClipboardEntry = system
     
-                print("setNextRouteHopToClipbord set clipboard to", system)
+                print("setNextRouteHopToClipbord2 set clipboard to", system)
 
         self.timer_setNextRouteHopToClipbord.start()
     
