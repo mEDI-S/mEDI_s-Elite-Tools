@@ -39,7 +39,11 @@ class tool(QtGui.QWidget):
 
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = guitools.LineEdit()
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        configval = self.mydb.getConfig( 'option_pcf_location' )
+        if configval:
+            self.locationlineEdit.setText( configval )
+        else:
+            self.locationlineEdit.setText( self.main.location.getLocation() )
         self.locationlineEdit.textChanged.connect(self.searchPower)
 
 
@@ -51,6 +55,10 @@ class tool(QtGui.QWidget):
         for power in powers:
             self.powerComboBox.addItem( power["Name"] )
             self.powerList.append(power["id"])
+
+        if self.mydb.getConfig("option_pcf_power"):
+            self.powerComboBox.setCurrentIndex(self.mydb.getConfig("option_pcf_power"))
+
         self.powerComboBox.currentIndexChanged.connect(self.searchPower)
 
         self.searchbutton = QtGui.QPushButton("Search")
@@ -102,6 +110,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setLayout(layout)
 
         self.guitools.setSystemComplete("", self.locationlineEdit)
+        self.searchPower()
         
         return vGroupBox
 
@@ -120,6 +129,12 @@ class tool(QtGui.QWidget):
 
     def setCurentLocation(self):
         self.locationlineEdit.setText( self.main.location.getLocation() )
+
+
+    def saveOptions(self):
+        # save last options
+        self.mydb.setConfig('option_pcf_power', self.powerComboBox.currentIndex())
+        self.mydb.setConfig( 'option_pcf_location', self.locationlineEdit.text() )
 
 
     def searchPower(self):

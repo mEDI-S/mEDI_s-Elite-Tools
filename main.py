@@ -288,11 +288,14 @@ class MainWindow(QtGui.QMainWindow):
         
         self.mydb.setConfig( 'mainwindow.size', "%d,%d" % ( size.width(), size.height() ) )
 
-        if self.dealsFromToWidget: # save only from last windows
-            self.dealsFromToWidget[-1].saveOptions()
+        if self.dealsFromToWidget: # save only from first windows
+            self.dealsFromToWidget[0].saveOptions()
 
-        if self.multiHopRouteWidget: # save only from last windows
-            self.multiHopRouteWidget[-1].saveOptions()
+        if self.multiHopRouteWidget: # save only from first windows
+            self.multiHopRouteWidget[0].saveOptions()
+
+        if self.powerControlFinderWidget: # save only from first windows
+            self.powerControlFinderWidget[0].saveOptions()
 
 
 
