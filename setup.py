@@ -131,6 +131,14 @@ if os.path.isfile(clonedDBpath):
     db = elite.db(guiMode=True, DBPATH=clonedDBpath)
 
     db.setConfig('initRun', 1)
+
+    db.setConfig('option_dft_fromSystem', '')
+    db.setConfig('option_dft_fromStation', '')
+    db.setConfig('option_dft_toSystem', '')
+    db.setConfig('option_dft_toStation', '')
+
+    db.setConfig('option_pcf_power', '')
+    db.setConfig('option_pcf_location', '')
     
     lastOptimize = db.getConfig( 'lastOptimizeDatabase' )
     if lastOptimize:
