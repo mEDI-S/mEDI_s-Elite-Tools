@@ -7,11 +7,17 @@ Tools for Elite:Dangerous
 ## Features: ##
 * Live data update and import from many sources
 * Fast search
+* Fake Item Filter for not existig items (Pirate data entrys)
 * Multi Hop Route Finder
  * Clippord Helper (push next navi point to clipbord) `start over route contextmenü`
  * Current location and active route colored 
+ * Connect To Deals From To Finder to view all other deals
 * Deals From To Finder
+ * Station To Station
+ * Station To System
 * Shipyard Finder
+* Power Control Finder
+
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)
