@@ -185,7 +185,10 @@ class tool(QtGui.QWidget):
         self.optionsGroupBox = QtGui.QGroupBox("Options")
         self.optionsGroupBox.setLayout(gridLayout)
 
-        self.searchGroupBox = QtGui.QGroupBox("Search")
+        self.searchGroupBox = QtGui.QGroupBox()
+        self.searchGroupBox.setFlat(True)
+        self.searchGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;} QGridLayout {border:0;margin:0;padding:0;} margin:0;padding:0;""")
+
         self.searchGroupBox.setLayout(searchgridLayout)
 
         self.listView = QtGui.QTreeView()

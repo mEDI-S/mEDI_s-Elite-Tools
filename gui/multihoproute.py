@@ -540,6 +540,7 @@ class tool(QtGui.QWidget):
 
         locationGroupBox = QtGui.QGroupBox()
         locationGroupBox.setFlat(True)
+        locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
         layout = QtGui.QHBoxLayout()
 
@@ -574,6 +575,7 @@ class tool(QtGui.QWidget):
 
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
+
         layout = QtGui.QVBoxLayout()
 
         layout.addWidget(self.optionsGroupBox)

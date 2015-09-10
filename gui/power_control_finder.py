@@ -70,6 +70,8 @@ class tool(QtGui.QWidget):
         layout.addWidget(self.searchbutton)
 
         locationGroupBox = QtGui.QGroupBox()
+        locationGroupBox.setFlat(True)
+        locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
         locationGroupBox.setLayout(layout)
 
 
