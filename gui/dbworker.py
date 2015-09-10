@@ -73,7 +73,11 @@ class _updateDBchild(threading.Thread):
 
         self.mydb.sendProcessMsg = self.sendProcessMsg
 
-        self.mydb.updateData( )
+        try:
+            self.mydb.updateData( )
+        except:
+            self.close()
+            return
 
         if self._active != True:
             self.close()
