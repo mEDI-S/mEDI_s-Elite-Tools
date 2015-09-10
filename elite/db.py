@@ -583,10 +583,50 @@ class db(object):
         result = cur.fetchall()
         cur.close()
 
-#        for i in result:
-#            print(i)
             
         return result
+
+
+    def getDealsFromToSystem(self, fromStationID,  toSystemID, maxStarDist=999999999, maxAgeDate=datetime.utcnow()-timedelta(days=14), minStock=0 ):
+
+
+        cur = self.cursor()
+
+        cur.execute('''select priceA.ItemID AS ItemID, priceB.StationBuy-priceA.StationSell AS profit,
+                             priceB.StationBuy AS StationBuy,  priceA.StationSell AS StationSell,
+                            priceA.id AS priceAid, priceB.id AS priceBid, priceA.Stock AS Stock,
+                             items.name AS itemName,
+                             stationA.Station AS fromStation,
+                             stationB.Station AS toStation,
+                             priceA.modified AS fromAge, priceB.modified AS toAge
+                             
+                    FROM price AS priceA
+
+                    inner JOIN price AS priceB ON priceB.SystemID=? AND priceA.ItemID=priceB.ItemID AND priceB.StationBuy > priceA.StationSell
+                    left JOIN items on priceA.ItemID=items.id
+                    left JOIN stations AS stationA on priceA.StationID=stationA.id
+                    left JOIN stations AS stationB on priceB.StationID=stationB.id
+
+                    left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
+                    left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
+
+                    WHERE 
+
+                        priceA.StationID=? 
+                        AND priceA.StationSell > 0
+                        AND stationB.StarDist <= ?
+                        AND priceA.Stock > ?
+                        AND priceA.modified >= ?
+                        AND priceB.modified >= ?
+                        AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                    order by profit DESC
+                    ''', (toSystemID, fromStationID, maxStarDist, minStock, maxAgeDate, maxAgeDate))
+        
+        result = cur.fetchall()
+        cur.close()
+           
+        return result
+
 
     def calcDealsInDistancesCache(self, systemIDlist, maxAgeDate , minTradeProfit=1000,dist=51):
         print("calcDealsInDistancesCache", len(systemIDlist))
