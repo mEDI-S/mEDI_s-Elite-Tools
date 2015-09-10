@@ -983,6 +983,12 @@ class tool(QtGui.QWidget):
 
     def connectToDealsFromToWindows(self):
         if _debug: print("connectToDealsFromToWindows")
+        if self.connectedDealsFromToWindows:
+            indexes = self.listView.selectionModel().selectedIndexes()
+            if self.activeRoutePointer == indexes[0].internalPointer().getInternalRoutePointer():
+                self.connectedDealsFromToWindows = None
+                return
+
         if self.main.dealsFromToWidget:
             self.setActiveRoutePointer()
             self.triggerLocationChanged()
