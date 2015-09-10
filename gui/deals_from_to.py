@@ -389,15 +389,17 @@ class tool(QtGui.QWidget):
             
         maxAgeDate = datetime.utcnow() - timedelta(days = self.maxAgeSpinBox.value() )
         minStock = self.minStockSpinBox.value()
+        startDist = self.maxStartDistSpinBox.value()
         
-        if not fromSystemID or not fromStationID or not toSystemID or not toStationID:
+        if not fromSystemID or not fromStationID or not toSystemID:
             return
-
+        
 #        self.main.lockDB()
     
         if fromStationID and toStationID:
             deals = self.mydb.getDealsFromTo( fromStationID,  toStationID, maxAgeDate , minStock )
-
+        elif fromStationID and toSystemID:
+            deals = self.mydb.getDealsFromToSystem( fromStationID,  toSystemID, startDist, maxAgeDate , minStock )
         else:
             deals = []
 
