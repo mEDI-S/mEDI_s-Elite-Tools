@@ -76,6 +76,8 @@ class _updateDBchild(threading.Thread):
         try:
             self.mydb.updateData( )
         except:
+            e = sys.exc_info()
+            print("except",e)
             self.close()
             return
 
