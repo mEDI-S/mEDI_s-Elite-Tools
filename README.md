@@ -49,7 +49,8 @@ multiple open tools
 
 ## Download ##
 
-Windows alpa build [Download](http://tmp.medi.li/mediselitetools.7z)
+Windows Installer without DB [Download](http://tmp.medi.li/mEDIs Elite Tools-0.1-win32.msi)
+Windows alpa build with DB [Download](http://tmp.medi.li/mediselitetools.7z)
 
 linux users get the sources and start it in console `python main.py`
 requiered modules: PySide, py-dateutil, pyzmq
