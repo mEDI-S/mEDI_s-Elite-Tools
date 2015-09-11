@@ -61,8 +61,8 @@ class loader(object):
                 stationID = self.mydb.getStationID(systemID, row[fields.index("Station")])
                 # add new stations
                 if not stationID:
-                    print("add new station: %s" % system)
-                    cur.execute("insert or IGNORE into station (SystemID, Station) values (?) ",
+                    print("add new station: %s" % row[fields.index("Station")])
+                    cur.execute("insert or IGNORE into stations (SystemID, Station) values (?,?) ",
                                                                (systemID, row[fields.index("Station")]))
 
                     stationID = self.mydb.getStationID(systemID, row[fields.index("Station")])
