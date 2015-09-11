@@ -118,12 +118,13 @@ class loader(object):
             systemID = self.mydb.getSystemIDbyName(system)
             if systemID == None:
                 print("new system?",system)
+                continue
             for station in self.__dataCache[system]:
 
                 stationID = self.mydb.getStationID(systemID, station)
                 if stationID == None:
-                    print("new station?",stationID)
-
+                    print("new station?", station)
+                    continue
                 for item in self.__dataCache[system][station]:
 
                     itemID = self.mydb.getItemID(item)
@@ -199,7 +200,9 @@ class loader(object):
         request.add_header('User-Agent', __useragent__)
         request.add_header('Accept-encoding', 'gzip')
 
+
         response = urllib2.urlopen(request)
+            
         if response.info().get('Content-Encoding') == 'gzip':
             buf = io.BytesIO(response.read())
             f = gzip.GzipFile(fileobj=buf)
