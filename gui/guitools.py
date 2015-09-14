@@ -70,7 +70,10 @@ class guitools(object):
             if item.data():
                 if isinstance( item.data(), str):
                     clip.append( item.data() )
+                elif isinstance( item.data(), QtCore.QDateTime):
+                    clip.append( item.data().toString("dd.MM.yyyy hh:mm:ss") )
                 else:
+                    #print(type(item.data()))
                     clip.append( str(item.data()) )
 #                    print(type(item.data()))
         if clip:
