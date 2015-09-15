@@ -65,7 +65,6 @@ class db(object):
         self.con.execute("PRAGMA journal_mode = MEMORY")
         self.con.execute("PRAGMA recursive_triggers=True")
             
-
         if self.getConfig( 'dbVersion' ) != DBVERSION:
             ''' run on database update'''
             self.initDB()
@@ -228,6 +227,9 @@ class db(object):
 
         #powers
         self.con.execute( "CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+
+        #fly log
+        self.con.execute( "CREATE TABLE IF NOT EXISTS flylog (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT, optionalSystemName TEXT, Comment TEXT, DateTime timestamp)" )
 
         # trigger to controll the dynamic cache
         self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price

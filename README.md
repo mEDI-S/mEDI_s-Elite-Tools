@@ -17,7 +17,8 @@ Tools for Elite:Dangerous
  * Station To System
 * Shipyard Finder
 * Power Control Finder
-
+* Fly Log
+ * EDSC Submit Distances Wizard (add easy and fast new systems) `only avalibel inside a new system in contextmenü over the unknow system`
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)

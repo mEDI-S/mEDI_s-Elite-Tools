@@ -6,7 +6,7 @@ Created on 19.08.2015
 @author: mEDI
 '''
 
-__defauktUpdateTime__ = 1000*30
+__defaultUpdateTime__ = 1000*30
 
 import logging
 import sys
@@ -61,6 +61,7 @@ class MainWindow(QtGui.QMainWindow):
     dealsFromToWidget = []
     shipyardFinderWidget = []
     powerControlFinderWidget = []
+    flyLogWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -90,6 +91,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
         self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
+        self.addTool( gui.flylog, self.flyLogWidget)
 
         self.setStatusBar("Welcomme to mEDI's Elite Tools")
 
@@ -130,6 +132,10 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip=tool.__statusTip__, triggered=createDockWidget)
     
         self.toolsMenu.addAction(myAct)
+
+        ''' run initRun from tool/plugin '''
+        if hasattr(tool, "initRun"):
+            tool.initRun(self)
 
     def addProgressBarStatusBar(self):
         DEFAULT_STYLE = """
@@ -233,7 +239,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createTimer(self):
         self.updateDBtimer = QtCore.QTimer()
-        self.updateDBtimer.start(__defauktUpdateTime__)
+        self.updateDBtimer.start(__defaultUpdateTime__)
         self.updateDBtimer.timeout.connect(self.updateDB)
 
         self.childMsgPullTimer = QtCore.QTimer()
@@ -260,9 +266,9 @@ class MainWindow(QtGui.QMainWindow):
 
         status = self.dbworker.updateDB()
         if status:
-            self.updateDBtimer.start(__defauktUpdateTime__)
+            self.updateDBtimer.start(__defaultUpdateTime__)
         else:
-            self.updateDBtimer.start(__defauktUpdateTime__*4)
+            self.updateDBtimer.start(__defaultUpdateTime__*4)
 
     def lockDB(self):
         self.dbworker.lockDB()
