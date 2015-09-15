@@ -19,7 +19,7 @@ import platform
 import time
 import zmq.libzmq
 
-__version__ = "0.1"
+__version__ = "0.1.1"
 __buildid__ = ""
 __builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 __ZIPFILE__ = "mediselitetools.7z"
@@ -29,6 +29,9 @@ __toolnameSave__ = __toolname__.replace("'", "")
 __exeName__ = 'mEDIsEliteTools.exe'
 __msiFile__ = "%s-%s-%s.msi" % (__toolnameSave__, __version__, sys.platform)
 __destDisr__ = "dist"
+
+__forceupdateFile__ = "updatetrigger.txt"
+__OptimizeDB__ = False
 
 VERSION_PY = """# This file is originally generated from Git information by running 'setup.py
 __buildid__ = '%s'
@@ -93,9 +96,16 @@ def update_version_py():
 
 
 update_version_py()
+
+''' add trigger file to force update on private databases '''
+f = open(__forceupdateFile__, "w")
+f.write("1")
+f.close()
+
+
 imgPath = "img"
 #includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
-includeFilesList = [["db/rares.csv","db/rares.csv"], [zmq.libzmq.__file__, "libzmq.pyd" ]]
+includeFilesList = [["db/rares.csv","db/rares.csv"], [zmq.libzmq.__file__, "libzmq.pyd" ], [__forceupdateFile__,__forceupdateFile__]]
 
 #add img
 for f in os.listdir(imgPath):
@@ -185,6 +195,9 @@ setup(name=__toolnameSave__,
       executables = executables)
 
 
+''' remove trigger file '''
+if os.path.isfile( __forceupdateFile__ ):
+    os.remove( __forceupdateFile__ )
 
 ''' only for the zip fallback'''
 if _buildZip:
@@ -197,7 +210,7 @@ if _buildZip:
     
     if os.path.isfile(clonedDBpath):
         db = elite.db(guiMode=True, DBPATH=clonedDBpath)
-    
+        cur = db.cursor()
         db.setConfig('initRun', 1)
     
         db.setConfig('option_dft_fromSystem', '')
@@ -207,9 +220,17 @@ if _buildZip:
     
         db.setConfig('option_pcf_power', '')
         db.setConfig('option_pcf_location', '')
-        
+
+        db.setConfig('option_commanderName', '')
+
+        ''' drop private tables '''
+        cur.execute("DROP TABLE flylog")
+
+        db.con.commit()
+        cur.close()
+
         lastOptimize = db.getConfig( 'lastOptimizeDatabase' )
-        if lastOptimize:
+        if __OptimizeDB__ and lastOptimize:
             lastOptimize = datetime.strptime(lastOptimize , "%Y-%m-%d %H:%M:%S")
             if lastOptimize + timedelta(days=1) < datetime.now():
                 db.optimizeDatabase()

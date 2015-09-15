@@ -19,6 +19,7 @@ import elite.loader.raresimport
 import elite.loader.eddn
 
 __loaderCount__ = 5
+__forceupdateFile__ = "updatetrigger.txt"
 
 import sqlite3_functions
 
@@ -70,8 +71,8 @@ class db(object):
             self.initDB()
             self.getSystemPaths()        
             self.setConfig('dbVersion', DBVERSION)
-        elif self.getConfig( 'initRun' ) == "1":
-            ''' run on first start (install with build db)'''
+        elif self.getConfig( 'initRun' ) == "1" or os.path.isfile( __forceupdateFile__ ):
+            ''' run on first start (install with build db or on update)'''
             print("init run")
             self.initDB()
             self.getSystemPaths()        
