@@ -284,6 +284,7 @@ class MainWindow(QtGui.QMainWindow):
             event.ignore()
 
     def closeApp( self ):
+        self.dbworker.stop()
         self.saveOptions()
         self.mydb.stopStreamUpdater()
         self.mydb.close()
