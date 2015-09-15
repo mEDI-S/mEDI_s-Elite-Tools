@@ -77,6 +77,9 @@ class db(object):
             self.initDB()
             self.getSystemPaths()        
             self.setConfig('initRun', 0)
+            ''' remove trigger file '''
+            if os.path.isfile( __forceupdateFile__ ):
+                os.remove( __forceupdateFile__ )
             
         if not self.guiMode:
             self.initDB()
