@@ -27,7 +27,6 @@ __sourceDB__ = "db/my.db"
 __toolname__ = "mEDI's Elite Tools"
 __toolnameSave__ = __toolname__.replace("'", "")
 __exeName__ = 'mEDIsEliteTools.exe'
-__msiFile__ = "%s-%s-%s.msi" % (__toolnameSave__, __version__, sys.platform)
 __destDisr__ = "dist"
 
 __forceupdateFile__ = "updatetrigger.txt"
@@ -99,14 +98,18 @@ def update_version_py():
     f.close()
     print("_version.py to '%s'" % __buildid__)
 
-    ''' create versions file '''
 
-    f = open(os.path.join(__destDisr__,"mediselitetools.version.txt"), "w")
-    f.write(VERSION_HOMEPAGE % (__buildid__, __version__, __msiFile__, __builddate__))
-    f.close()
 
 
 update_version_py()
+
+
+__msiFile__ = "%s-%s-%s.msi" % (__toolnameSave__, __version__, sys.platform)
+
+''' create versions file '''
+f = open(os.path.join(__destDisr__,"mediselitetools.version.txt"), "w")
+f.write(VERSION_HOMEPAGE % (__buildid__, __version__, __msiFile__, __builddate__))
+f.close()
 
 ''' add trigger file to force update on private databases '''
 f = open(__forceupdateFile__, "w")
