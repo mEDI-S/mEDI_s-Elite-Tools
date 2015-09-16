@@ -19,7 +19,7 @@ import platform
 import time
 import zmq.libzmq
 
-__version__ = "0.1.1"
+__version__ = "0.1"
 __buildid__ = ""
 __builddate__ = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 __ZIPFILE__ = "mediselitetools.7z"
@@ -62,10 +62,15 @@ if os.path.isdir(mybuild_dir):
     shutil.rmtree(mybuild_dir)
     pass
 
-
+def isInt(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 def update_version_py():
-    global __buildid__
+    global __buildid__, __version__
     if not os.path.isdir(".git"):
         print("This does not appear to be a Git repository.")
         return
@@ -83,6 +88,12 @@ def update_version_py():
 
     __buildid__ = stdout.strip().decode("utf-8")
 
+    ver = __buildid__.split("-")
+    if isInt(ver[1]):
+        __version__ = "%s.%s" % (ver[0], ver[1]) 
+    else:
+        __version__ = "%s.%s" % (ver[0], 0) 
+        
     f = open("_version.py", "w")
     f.write(VERSION_PY % (__buildid__, __version__, __builddate__, __toolnameSave__))
     f.close()
