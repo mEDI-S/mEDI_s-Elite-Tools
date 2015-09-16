@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import gui.guitools as guitools
 
 __toolname__ = "Deals From To Finder"
+__internalName__ = "DeFrToFi"
 __statusTip__ = "Open A %s Window" % __toolname__
 
 class tool(QtGui.QWidget):

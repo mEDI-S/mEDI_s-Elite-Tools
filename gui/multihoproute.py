@@ -13,6 +13,7 @@ import gui.guitools as guitools
 
 
 __toolname__ = "Multi Hop Route Finder"
+__internalName__ = "MuHoRoFi"
 __statusTip__ = "Open A %s Window" % __toolname__
 _debug = None
 
@@ -597,14 +598,14 @@ class tool(QtGui.QWidget):
 
         indexes = self.listView.selectionModel().selectedIndexes()
         if isinstance(indexes[0].internalPointer(), RouteTreeHopItem):
-            if self.main.dealsFromToWidget:
+            if len(self.main.dealsFromToWidget) > 1:
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
                 menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
             menu.addAction(self.markFakeItemAct)
 
         elif isinstance(indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
-            if self.main.dealsFromToWidget:
+            if len(self.main.dealsFromToWidget) > 1:
                 self.connectToDealsFromToWindowsAct.setChecked(False)
                 menu.addAction(self.connectToDealsFromToWindowsAct)
                 if self.connectedDealsFromToWindows:
@@ -966,8 +967,8 @@ class tool(QtGui.QWidget):
         toSystem = self.route.getSystemA(route, hopID)
         # TODO: set it only in first Deals window current
         if toSystem and toStation:
-            self.main.dealsFromToWidget[0].toSystem.setText(toSystem)
-            self.main.dealsFromToWidget[0].toStation.setText(toStation)
+            self.main.dealsFromToWidget[1].toSystem.setText(toSystem)
+            self.main.dealsFromToWidget[1].toStation.setText(toStation)
 
     def addRouteHopAsFromSystemInDealsFromToFinder(self):
 
@@ -978,8 +979,8 @@ class tool(QtGui.QWidget):
         system = self.route.getSystemA(route, hopID)
         # TODO: set it only in first Deals window current
         if system and station:
-            self.main.dealsFromToWidget[0].fromSystem.setText(system)
-            self.main.dealsFromToWidget[0].fromStation.setText(station)
+            self.main.dealsFromToWidget[1].fromSystem.setText(system)
+            self.main.dealsFromToWidget[1].fromStation.setText(station)
 
     def connectToDealsFromToWindows(self):
         if _debug: print("connectToDealsFromToWindows")
@@ -993,7 +994,7 @@ class tool(QtGui.QWidget):
             self.setActiveRoutePointer()
             self.triggerLocationChanged()
 
-            self.connectedDealsFromToWindows = self.main.dealsFromToWidget[0]
+            self.connectedDealsFromToWindows = self.main.dealsFromToWidget[1]
             self.connectedDealsFromToWindows.autoUpdateLocation.setChecked(False)
 
             self.updateConnectedDealsFromToWindow(init=True)

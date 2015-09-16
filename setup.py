@@ -225,6 +225,7 @@ if _buildZip:
 
         db.setConfig('mainwindow.geometry', '')
         db.setConfig('mainwindow.State', '')
+        db.setConfig('mainwindow.openWidgets', '')
 
 
         ''' drop private tables '''

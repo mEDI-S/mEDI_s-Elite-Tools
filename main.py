@@ -87,11 +87,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.addProgressBarStatusBar()
         
-        self.addTool( gui.multihoproute, self.multiHopRouteWidget)
-        self.addTool( gui.deals_from_to, self.dealsFromToWidget)
-        self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
-        self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
-        self.addTool( gui.flylog, self.flyLogWidget)
 
         self.setStatusBar("Welcomme to mEDI's Elite Tools")
 
@@ -101,6 +96,14 @@ class MainWindow(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
 
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.shipyard_finder, gui.power_control_finder, gui.flylog] 
+        
+        self.addTool( gui.multihoproute, self.multiHopRouteWidget)
+        self.addTool( gui.deals_from_to, self.dealsFromToWidget)
+        self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
+        self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
+        self.addTool( gui.flylog, self.flyLogWidget)
+
         self.loadLastWindowsOptions()
 
     def loadLastWindowsOptions(self):
@@ -109,6 +112,20 @@ class MainWindow(QtGui.QMainWindow):
         if windowgeometry:
             self.restoreGeometry( base64.b64decode(windowgeometry) )
 
+        ''' restore open Widgets'''
+        openWidgets = self.mydb.getConfig('mainwindow.openWidgets')
+        if openWidgets:
+            openWidgetsList = openWidgets.split(",")
+            openWidgets = {}
+            for item in openWidgetsList:
+                widget = item.split(":")
+                for tool in self.myPlugins:
+                    count = int(widget[1])
+                    if widget[0] == tool.__internalName__:
+                        while count:
+                            count -= 1
+                            tool._openDockWidget()
+        
         winState = self.mydb.getConfig('mainwindow.State')
         if winState:
             self.restoreState(  base64.b64decode(winState)  )
@@ -128,10 +145,12 @@ class MainWindow(QtGui.QMainWindow):
         
             widget = myWidget.getWideget()
     
-            pos = len(toolsList)
+            pos = len(toolsList)-1
             title = "%s %d" % (tool.__toolname__, pos)
-            self.addMyDockWidget( widget, title )    
-        
+            self.addMyDockWidget( widget, title)
+
+        tool._openDockWidget = createDockWidget
+        toolsList.append(createDockWidget)
     
         ''' tool to tools menu '''    
         myAct = QtGui.QAction(tool.__toolname__, self,
@@ -142,6 +161,8 @@ class MainWindow(QtGui.QMainWindow):
         ''' run initRun from tool/plugin '''
         if hasattr(tool, "initRun"):
             tool.initRun(self)
+
+
 
     def addProgressBarStatusBar(self):
         DEFAULT_STYLE = """
@@ -180,15 +201,16 @@ class MainWindow(QtGui.QMainWindow):
     def addMyDockWidget(self, widget, title):
 
         dock = QtGui.QDockWidget(title, self)
+        dock.setObjectName(title)
 
         dock.setAllowedAreas( QtCore.Qt.AllDockWidgetAreas)
         dock.DockWidgetFeature(QtGui.QDockWidget.AllDockWidgetFeatures )
         dock.setWidget(widget)
-    
+
+
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
     
         self.viewMenu.addAction(dock.toggleViewAction())
-
 
         
     def createActions(self):
@@ -302,14 +324,33 @@ class MainWindow(QtGui.QMainWindow):
 
         self.mydb.setConfig( 'mainwindow.State', str( self.saveState().toBase64() ) )
 
-        if self.dealsFromToWidget: # save only from first windows
-            self.dealsFromToWidget[0].saveOptions()
 
-        if self.multiHopRouteWidget: # save only from first windows
-            self.multiHopRouteWidget[0].saveOptions()
+        ''' save open Widgets'''
+        openWidgets = {}
 
-        if self.powerControlFinderWidget: # save only from first windows
-            self.powerControlFinderWidget[0].saveOptions()
+        for dock in self.findChildren(QtGui.QDockWidget):
+            if not dock.isHidden():
+                for tool in self.myPlugins:
+                    if dock.objectName()[:len(tool.__toolname__)] == tool.__toolname__:
+                        if tool.__internalName__ not in openWidgets:
+                            openWidgets[tool.__internalName__] = 1
+                        else:
+                            openWidgets[tool.__internalName__] += 1
+
+        openWidgetsList = []
+        for dock in openWidgets:
+            openWidgetsList.append( "%s:%s" % (dock, openWidgets[dock]) )
+
+        self.mydb.setConfig( 'mainwindow.openWidgets', ",".join(openWidgetsList) )
+        
+        if len(self.dealsFromToWidget) > 1: # save only from first windows
+            self.dealsFromToWidget[1].saveOptions()
+
+        if len(self.multiHopRouteWidget) > 1: # save only from first windows
+            self.multiHopRouteWidget[1].saveOptions()
+
+        if len(self.powerControlFinderWidget) > 1: # save only from first windows
+            self.powerControlFinderWidget[1].saveOptions()
 
 
 

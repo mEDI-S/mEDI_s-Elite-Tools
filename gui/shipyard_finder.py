@@ -11,6 +11,7 @@ import PySide
 import gui.guitools as guitools
 
 __toolname__ = "Shipyard Finder"
+__internalName__ = "ShFi"
 __statusTip__ = "Open A %s Window" % __toolname__
 
 class tool(QtGui.QWidget):

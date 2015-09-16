@@ -11,6 +11,7 @@ import PySide
 import gui.guitools as guitools
 
 __toolname__ = "Power Control Finder"
+__internalName__ = "PoCoFi"
 __statusTip__ = "Find controlled systems by Power"
 
 class tool(QtGui.QWidget):
