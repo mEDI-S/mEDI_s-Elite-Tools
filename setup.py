@@ -223,6 +223,10 @@ if _buildZip:
 
         db.setConfig('option_commanderName', '')
 
+        db.setConfig('mainwindow.geometry', '')
+        db.setConfig('mainwindow.State', '')
+
+
         ''' drop private tables '''
         cur.execute("DROP TABLE flylog")
 

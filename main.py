@@ -50,7 +50,7 @@ except:
 import elite
 import gui
 from PySide import QtCore, QtGui
-
+import base64
 
 class MainWindow(QtGui.QMainWindow):
 
@@ -97,17 +97,23 @@ class MainWindow(QtGui.QMainWindow):
 
         self.setMinimumSize(640,400)
 
-        windowsize = self.mydb.getConfig('mainwindow.size')
-        if windowsize:
-            windowsize = windowsize.split(",")
-            self.resize(int(windowsize[0]), int(windowsize[1]))
-        else:
-            self.resize(640,480)
-
         self.clipboard = QtGui.QClipboard()
 
         self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
 
+        self.loadLastWindowsOptions()
+
+    def loadLastWindowsOptions(self):
+        
+        windowgeometry = self.mydb.getConfig('mainwindow.geometry')
+        if windowgeometry:
+            self.restoreGeometry( base64.b64decode(windowgeometry) )
+
+        winState = self.mydb.getConfig('mainwindow.State')
+        if winState:
+            self.restoreState(  base64.b64decode(winState)  )
+
+        
     def setStatusBar(self, msg):
         print("statusBar msg: %s" % msg)
         self.statusBar().showMessage(msg)
@@ -291,9 +297,10 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.qApp.quit()
 
     def saveOptions( self ):
-        size = self.size()
-        
-        self.mydb.setConfig( 'mainwindow.size', "%d,%d" % ( size.width(), size.height() ) )
+
+        self.mydb.setConfig( 'mainwindow.geometry', str( self.saveGeometry().toBase64() ) )
+
+        self.mydb.setConfig( 'mainwindow.State', str( self.saveState().toBase64() ) )
 
         if self.dealsFromToWidget: # save only from first windows
             self.dealsFromToWidget[0].saveOptions()
