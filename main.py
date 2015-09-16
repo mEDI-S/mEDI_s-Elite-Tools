@@ -73,6 +73,15 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("mEDI's Elite Tools")
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks | QtGui.QMainWindow.AllowTabbedDocks)
 
+        self.setStatusBar("Welcomme to mEDI's Elite Tools")
+        self.setMinimumSize(600,400)
+
+        self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
+
+        self.addProgressBarStatusBar()
+
+        self.clipboard = QtGui.QClipboard()
+
         self.mydb = elite.db(guiMode=True)
         self.mydb.startStreamUpdater()
 
@@ -85,16 +94,6 @@ class MainWindow(QtGui.QMainWindow):
         self.createMenus()
         self.createTimer()
 
-        self.addProgressBarStatusBar()
-        
-
-        self.setStatusBar("Welcomme to mEDI's Elite Tools")
-
-        self.setMinimumSize(640,400)
-
-        self.clipboard = QtGui.QClipboard()
-
-        self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
 
         self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.shipyard_finder, gui.power_control_finder, gui.flylog] 
         
@@ -103,6 +102,8 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
         self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
         self.addTool( gui.flylog, self.flyLogWidget)
+
+        self.show()
 
         self.loadLastWindowsOptions()
 
@@ -243,17 +244,19 @@ class MainWindow(QtGui.QMainWindow):
 
        
     def createMenus(self):
-        self.fileMenu = self.menuBar().addMenu("&File")
+        self.menuBar().clear()
+        self.fileMenu = self.menuBar().addMenu("File")
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAct)
 
-        self.toolsMenu = self.menuBar().addMenu("&Tools")
-
+        self.toolsMenu = self.menuBar().addMenu("Tools")
         self.toolsMenu.addSeparator()
 
-        self.viewMenu = self.menuBar().addMenu("&View")
+        self.viewMenu = self.menuBar().addMenu("View")
+        self.viewMenu.addSeparator()
 
-        self.helpMenu = self.menuBar().addMenu("&Help")
+        self.helpMenu = self.menuBar().addMenu("Help")
+        self.toolsMenu.addSeparator()
 
         self.helpMenu.addAction(self.aboutWebsideAct)
         self.helpMenu.addAction(self.aboutChangelogAct)
