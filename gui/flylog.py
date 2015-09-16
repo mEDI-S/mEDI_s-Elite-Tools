@@ -118,18 +118,20 @@ class flyLogger(object):
             self.lastPos = location                
             print(location)
             # return
+            self.main.lockDB()
             if systemID:
                 cur.execute("insert or replace into flylog (SystemID, DateTime) values (?,?)", (systemID, datetime.utcnow()))
             else:
                 cur.execute("insert or replace into flylog (optionalSystemName, DateTime) values (?,?)", (location, datetime.utcnow()))
                 print("unknow system %s" % location)
+            self.main.unlockDB()
 
             self.mydb.con.commit()
             cur.close()
             ''' update open logs '''
             if self.main.flyLogWidget:
-                for flylog in self.main.flyLogWidget:
-                    flylog.showLog()
+                for flylog in range(1, len(self.main.flyLogWidget)):
+                    self.main.flyLogWidget[flylog].showLog()
 
 def initRun(self):
 
