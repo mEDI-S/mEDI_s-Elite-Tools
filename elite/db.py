@@ -24,7 +24,7 @@ __forceupdateFile__ = "updatetrigger.txt"
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db","my.db")
-DBVERSION = 1
+DBVERSION = 2
 
 class db(object):
 
@@ -187,12 +187,16 @@ class db(object):
 
 
         #systems
-        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, modified timestamp)" )
-#        self.con.execute( "create UNIQUE index  IF NOT EXISTS systems_unique_System on systems (System)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, government INT, allegiance INT, modified timestamp)" )
 
         #stations
-        self.con.execute( "CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, government INT, allegiance INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)" )
         self.con.execute( "create UNIQUE index  IF NOT EXISTS station_unique_system_Station on stations (SystemID, Station)" )
+
+
+        self.con.execute( "CREATE TABLE IF NOT EXISTS allegiances (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+        self.con.execute( "CREATE TABLE IF NOT EXISTS governments (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+
 
         #items
         self.con.execute( "CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )" )
@@ -261,6 +265,24 @@ class db(object):
                                 insert or ignore into dealsInDistancesSystems_queue (systemID) values(OLD.systemID);
                             END; """ )
 
+
+        ''' update db version'''
+        dbVersion  = self.getConfig( 'dbVersion' )
+        if dbVersion:
+            dbVersion = int(dbVersion)
+        else:
+            dbVersion = DBVERSION
+        ''' 01 to 02 '''
+        if dbVersion < 2:
+            print("update database from %s to 2" % dbVersion)
+            self.con.execute( "ALTER TABLE systems ADD COLUMN government INT;" )
+            self.con.execute( "ALTER TABLE systems ADD COLUMN allegiance INT;" )
+    
+            self.con.execute( "ALTER TABLE stations ADD COLUMN government INT;" )
+            self.con.execute( "ALTER TABLE stations ADD COLUMN allegiance INT;" )
+    
+            self.con.execute( "vacuum systems;" )
+            self.con.execute( "vacuum stations;" )
 
         self.con.commit()
 
@@ -1091,6 +1113,46 @@ class db(object):
 
         cur.close()
         return result
+
+    def getAllegianceID(self, allegiance, addUnknown=None):
+        if not allegiance or allegiance == "None":
+            return
+
+        cur = self.cursor()
+        cur.execute( "select id from allegiances where LOWER(Name)=? limit 1", ( allegiance.lower(), ) )
+
+        result = cur.fetchone()
+
+        if not result and addUnknown:
+            cur.execute( "insert or IGNORE into allegiances (Name) values (?) ", ( allegiance, ))
+            cur.execute( "select id from allegiances where Name=? limit 1", ( allegiance, ) )
+
+            result = cur.fetchone()
+
+        cur.close()
+        if result:
+            return result[0]
+
+
+    def getGovernmentID(self, government, addUnknown=None):
+        if not government or government == "None":
+            return
+        
+        cur = self.cursor()
+        cur.execute( "select id from governments where LOWER(Name)=? limit 1", ( government.lower(), ) )
+
+        result = cur.fetchone()
+
+        if not result and addUnknown:
+            cur.execute( "insert or IGNORE into governments (Name) values (?) ", ( government, ))
+            cur.execute( "select id from governments where Name=? limit 1", ( government, ) )
+
+            result = cur.fetchone()
+
+        cur.close()
+        if result:
+            return result[0]
+
 
 if __name__ == '__main__':
     #mydb = db()

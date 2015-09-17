@@ -132,14 +132,19 @@ class loader(object):
 
             systemID = systemJosmIDtoDBIDCache[station["system_id"]]
             stationCacheKey = "%s_%s" % (systemID, station["name"].lower() )
+
+            allegianceID = self.mydb.getAllegianceID(station["allegiance"], True )
+
+            governmentID = self.mydb.getGovernmentID(station["government"], True )
+
             '''
             update or insert Stations 
             '''
             if stationCacheKey not in stationCache:
                 insertCount += 1
 
-                cur.execute("insert or IGNORE into stations (SystemID, Station, StarDist, blackmarket, max_pad_size, market, shipyard, outfitting, rearm, refuel, repair, modified) values (?,?,?,?,?,?,?,?,?,?,?,?) ",
-                    (systemID, station["name"], station["distance_to_star"], station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified))
+                cur.execute("insert or IGNORE into stations (SystemID, Station, StarDist, government, allegiance, blackmarket, max_pad_size, market, shipyard, outfitting, rearm, refuel, repair, modified) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ",
+                    (systemID, station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified))
 
                 
                 stationID = self.mydb.getStationID(systemID,station["name"])
@@ -147,7 +152,7 @@ class loader(object):
             elif stationCache[stationCacheKey][1] < modified:
                 updateCount += 1
                 stationID = stationCache[stationCacheKey][0]
-                updateStation.append( [station["name"], station["distance_to_star"], station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified, stationID] )
+                updateStation.append( [station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified, stationID] )
             else:
                 stationID = stationCache[stationCacheKey][0]
 
@@ -175,11 +180,10 @@ class loader(object):
 
 
         if updateStation:
-            cur.executemany("UPDATE stations SET Station=?, StarDist=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id = ?", updateStation)
+            cur.executemany("UPDATE stations SET Station=?, StarDist=?, government=?, allegiance=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id = ?", updateStation)
 
         if insertItems:
             cur.executemany( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand, Stock, modified, source) values (?,?,?,?,?,?,?,?,4) ", insertItems)
-        self.mydb.con.commit()
 
 
         if updateItems:
