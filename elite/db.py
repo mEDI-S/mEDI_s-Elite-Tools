@@ -211,6 +211,9 @@ class db(object):
         #fakePrice
         self.con.execute( "CREATE TABLE IF NOT EXISTS fakePrice (priceID INTEGER PRIMARY KEY  )" )
 
+        #blackmarketPrice
+        self.con.execute( "CREATE TABLE IF NOT EXISTS blackmarketPrice (priceID INTEGER PRIMARY KEY  )" )
+
         #default config
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "dbVersion", DBVERSION ) )
         self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", r'c:\Users\mEDI\Documents\ED' ) )
@@ -545,19 +548,20 @@ class db(object):
         cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
-        #cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where id != ? AND dist < ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],systemID,distance, ) )
-
 
         cur.execute("""select * FROM price
                         inner JOIN   (select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? ) as dist ON dist.id=price.systemID
                     left JOIN items on items.id = price.ItemID
                     left JOIN systems on systems.id = price.SystemID
                     left JOIN stations on stations.id = price.StationID
+
+                    left JOIN fakePrice AS fakePriceA ON price.id=fakePriceA.priceID
  
                     where
                         systems.permit != 1
                         AND price.modified >= ?
                         AND stations.StarDist <= ?
+                        AND fakePriceA.priceID IS NULL
                         """  , (systemA["posX"],systemA["posY"],systemA["posZ"], distance, maxAgeDate, maxStarDist  )  )
         
         result = cur.fetchall()
