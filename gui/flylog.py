@@ -178,6 +178,7 @@ class tool(QtGui.QWidget):
 
 
         layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
 
         layout.addWidget(locationFilterLabel)
         layout.addWidget(locationButton)
@@ -209,14 +210,42 @@ class tool(QtGui.QWidget):
         self.listView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.listView.customContextMenuRequested.connect(self.myContextMenuEvent)
 
+        QtCore.QObject.connect(self.listView.selectionModel(), QtCore.SIGNAL('selectionChanged(QItemSelection, QItemSelection)'), self.calcSelected)
+
+        distanceLabel = QtGui.QLabel("Distance:")
+        self.distanceLineEdit = QtGui.QLineEdit()
+        self.distanceLineEdit.setMaximumWidth(100)
+
+        timeLabel = QtGui.QLabel("Time:")
+        self.timeLineEdit = QtGui.QLineEdit()
+        self.timeLineEdit.setMaximumWidth(100)
+
+        spacer = QtGui.QSpacerItem(1, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+
+        layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(distanceLabel)
+        layout.addWidget(self.distanceLineEdit)
+        layout.addWidget(timeLabel)
+        layout.addWidget(self.timeLineEdit)
+
+        layout.addItem(spacer)
+
+        infosGroupBox = QtGui.QGroupBox()
+        infosGroupBox.setFlat(True)
+        #infosGroupBox.setStyleSheet("""border:0; margin:0;padding:0;""")
+        infosGroupBox.setLayout(layout)
+
 
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
+        vGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
         layout = QtGui.QVBoxLayout()
-
+        layout.setContentsMargins(6,2,6,6)
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.listView)
+        layout.addWidget(infosGroupBox)
 
 
 
@@ -226,6 +255,39 @@ class tool(QtGui.QWidget):
         
         return vGroupBox
 
+    def calcSelected(self):
+        indexes = self.listView.selectionModel().selectedIndexes()
+        ''' calc Distances '''
+        if indexes[0].column() == self.headerList.index("Distance"):
+            distSum  = 0
+            for index in indexes:
+                item = self.proxyModel.sourceModel().item(index.row(), self.headerList.index("Distance"))
+                if item:
+                    dist = item.data(0)
+                    if dist:
+                        distSum += dist
+            self.distanceLineEdit.setText( str( round(distSum,2) ) )
+        ''' calc Time '''
+        if indexes[0].column() == self.headerList.index("Date"):
+            minDate = None
+            maxDate = None
+            for index in indexes:
+                item = self.proxyModel.sourceModel().item(index.row(), self.headerList.index("Date"))
+                if item:
+                    date = item.data(0)
+                    if not minDate and not maxDate:
+                        minDate=date
+                        maxDate=date
+                    elif minDate > date:
+                        minDate = date
+                    elif maxDate < date:
+                        maxDate = date
+            timeDiff = int(maxDate.toMSecsSinceEpoch()/1000 - minDate.toMSecsSinceEpoch()/1000)
+
+            minutes,sekunds = divmod( timeDiff, 60) 
+            h,minutes = divmod( minutes, 60) 
+            time = "%02d:%02d:%02d" % (h,minutes,sekunds)
+            self.timeLineEdit.setText(time)
 
     def myContextMenuEvent(self, event):
         menu = QtGui.QMenu(self)
