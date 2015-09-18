@@ -500,8 +500,8 @@ class tool(QtGui.QWidget):
             return
 
         status = self.main.flyLogger.edsc.submitDistances( self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList )
-
-        if status:
+        errorMsg = None
+        if status and 'status' in status:
             print(status)
             if status['status']['dist']:
                 for distStatus in status['status']['dist']:
@@ -525,6 +525,19 @@ class tool(QtGui.QWidget):
             msgBox.exec_()
             if status['status']['input'][0]['status']['statusnum'] == 0:
                 self.main.flyLogger.insertSystemFromEDSC(self.systemNameLineEdit.text())
+            return
+        elif status and "error" in status:
+            errorMsg = str(status["error"][1])
+        else:
+            errorMsg = "Unknown Error"
+
+        if errorMsg:
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                        "Send Error", errorMsg,
+                        QtGui.QMessageBox.NoButton, self)
+            msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.exec_()
+            
         #{'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
 
     def showLog(self):

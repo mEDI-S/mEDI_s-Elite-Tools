@@ -60,8 +60,10 @@ class edsc(object):
         josnData = self.sendAPIRequest(apiurl, postrequest)
         if not josnData:
             return
-
         print(josnData)
+
+        if "error" in josnData:
+            return
         for system in josnData['d']['systems']:
             if system['name'] == systemname:
                 # print(system)
@@ -83,8 +85,12 @@ class edsc(object):
 #        print(postrequest)
         josnData = self.sendAPIRequest(apiurl, postrequest)
         print(josnData)
-        if josnData:
+
+        if josnData and "s" in josnData:
             return josnData['d']
+        else:
+            return josnData
+            
 
     
     def sendAPIRequest(self, apiurl, postrequest):
@@ -105,7 +111,7 @@ class edsc(object):
         except:
             e = sys.exc_info()
             print("sendAPIRequest except",e)
-            return
+            return {"error":e}
         
         if response.info().get('Content-Encoding') == 'gzip':
             # print("gzip ok")
