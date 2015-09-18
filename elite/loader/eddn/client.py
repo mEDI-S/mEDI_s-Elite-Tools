@@ -14,7 +14,7 @@ __sourceID__ = 5
 
 import zlib
 import zmq
-#import simplejson
+
 import sys
 import time
 import json
@@ -22,7 +22,7 @@ import json
 import random    
 import threading
 import queue
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dateutil.parser import parse as dateutil_parse
 import elite
 
@@ -57,7 +57,8 @@ class _child(threading.Thread):
         
         subscriber.setsockopt(zmq.SUBSCRIBE, b"")
         subscriber.setsockopt(zmq.RCVTIMEO, self.__timeoutEDDN)
-    
+        __message = None
+
         while self._active:
             try:
                 self.__relayEDDN = self.getNextEDDNrelay()
@@ -95,7 +96,7 @@ class _child(threading.Thread):
 
 
 def convertStrptimeToDatetimeUTC( timestr ):
-    #print( "convert", timestr )
+
     d = dateutil_parse(timestr)
 
     if not d:
@@ -167,7 +168,6 @@ class loader(object):
                 updateItems.append( [ item["sellPrice"] , item["buyPrice"], item["demand"], item["supply"], timestamp ,stationID,itemID, timestamp  ] ) 
             else:
                 print("EDDN wrong itemname?:", item)
-            #print(item)
 
         if updateItems:
             cur = self.mydb.cursor()
