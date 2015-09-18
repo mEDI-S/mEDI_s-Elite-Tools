@@ -59,6 +59,7 @@ class MainWindow(QtGui.QMainWindow):
     location = None
     multiHopRouteWidget = []
     dealsFromToWidget = []
+    commoditiesFinderWidget = []
     shipyardFinderWidget = []
     powerControlFinderWidget = []
     flyLogWidget = []
@@ -95,10 +96,11 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.shipyard_finder, gui.power_control_finder, gui.flylog] 
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog] 
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
+        self.addTool( gui.commodities_finder, self.commoditiesFinderWidget)
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
         self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
         self.addTool( gui.flylog, self.flyLogWidget)
@@ -354,6 +356,9 @@ class MainWindow(QtGui.QMainWindow):
 
         if len(self.powerControlFinderWidget) > 1: # save only from first windows
             self.powerControlFinderWidget[1].saveOptions()
+
+        if len(self.commoditiesFinderWidget) > 1: # save only from first windows
+            self.commoditiesFinderWidget[1].saveOptions()
 
 
 

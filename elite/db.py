@@ -445,6 +445,18 @@ class db(object):
             self.__itemIDCache[itemname.lower()] = result[0]
             return result[0]
 
+    def getAllItemNames(self):
+
+        cur = self.cursor()
+
+        cur.execute( "select id ,name from items order by name" )
+
+        result = cur.fetchall()
+
+        cur.close()
+        if result:
+            return result
+
     def getSystemData(self,systemID):
         cur = self.cursor()
         cur.execute( "select * from systems where id = ? limit 1", ( systemID, ) )
@@ -505,7 +517,6 @@ class db(object):
         cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
         systemA = cur.fetchone()
 
-#        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where id != ? AND dist < ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],systemID,distance, ) )
         cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],distance, ) )
         result = cur.fetchall()
 
@@ -535,7 +546,7 @@ class db(object):
         return result
 
 
-    def getPricesInDistance(self, system, distance,maxStarDist, maxAgeDate):
+    def getPricesInDistance(self, system, distance, maxStarDist, maxAgeDate, ItemID=None, onlyLpads=None, buyOrSell=None, allegiance=None, government=None):
         # system is systemid or name
 
         if isinstance(system,int):
@@ -544,25 +555,54 @@ class db(object):
             systemID = self.getSystemIDbyName(system)
         cur = self.cursor()
 
-        #get pos data from systemA
-        cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
-        systemA = cur.fetchone()
+        if distance  == 0:
+            distanceFromQuery = "FROM ( select * from systems where systems.id = '%s' ) as systems" % systemID
+        else:
+            #get pos data from systemA
+            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            systemA = cur.fetchone()
+            distanceFromQuery = "FROM ( select calcDistance(%s, %s, %s, systems.posX, systems.posY, systems.posZ ) as dist, * from systems where dist <= %s ) as systems" % (systemA["posX"],systemA["posY"],systemA["posZ"], distance)
+            
+        itemFilter = ""
+        if ItemID:
+            itemFilter = "AND price.ItemID=%d" % ItemID
 
+        padsizeFilter = ""
+        if onlyLpads:
+            padsizeFilter = " AND stations.max_pad_size = 'L' "
 
-        cur.execute("""select * FROM price
-                        inner JOIN   (select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? ) as dist ON dist.id=price.systemID
+        buyOrSellFilter = ""
+        if buyOrSell:
+            if buyOrSell == 1:
+                buyOrSellFilter = "AND price.StationSell > 0"
+            elif buyOrSell == 2:
+                buyOrSellFilter = "AND price.StationBuy > 0"
+
+        allegianceFilter = ""
+        if allegiance:
+            allegianceFilter = "AND (systems.allegiance=%s OR stations.allegiance=%s)" % (allegiance, allegiance)
+
+        governmentFilter = ""
+        if government:
+            governmentFilter =  "AND ( systems.government=%s OR stations.government=%s)" % (government, government)
+           
+        cur.execute("""select *, price.modified AS age 
+                    %s
+                    inner join price ON systems.id=price.SystemID
+
                     left JOIN items on items.id = price.ItemID
-                    left JOIN systems on systems.id = price.SystemID
                     left JOIN stations on stations.id = price.StationID
 
                     left JOIN fakePrice AS fakePriceA ON price.id=fakePriceA.priceID
- 
+
                     where
-                        systems.permit != 1
+                        fakePriceA.priceID IS NULL
+                        %s
+                        %s %s
+                        %s %s
                         AND price.modified >= ?
                         AND stations.StarDist <= ?
-                        AND fakePriceA.priceID IS NULL
-                        """  , (systemA["posX"],systemA["posY"],systemA["posZ"], distance, maxAgeDate, maxStarDist  )  )
+                        """ % (distanceFromQuery, itemFilter, padsizeFilter, buyOrSellFilter, allegianceFilter, governmentFilter) , ( maxAgeDate, maxStarDist,  )  )
         
         result = cur.fetchall()
 
@@ -574,12 +614,12 @@ class db(object):
         if isinstance(fromStation,int):
             fromStationID = fromStation
         else:
-            fromStationID = self.getStationID( fromStation )
+            return
 
         if isinstance(toStation,int):
             toStationID = toStation
         else:
-            toStationID = self.getStationID( toStation )
+            return
 
         cur = self.cursor()
 
@@ -1137,6 +1177,17 @@ class db(object):
         if result:
             return result[0]
 
+    def getAllegiances(self):
+
+        cur = self.cursor()
+        cur.execute( "select id, Name from allegiances " )
+
+        result = cur.fetchall()
+
+        cur.close()
+        if result:
+            return result
+
 
     def getGovernmentID(self, government, addUnknown=None):
         if not government or government == "None":
@@ -1156,6 +1207,18 @@ class db(object):
         cur.close()
         if result:
             return result[0]
+
+
+    def getGovernments(self):
+
+        cur = self.cursor()
+        cur.execute( "select id, Name from governments " )
+
+        result = cur.fetchall()
+
+        cur.close()
+        if result:
+            return result
 
 
 if __name__ == '__main__':
