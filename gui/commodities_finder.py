@@ -329,7 +329,7 @@ class tool(QtGui.QWidget):
 
             model.setData(model.index(0, self.headerList.index("Station") ), item["Station"])
 
-            if "dist" in item:
+            if "dist" in item.keys() :
                 model.setData(model.index(0, self.headerList.index("Distance") ),  item["dist"])
             else:
                 model.setData(model.index(0, self.headerList.index("Distance") ),  0)
