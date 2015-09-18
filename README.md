@@ -15,6 +15,7 @@ Tools for Elite:Dangerous
 * Deals From To Finder
  * Station To Station
  * Station To System
+* Commodities Finder
 * Shipyard Finder
 * Power Control Finder
 * Fly Log
@@ -40,6 +41,8 @@ Tools for Elite:Dangerous
 ![Multi Window screenshot](screenshots/dockwidgetexample.jpg)
 multiple open tools
 
+![Commodities Finder](screenshots/CommoditiesFinder.jpg)
+Commodities Finder
 
 ## Usage ##
 1. Select in Tools menü ur wanted tool
