@@ -50,7 +50,7 @@ class edsc(object):
                                "outputmode": 2,
                                "filter":{
                                      "knownstatus":1,
-                                     "cr":1,    # 1 or 5?
+                                     "cr":5,    # 1 or 5?
                                      "systemname": systemname,
                                      "date": '1990-01-01'
                                     }
