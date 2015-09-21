@@ -305,6 +305,9 @@ class tool(QtGui.QWidget):
         location = self.locationlineEdit.text()
         systemID = self.mydb.getSystemIDbyName(location)
 
+        if not systemID:
+            return
+       
         if self.onlyLocation.isChecked():
             distance = 0
         else:
