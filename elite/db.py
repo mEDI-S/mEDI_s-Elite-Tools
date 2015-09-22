@@ -1076,7 +1076,7 @@ class db(object):
         
     def getSystemPaths(self):
         print("getSystemPaths")
-
+        logPath = None
         if sys.platform=='win32':
             from PySide import QtCore
             InstallLocation = None
