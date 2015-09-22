@@ -538,6 +538,10 @@ class tool(QtGui.QWidget):
         self.locationlineEdit.setText(self.main.location.getLocation())
         self.locationlineEdit.textChanged.connect(self.triggerLocationChanged)
 
+        locationButton = QtGui.QToolButton()
+        locationButton.setIcon(self.guitools.getIconFromsvg("img/location.svg"))
+        locationButton.clicked.connect(self.setCurentLocation)
+        locationButton.setToolTip("Current Location")
 
         locationGroupBox = QtGui.QGroupBox()
         locationGroupBox.setFlat(True)
@@ -554,6 +558,7 @@ class tool(QtGui.QWidget):
         self.searchbutton.clicked.connect(self.startRouteSearch)
 
         layout.addWidget(locationLabel)
+        layout.addWidget(locationButton)
         layout.addWidget(self.locationlineEdit)
         layout.addWidget(self.showOptions)
         layout.addWidget(self.searchbutton)
@@ -623,6 +628,8 @@ class tool(QtGui.QWidget):
         else:
             self.optionsGroupBox.hide()
             
+    def setCurentLocation(self):
+        self.locationlineEdit.setText(self.main.location.getLocation())
 
     def initRoute(self):
         ''' init the route on start and set saved options'''
