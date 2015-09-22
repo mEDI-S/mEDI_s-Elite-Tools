@@ -782,6 +782,20 @@ class db(object):
 
         result = cur.fetchone()
 
+
+    def rebuildFullDistancesCache(self):
+        cur = self.cursor()
+
+        cur.execute( """ DELETE FROM dealsInDistances""")
+        cur.execute( """ DELETE FROM dealsInDistancesSystems""")
+        self.con.commit()
+
+    def deleteDealsInDistancesSystems_queue(self):
+        cur = self.cursor()
+
+        cur.execute( """ DELETE FROM dealsInDistancesSystems_queue""")
+        self.con.commit()
+
     def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50, onlyLpads=None):
         if isinstance(system,int):
             systemID = system

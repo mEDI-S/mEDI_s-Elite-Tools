@@ -246,6 +246,10 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip="recalculate the cache can be time consuming",
                 triggered=self.rebuildFullDistancesCache)
 
+        self.deleteDistancesCacheAct = QtGui.QAction("Delete Distances Cache", self,
+                statusTip="clearing the cache will slow down the search the first time, but the update speed",
+                triggered=self.deleteDistancesCache)
+
        
     def createMenus(self):
         self.menuBar().clear()
@@ -259,6 +263,7 @@ class MainWindow(QtGui.QMainWindow):
         self.maintenanceMenu = self.editMenu.addMenu("Maintenance")
         self.maintenanceMenu.addSeparator()
         self.maintenanceMenu.addAction(self.rebuildFullCacheAct)
+        self.maintenanceMenu.addAction(self.deleteDistancesCacheAct)
 
 
         self.toolsMenu = self.menuBar().addMenu("Tools")
@@ -452,6 +457,24 @@ class MainWindow(QtGui.QMainWindow):
             self.lockDB()
             self.mydb.rebuildFullDistancesCache()
             self.unlockDB()
+
+    def deleteDistancesCache(self):
+        msg = "Are you sure you want to delete the Cache?\n"
+        msg += "clearing the cache will slow down the search the first time, but the update speed"
+
+        msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                "Delete Distances Cache", msg,
+                QtGui.QMessageBox.NoButton, self)
+
+        msgBox.addButton("Delete", QtGui.QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+        if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+            self.lockDB()
+            self.mydb.rebuildFullDistancesCache()
+            self.mydb.deleteDealsInDistancesSystems_queue()
+            self.unlockDB()
+
             
 if __name__ == '__main__':
 
