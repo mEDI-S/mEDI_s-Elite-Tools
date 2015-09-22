@@ -387,13 +387,16 @@ class tool(QtGui.QWidget):
 
             beforeSystem = self.main.flyLogger.getLastPosWithKnowCords()
             refSystems = self.mydb.getSystemsInDistance( beforeSystem['SystemID'], 50)
-
+            excludeList = ['Sector']
             refsyslist = []
-            refsyslist.append(beforeSystem['System'])
+            #refsyslist.append(beforeSystem['System'])
             for i in range(1, 5):
+                
                 idx = random.randint(0, len(refSystems)-1)
-                while refSystems[idx]['System'] in refsyslist:
+
+                while refSystems[idx]['System'] in refsyslist or [s for s in excludeList if refSystems[idx]['System'].find(s) > -1 ] :
                     idx = random.randint(0, len(refSystems)-1)
+
                 refsyslist.append(refSystems[idx]['System'])
 
             page = QtGui.QWizardPage()
