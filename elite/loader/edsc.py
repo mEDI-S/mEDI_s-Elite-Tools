@@ -40,7 +40,7 @@ class edsc(object):
         pass
     
 
-    def getSystem(self, systemname):
+    def getSystemCoords(self, systemname):
         apiPath = "GetSystems"
         apiurl = "%s/%s" % (__edscAPIurl__, apiPath)
         postrequest = {
@@ -50,7 +50,7 @@ class edsc(object):
                                "outputmode": 2,
                                "filter":{
                                      "knownstatus":1,
-                                     "cr":5,    # 1 or 5?
+                                     "cr": 1,    # 1 or 5?
                                      "systemname": systemname,
                                      "date": '1990-01-01'
                                     }
@@ -67,7 +67,11 @@ class edsc(object):
         for system in josnData['d']['systems']:
             if system['name'] == systemname:
                 # print(system)
-                return system
+                if system['coord']:
+                    coord = {'x': system['coord'][0],
+                             'y': system['coord'][1],
+                             'z': system['coord'][2]}
+                    return coord
 
     def submitDistances(self, targetSystemname, commander, refsystems ):
         apiPath = "SubmitDistances"
@@ -86,7 +90,7 @@ class edsc(object):
         josnData = self.sendAPIRequest(apiurl, postrequest)
         print(josnData)
 
-        if josnData and "s" in josnData:
+        if josnData and "d" in josnData:
             return josnData['d']
         else:
             return josnData
@@ -95,7 +99,7 @@ class edsc(object):
     
     def sendAPIRequest(self, apiurl, postrequest):
 
-        post = str(postrequest).encode('utf8')
+        post = str( json.dumps(postrequest) ).encode('utf8')
 #        print(post)
         request = urllib2.Request(apiurl, post)
         request.add_header('User-Agent', __useragent__)

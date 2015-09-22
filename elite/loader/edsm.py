@@ -33,7 +33,7 @@ except ImportError:
     from urllib.parse import urlencode
 
 __edsmAPIurl__ = 'http://www.edsm.net/api-v1'
-__test__ = '1'
+__test__ = ''
 
 class edsm(object):
 
@@ -73,7 +73,7 @@ class edsm(object):
         postrequest = {
                        "data": {
                                "ver": 2,
-                               'test': __test__,
+#                               'test': __test__,
                                "commander": commander,
                                "p0":{ "name": targetSystemname },
                                 "refs": refsystems,
@@ -84,9 +84,7 @@ class edsm(object):
         josnData = self.sendAPIRequest(apiurl, None, postrequest )
         print(josnData)
 
-        if josnData and "d" in josnData:
-            return josnData['d']
-        else:
+        if josnData:
             return josnData
             
 
@@ -111,7 +109,7 @@ class edsm(object):
         if postRequest:
             request.add_header('Content-Length', len(postRequest))
 
-#        request.add_header('Accept-encoding', 'gzip')
+        request.add_header('Accept-encoding', 'gzip')
 
         print(apiurl, getRequest, postRequest)
 #        return

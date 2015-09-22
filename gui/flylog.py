@@ -11,6 +11,7 @@ from datetime import datetime
 import gui.guitools as guitools
 from sqlite3_functions import calcDistance
 import elite.loader.edsc
+import elite.loader.edsm
 import random
 
 
@@ -28,20 +29,24 @@ class flyLogger(object):
         self.main = main
         self.mydb = main.mydb
         self.edsc = elite.loader.edsc.edsc()
+        self.edsm = elite.loader.edsm.edsm()
 
         self.lastPos = self.getLastPos()
-        print(self.lastPos)
+        print("lastpos",self.lastPos)
         
     def getLastPos(self):
         cur = self.mydb.cursor()
-        cur.execute("""select System from flylog
+        cur.execute("""select System, optionalSystemName from flylog
                     left join systems on flylog.SystemID=systems.id
                     order by flylog.id DESC limit 1""")
 
         result = cur.fetchone()
         cur.close()
         if result:
-            return result[0]
+            if result[0]:
+                return result[0]
+            else:
+                return result[1]
 
     def getLastPosWithKnowCords(self):
         cur = self.mydb.cursor()
@@ -69,17 +74,16 @@ class flyLogger(object):
         cur.close()
         return result
 
-    def insertSystemFromEDSC(self, system):
-        edscSystem = self.edsc.getSystem(system)
-        print("get EDSC "+system, edscSystem)
-        if edscSystem:
+
+    def insertSystemCoords(self, system, coords):
+        if coords and system:
             self.main.lockDB()
             
             cur = self.mydb.cursor()
-            print("update coord data from edsc for %s" % system)
+            print("update coord data from  %s" % system)
 
             cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
-                                (system , float(edscSystem['coord'][0]) , float(edscSystem['coord'][1]), float(edscSystem['coord'][2])))
+                                (system , float(coords['x']) , float(coords['y']), float(coords['z']) ))
 
             systemID = self.mydb.getSystemIDbyName(system)
             if systemID:
@@ -88,7 +92,7 @@ class flyLogger(object):
             self.mydb.con.commit()
             cur.close()
             self.main.unlockDB()
-
+#            self.reloadLogViews()
                 
     def logCurrentPos(self):
         location = self.main.location.getLocation()
@@ -99,35 +103,44 @@ class flyLogger(object):
             return
         
         if self.lastPos != location:
+            self.main.lockDB()
             cur = self.mydb.cursor()
             systemID = self.mydb.getSystemIDbyName(location)
 
             if not systemID:
-                ''' ask edsc first '''
-                edscSystem = self.edsc.getSystem(location)
-                if edscSystem:
-                    self.main.lockDB()
-
-                    print("update coord data from edsc for %s" % location)
+                edsmCoords = self.edsm.getSystemCoords(location)
+                if edsmCoords:
+                    print("update coord data from edsm for %s" % location)
                     cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
-                                        (location , float(edscSystem['coord'][0]) , float(edscSystem['coord'][1]), float(edscSystem['coord'][2])))
-
+                                        (location , float(edsmCoords['x']) , float(edsmCoords['y']), float(edsmCoords['z']) ) )
+                    
                     systemID = self.mydb.getSystemIDbyName(location)
-                    self.main.unlockDB()
+                else:
+                    ''' ask edsc '''
+                    edscSystem = self.edsc.getSystemCoords(location)
+                    if edscSystem:
+    
+                        print("update coord data from edsc for %s" % location)
+                        cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
+                                            (location , float(edscSystem['coord'][0]) , float(edscSystem['coord'][1]), float(edscSystem['coord'][2])))
+    
+                        systemID = self.mydb.getSystemIDbyName(location)
 
             self.lastPos = location                
             print(location)
             # return
-            self.main.lockDB()
             if systemID:
                 cur.execute("insert or replace into flylog (SystemID, DateTime) values (?,?)", (systemID, datetime.utcnow()))
             else:
                 cur.execute("insert or replace into flylog (optionalSystemName, DateTime) values (?,?)", (location, datetime.utcnow()))
                 print("unknow system %s" % location)
-            self.main.unlockDB()
 
             self.mydb.con.commit()
+            self.main.unlockDB()
             cur.close()
+            self.reloadLogViews()
+
+    def reloadLogViews(self):
             ''' update open logs '''
             if self.main.flyLogWidget:
                 for flylog in range(1, len(self.main.flyLogWidget)):
@@ -144,7 +157,6 @@ def initRun(self):
 class tool(QtGui.QWidget):
     main = None
     mydb = None
-    route = None
 
     def __init__(self, main):
         super(tool, self).__init__(main)
@@ -295,6 +307,7 @@ class tool(QtGui.QWidget):
         menu.addAction(self.copyAct)
         indexes = self.listView.selectionModel().selectedIndexes()
         system = self.proxyModel.sourceModel().item(indexes[0].row(), self.headerList.index("System")).data(0)
+
         if system and system == self.main.location.getLocation():
             ''' allow submit edsc only in same system '''
             systemID = self.mydb.getSystemIDbyName(system)
@@ -307,8 +320,8 @@ class tool(QtGui.QWidget):
     def createActions(self):
         self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
 
-        self.openSubmitDistancesWizardAct = QtGui.QAction("EDSC SubmitDistances Wizard", self,
-                statusTip="EDSC SubmitDistances Wizard", triggered=self.openSubmitDistancesWizard)
+        self.openSubmitDistancesWizardAct = QtGui.QAction("SubmitDistances Wizard", self,
+                statusTip="SubmitDistances Wizard", triggered=self.openSubmitDistancesWizard)
 
 
     def setCurentLocation(self):
@@ -338,7 +351,7 @@ class tool(QtGui.QWidget):
             page.setTitle("Introduction")
         
             label = QtGui.QLabel("This wizard will help you Submit Distances "
-                    "to http://edstarcoordinator.com.")
+                    "to http://edstarcoordinator.com and to http://www.edsm.net.")
             label.setWordWrap(True)
 
             gridLayout = QtGui.QGridLayout()
@@ -440,16 +453,20 @@ class tool(QtGui.QWidget):
             page.setTitle("Submit")
         
             label = QtGui.QLabel("Press the Send button to submit the data "
-                    "to http://edstarcoordinator.com.")
+                    "to http://edstarcoordinator.com and to http://www.edsm.net.")
             label.setWordWrap(True)
 
-            submitButton = QtGui.QPushButton("Send")
-            submitButton.clicked.connect(self.submitDistances)
+            submitEDSMButton = QtGui.QPushButton("Send to EDSM")
+            submitEDSMButton.clicked.connect(self.submitDistancesEDSM)
+
+            submitEDSCButton = QtGui.QPushButton("Send to EDSC")
+            submitEDSCButton.clicked.connect(self.submitDistancesEDSC)
            
 
             layout = QtGui.QVBoxLayout()
             layout.addWidget(label)
-            layout.addWidget(submitButton)
+            layout.addWidget(submitEDSMButton)
+            layout.addWidget(submitEDSCButton)
 
             page.setLayout(layout)
         
@@ -471,10 +488,88 @@ class tool(QtGui.QWidget):
 
         if res == QtGui.QWizard.NextButton or res == QtGui.QWizard.FinishButton:
             self.mydb.setConfig('option_commanderName', self.commanderNameLineEdit.text())
-            print("ok")
+            self.showLog()
 
-    def submitDistances(self):
-        print("submitDistances")
+
+    def submitDistancesEDSM(self):
+        print("submitDistancesEDSM")
+        refList = []
+        fail = ""
+        if self.systemNameLineEdit.text():
+            for system in self.refSyslist:
+                if system[1].value() <= 1.0:
+                    fail = "distance from <= 1 is not allowed"
+                    break
+                elif system[0].text() == "":
+                    fail = "System name emty"
+                    break
+    
+                refList.append({'name':system[0].text(), 'dist': system[1].value() })
+                print(system[0].text(), system[1].value())
+        else:
+            fail = "No Target System Name"
+
+        if fail:
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                        "Send Failed", fail,
+                        QtGui.QMessageBox.NoButton, self)
+            msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.exec_()
+            return
+
+        status = self.main.flyLogger.edsm.submitDistances( self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList )
+
+        errorMsg = None
+        if status and 'distances' in status:
+
+            print(status)
+
+            if status['distances']:
+                for distStatus in status['distances']:
+                    if distStatus['msg']:
+                        newStatus = distStatus['msg']
+
+                    for ref in self.refSyslist:
+                        if ref[0].text() == distStatus['name']:
+                            ref[2].setText(newStatus)
+                        
+            
+            self.submitDistancesWizard.back()
+            msg = None
+
+            if 'basesystem' in status:
+                if 'msg' in status['basesystem'] and status['basesystem']['msg']:
+                    msg = status['basesystem']['msg']
+
+            if not msg:
+                msg = status
+
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                        "New data Send", str(msg),
+                        QtGui.QMessageBox.NoButton, self)
+            msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.exec_()
+
+            if 'coords' in status['basesystem']:
+                self.main.flyLogger.insertSystemCoords( self.systemNameLineEdit.text(), status['basesystem']['coords'] )
+            return
+        elif status and "error" in status:
+            errorMsg = str(status["error"][1])
+        else:
+            errorMsg = "Unknown Error"
+
+        if errorMsg:
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                        "Send Error", errorMsg,
+                        QtGui.QMessageBox.NoButton, self)
+            msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+            msgBox.exec_()
+            
+        #{'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
+
+
+    def submitDistancesEDSC(self):
+        print("submitDistancesEDSC")
         refList = []
         fail = ""
         if self.systemNameLineEdit.text():
@@ -505,9 +600,7 @@ class tool(QtGui.QWidget):
             print(status)
             if status['status']['dist']:
                 for distStatus in status['status']['dist']:
-                    if distStatus['status']['statusnum'] == 301 or distStatus['status']['statusnum'] == 302:
-                        newStatus = "Ok"
-                    else:
+                    if distStatus['status']['msg']:
                         newStatus = distStatus['status']['msg']
 
                     for ref in self.refSyslist:
@@ -516,15 +609,25 @@ class tool(QtGui.QWidget):
                         
             
             self.submitDistancesWizard.back()
+            msg = None
 
-            
+            if 'input' in status['status'] and status['status']['input'][0]['status']['msg']:
+                    msg = status['status']['input'][0]['status']['msg']
+
+            if not msg:
+                msg = status
+
             msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
-                        "New data Send", str(status),
+                        "New data Send", str(msg),
+            
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
-            if status['status']['input'][0]['status']['statusnum'] == 0:
-                self.main.flyLogger.insertSystemFromEDSC(self.systemNameLineEdit.text())
+
+            if 'trilat' in status['status'] and len(status['status']['trilat']) and status['status']['trilat'][0]['system'] == self.systemNameLineEdit.text() and status['status']['trilat'][0]['coord']:
+                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(),  status['status']['trilat'][0]['coord'])
+            else:
+                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(),  self.main.flyLogger.edsc.getSystemCoords( self.systemNameLineEdit.text() ) )
             return
         elif status and "error" in status:
             errorMsg = str(status["error"][1])
@@ -538,7 +641,6 @@ class tool(QtGui.QWidget):
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
             
-        #{'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
 
     def showLog(self):
 
