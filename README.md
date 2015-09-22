@@ -19,7 +19,7 @@ Tools for Elite:Dangerous
 * Shipyard Finder
 * Power Control Finder
 * Fly Log
- * EDSC Submit Distances Wizard (add easy and fast new systems) `only avalibel inside a new system in contextmenü over the unknow system`
+ * Submit Distances Wizard for EDSM and EDSC (add easy and fast new systems) `only avalibel inside a new system in contextmenü over the unknow system`
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)
@@ -27,7 +27,8 @@ Tools for Elite:Dangerous
 * [eddb - Elite: Dangerous Database](http://eddb.io)
 * [Maddavo's Market Share](http://www.davek.com.au/td/)
 * [Slopey's BPC Market Tool `local installation`](https://forums.frontier.co.uk/showthread.php?t=76081)
-
+* [EDSM - Elite Dangerous Star Map](http://www.edsm.net)
+* [EDSC - EDStarCoordinator](http://edstarcoordinator.com)
 
 ## Screenshot's ##
 ![Deals And Mult Route screenshot](screenshots/dealsAndMultRoute.jpg)
