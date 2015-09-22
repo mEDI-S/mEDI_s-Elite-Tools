@@ -221,9 +221,6 @@ class MainWindow(QtGui.QMainWindow):
         self.exitAct = QtGui.QAction("E&xit", self, shortcut="Ctrl+Q",
                 statusTip="Exit", triggered=self.close)
 
-
-
-
         self.aboutWebsideAct = QtGui.QAction("Webside", self,
                 statusTip="Open Webside",
                 triggered=self.aboutWebside)
@@ -244,12 +241,25 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip="Show the Qt library's About box",
                 triggered=QtGui.qApp.aboutQt)
 
+        #maintenance
+        self.rebuildFullCacheAct = QtGui.QAction("Rebuild Full Distances Cache", self,
+                statusTip="recalculate the cache can be time consuming",
+                triggered=self.rebuildFullDistancesCache)
+
        
     def createMenus(self):
         self.menuBar().clear()
         self.fileMenu = self.menuBar().addMenu("File")
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAct)
+
+        self.editMenu = self.menuBar().addMenu("Edit")
+        self.editMenu.addSeparator()
+
+        self.maintenanceMenu = self.editMenu.addMenu("Maintenance")
+        self.maintenanceMenu.addSeparator()
+        self.maintenanceMenu.addAction(self.rebuildFullCacheAct)
+
 
         self.toolsMenu = self.menuBar().addMenu("Tools")
         self.toolsMenu.addSeparator()
@@ -308,7 +318,7 @@ class MainWindow(QtGui.QMainWindow):
         self.dbworker.waitQuit()
 
     def unlockDB(self):
-        self.dbworker.unockDB()
+        self.dbworker.unlockDB()
 
     def closeEvent( self, event ):
         if self.closeApp():
@@ -427,6 +437,22 @@ class MainWindow(QtGui.QMainWindow):
                         "No new version available", "Congratulation, you are already using the latest version")
 
 
+    def rebuildFullDistancesCache(self):
+        msg = "Are you sure you want to delete the Cache and recalculate? recalculate the cache can be time consuming.\n"
+        msg += "After the delete, the normal update process is the new cache Precalculating"
+
+        msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                "Rebuild Full Distances Cache", msg,
+                QtGui.QMessageBox.NoButton, self)
+
+        msgBox.addButton("Rebuild", QtGui.QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+        if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+            self.lockDB()
+            self.mydb.rebuildFullDistancesCache()
+            self.unlockDB()
+            
 if __name__ == '__main__':
 
     app = QtGui.QApplication(sys.argv)

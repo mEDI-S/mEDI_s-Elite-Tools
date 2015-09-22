@@ -157,7 +157,7 @@ class new(object):
         databaseLock = True
         mutex.unlock()
 
-    def unockDB(self):
+    def unlockDB(self):
         mutex.lock()
 
         databaseAccessWait.wakeOne()
