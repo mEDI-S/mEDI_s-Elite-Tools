@@ -28,6 +28,7 @@ __toolname__ = "mEDI's Elite Tools"
 __toolnameSave__ = __toolname__.replace("'", "")
 __exeName__ = 'mEDIsEliteTools.exe'
 __destDisr__ = "dist"
+__GUID__ = "{af43636e-d873-4f8d-b8d8-252a45e7cd91}"
 
 __forceupdateFile__ = "updatetrigger.txt"
 __OptimizeDB__ = False
@@ -161,7 +162,7 @@ shortcut_table = [
 msi_data = {"Shortcut": shortcut_table}
 
 msiOptions = dict(
-                   #upgrade_code = __buildid__,
+                   upgrade_code = __GUID__,
                    data = msi_data,
                  )
 
