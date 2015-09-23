@@ -8,7 +8,7 @@ import elite
 import timeit
 from datetime import datetime
 import sys
-from PySide import QtCore, QtGui
+from PySide import QtCore
 import threading
 
 databaseAccessWait = QtCore.QWaitCondition()
@@ -19,21 +19,25 @@ processCount = 0
 processPos = 0
 processMsg = None
 
+
 class statusMsg(object):
     processCount = 0
     processPos = 0
     msg = None
     processMsg = None
+
+    
     def __init__(self, msg=None, processPos=None, processCount=None):
         self.processCount = processCount
         self.processPos = processPos
         self.msg = msg
-    
+
+
 class _updateDBchild(threading.Thread):
     '''
     updatedb child job
     '''
-    name  = "updateDBchild"
+    name = "updateDBchild"
 
     def sendMsg(self, newmsg):
         global statusbarMsg
@@ -46,8 +50,10 @@ class _updateDBchild(threading.Thread):
         mutex.lock()
 
         processMsg = newmsg
-        if pos: processPos = pos
-        if count: processCount = count
+        if pos:
+            processPos = pos
+        if count:
+            processCount = count
 
         mutex.unlock()
         
@@ -63,36 +69,36 @@ class _updateDBchild(threading.Thread):
         databaseLock = True
         mutex.unlock()
 
-        self.sendProcessMsg( "open db" ,0 ,0)
+        self.sendProcessMsg("open db", 0, 0)
 
         starttime = timeit.default_timer()
 
         self.mydb = elite.db(guiMode=True)
 
-        self.sendProcessMsg( "Start Update", 0, self.mydb.loaderCount )
+        self.sendProcessMsg("Start Update", 0, self.mydb.loaderCount)
 
         self.mydb.sendProcessMsg = self.sendProcessMsg
 
         try:
-            self.mydb.updateData( )
+            self.mydb.updateData()
         except:
             e = sys.exc_info()
-            print("except",e)
+            print("except", e)
             self.close()
             return
 
-        if self._active != True:
+        if self._active is not True:
             self.close()
             return
 
         self.mydb.calcDealsInDistancesCacheQueue()
 
-        if self._active != True:
+        if self._active is not True:
             self.close()
             return
 
         self.mydb.sendProcessMsg = None
-        self.sendProcessMsg( "%s finished %ss" % ( datetime.now().strftime("%H:%M:%S"), round(timeit.default_timer() - starttime, 2) ) )
+        self.sendProcessMsg("%s finished %ss" % (datetime.now().strftime("%H:%M:%S"), round(timeit.default_timer() - starttime, 2)))
 
         self.close()
 
@@ -108,7 +114,8 @@ class _updateDBchild(threading.Thread):
     def stop(self):
         self._active = False
         self.mydb._active = False
-        
+
+
 class new(object):
     '''
     class to do long woking jobs in background
@@ -125,7 +132,7 @@ class new(object):
             self.waitQuit()
 
         self._updatedb = _updateDBchild()
-        self._updatedb.daemon=True
+        self._updatedb.daemon = True
         self._updatedb.setName("updateDBchildThread")
         self._updatedb.start()
 
@@ -181,4 +188,3 @@ class new(object):
         mutex.unlock()
 
         return msg
-    

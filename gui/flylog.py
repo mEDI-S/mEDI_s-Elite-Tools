@@ -32,7 +32,7 @@ class flyLogger(object):
         self.edsm = elite.loader.edsm.edsm()
 
         self.lastPos = self.getLastPos()
-        print("lastpos",self.lastPos)
+        print("lastpos", self.lastPos)
         
     def getLastPos(self):
         cur = self.mydb.cursor()
@@ -83,11 +83,11 @@ class flyLogger(object):
             print("update coord data from  %s" % system)
 
             cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
-                                (system , float(coords['x']) , float(coords['y']), float(coords['z']) ))
+                                (system, float(coords['x']), float(coords['y']), float(coords['z'])))
 
             systemID = self.mydb.getSystemIDbyName(system)
             if systemID:
-                cur.execute( "UPDATE flylog SET  SystemID=?, optionalSystemName='' where optionalSystemName=? and SystemID is Null", (systemID, system))
+                cur.execute("UPDATE flylog SET  SystemID=?, optionalSystemName='' where optionalSystemName=? and SystemID is Null", (systemID, system))
 
             self.mydb.con.commit()
             cur.close()
@@ -112,7 +112,7 @@ class flyLogger(object):
                 if edsmCoords:
                     print("update coord data from edsm for %s" % location)
                     cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
-                                        (location , float(edsmCoords['x']) , float(edsmCoords['y']), float(edsmCoords['z']) ) )
+                                        (location, float(edsmCoords['x']), float(edsmCoords['y']), float(edsmCoords['z'])))
                     
                     systemID = self.mydb.getSystemIDbyName(location)
                 else:
@@ -122,11 +122,11 @@ class flyLogger(object):
     
                         print("update coord data from edsc for %s" % location)
                         cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
-                                            (location , float(edscSystem['coord'][0]) , float(edscSystem['coord'][1]), float(edscSystem['coord'][2])))
+                                            (location, float(edscSystem['coord'][0]), float(edscSystem['coord'][1]), float(edscSystem['coord'][2])))
     
                         systemID = self.mydb.getSystemIDbyName(location)
 
-            self.lastPos = location                
+            self.lastPos = location
             print(location)
             # return
             if systemID:
@@ -146,6 +146,7 @@ class flyLogger(object):
                 for flylog in range(1, len(self.main.flyLogWidget)):
                     self.main.flyLogWidget[flylog].showLog()
 
+
 def initRun(self):
 
     self.flyLogger = flyLogger(self)
@@ -153,6 +154,7 @@ def initRun(self):
     self.flyLogTimer = QtCore.QTimer()
     self.flyLogTimer.start(__defaultUpdateTime__)
     self.flyLogTimer.timeout.connect(self.flyLogger.logCurrentPos)
+
 
 class tool(QtGui.QWidget):
     main = None
@@ -190,7 +192,7 @@ class tool(QtGui.QWidget):
 
 
         layout = QtGui.QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(locationFilterLabel)
         layout.addWidget(locationButton)
@@ -235,7 +237,7 @@ class tool(QtGui.QWidget):
         spacer = QtGui.QSpacerItem(1, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
 
         layout = QtGui.QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(distanceLabel)
         layout.addWidget(self.distanceLineEdit)
         layout.addWidget(timeLabel)
@@ -245,7 +247,7 @@ class tool(QtGui.QWidget):
 
         infosGroupBox = QtGui.QGroupBox()
         infosGroupBox.setFlat(True)
-        #infosGroupBox.setStyleSheet("""border:0; margin:0;padding:0;""")
+        # infosGroupBox.setStyleSheet("""border:0; margin:0;padding:0;""")
         infosGroupBox.setLayout(layout)
 
 
@@ -254,7 +256,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
         layout = QtGui.QVBoxLayout()
-        layout.setContentsMargins(6,2,6,6)
+        layout.setContentsMargins(6, 2, 6, 6)
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.listView)
         layout.addWidget(infosGroupBox)
@@ -271,14 +273,14 @@ class tool(QtGui.QWidget):
         indexes = self.listView.selectionModel().selectedIndexes()
         ''' calc Distances '''
         if indexes[0].column() == self.headerList.index("Distance"):
-            distSum  = 0
+            distSum = 0
             for index in indexes:
                 item = self.proxyModel.sourceModel().item(index.row(), self.headerList.index("Distance"))
                 if item:
                     dist = item.data(0)
                     if dist:
                         distSum += dist
-            self.distanceLineEdit.setText( str( round(distSum,2) ) )
+            self.distanceLineEdit.setText(str(round(distSum, 2)))
         ''' calc Time '''
         if indexes[0].column() == self.headerList.index("Date"):
             minDate = None
@@ -288,17 +290,17 @@ class tool(QtGui.QWidget):
                 if item:
                     date = item.data(0)
                     if not minDate and not maxDate:
-                        minDate=date
-                        maxDate=date
+                        minDate = date
+                        maxDate = date
                     elif minDate > date:
                         minDate = date
                     elif maxDate < date:
                         maxDate = date
-            timeDiff = int(maxDate.toMSecsSinceEpoch()/1000 - minDate.toMSecsSinceEpoch()/1000)
+            timeDiff = int(maxDate.toMSecsSinceEpoch() / 1000 - minDate.toMSecsSinceEpoch() / 1000)
 
-            minutes,sekunds = divmod( timeDiff, 60) 
-            h,minutes = divmod( minutes, 60) 
-            time = "%02d:%02d:%02d" % (h,minutes,sekunds)
+            minutes, sekunds = divmod(timeDiff, 60)
+            h, minutes = divmod(minutes, 60)
+            time = "%02d:%02d:%02d" % (h, minutes, sekunds)
             self.timeLineEdit.setText(time)
 
     def myContextMenuEvent(self, event):
@@ -386,16 +388,16 @@ class tool(QtGui.QWidget):
         def createReferencPage():
 
             beforeSystem = self.main.flyLogger.getLastPosWithKnowCords()
-            refSystems = self.mydb.getSystemsInDistance( beforeSystem['SystemID'], 50)
+            refSystems = self.mydb.getSystemsInDistance(beforeSystem['SystemID'], 50)
             excludeList = ['Sector']
             refsyslist = []
-            #refsyslist.append(beforeSystem['System'])
+            # refsyslist.append(beforeSystem['System'])
             for i in range(1, 5):
                 
-                idx = random.randint(0, len(refSystems)-1)
+                idx = random.randint(0, len(refSystems) - 1)
 
-                while refSystems[idx]['System'] in refsyslist or [s for s in excludeList if refSystems[idx]['System'].find(s) > -1 ] :
-                    idx = random.randint(0, len(refSystems)-1)
+                while refSystems[idx]['System'] in refsyslist or [s for s in excludeList if refSystems[idx]['System'].find(s) > -1 ]:
+                    idx = random.randint(0, len(refSystems) - 1)
 
                 refsyslist.append(refSystems[idx]['System'])
 
@@ -412,10 +414,10 @@ class tool(QtGui.QWidget):
 
             self.refSyslist = []
 
-            for i,system in enumerate(refsyslist):
+            for i, system in enumerate(refsyslist):
                 print(system)
             
-                nameLabel = QtGui.QLabel("Ref. System %d:" % (i+1) )
+                nameLabel = QtGui.QLabel("Ref. System %d:" % (i + 1))
                 LineEdit = QtGui.QLineEdit()
                 LineEdit.setText(system)
     
@@ -425,13 +427,13 @@ class tool(QtGui.QWidget):
                 DistSpinBox.setSingleStep(1)
                 DistSpinBox.setAlignment(QtCore.Qt.AlignRight)
 
-                statusLabel = QtGui.QLabel("N/A" )
+                statusLabel = QtGui.QLabel("N/A")
                 statusLabel.setAlignment(QtCore.Qt.AlignCenter)
                
-                gridLayout.addWidget(nameLabel, i+1, 0)
-                gridLayout.addWidget(LineEdit, i+1, 1,1,2)
-                gridLayout.addWidget(DistSpinBox, i+1, 3)
-                gridLayout.addWidget(statusLabel, i+1, 4)
+                gridLayout.addWidget(nameLabel, i + 1, 0)
+                gridLayout.addWidget(LineEdit, i + 1, 1, 1, 2)
+                gridLayout.addWidget(DistSpinBox, i + 1, 3)
+                gridLayout.addWidget(statusLabel, i + 1, 4)
 
                 
                 self.refSyslist.append([LineEdit, DistSpinBox, statusLabel])
@@ -483,7 +485,7 @@ class tool(QtGui.QWidget):
         self.submitDistancesWizard.addPage(createSubmitPage())
         
         self.submitDistancesWizard.setWindowTitle("EDSC Submit Distances")
-        self.submitDistancesWizard.setWindowFlags(QtCore.Qt.Tool| QtCore.Qt.MSWindowsFixedSizeDialogHint| QtCore.Qt.WindowStaysOnTopHint)
+        self.submitDistancesWizard.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
 #        submitDistancesWizard.setOptions(QtGui.QWizard.NoBackButtonOnStartPage)
         self.submitDistancesWizard.show()
 
@@ -507,7 +509,7 @@ class tool(QtGui.QWidget):
                     fail = "System name emty"
                     break
     
-                refList.append({'name':system[0].text(), 'dist': system[1].value() })
+                refList.append({'name': system[0].text(), 'dist': system[1].value() })
                 print(system[0].text(), system[1].value())
         else:
             fail = "No Target System Name"
@@ -520,7 +522,7 @@ class tool(QtGui.QWidget):
             msgBox.exec_()
             return
 
-        status = self.main.flyLogger.edsm.submitDistances( self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList )
+        status = self.main.flyLogger.edsm.submitDistances(self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList)
 
         errorMsg = None
         if status and 'distances' in status:
@@ -554,7 +556,7 @@ class tool(QtGui.QWidget):
             msgBox.exec_()
 
             if 'coords' in status['basesystem']:
-                self.main.flyLogger.insertSystemCoords( self.systemNameLineEdit.text(), status['basesystem']['coords'] )
+                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(), status['basesystem']['coords'])
             return
         elif status and "error" in status:
             errorMsg = str(status["error"][1])
@@ -568,7 +570,7 @@ class tool(QtGui.QWidget):
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
             
-        #{'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
+        # {'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
 
 
     def submitDistancesEDSC(self):
@@ -576,7 +578,7 @@ class tool(QtGui.QWidget):
         refList = []
         fail = ""
         if self.systemNameLineEdit.text():
-            for system in self.refSyslist: #.append([LineEdit, DistSpinBox])
+            for system in self.refSyslist:  # .append([LineEdit, DistSpinBox])
                 if system[1].value() <= 0.0:
                     fail = "distance from 0 is not allowed"
                     break
@@ -584,7 +586,7 @@ class tool(QtGui.QWidget):
                     fail = "System name emty"
                     break
     
-                refList.append({'name':system[0].text(), 'dist': system[1].value() })
+                refList.append({'name': system[0].text(), 'dist': system[1].value() })
                 print(system[0].text(), system[1].value())
         else:
             fail = "No Target System Name"
@@ -597,7 +599,7 @@ class tool(QtGui.QWidget):
             msgBox.exec_()
             return
 
-        status = self.main.flyLogger.edsc.submitDistances( self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList )
+        status = self.main.flyLogger.edsc.submitDistances(self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList)
         errorMsg = None
         if status and 'status' in status:
             print(status)
@@ -628,9 +630,9 @@ class tool(QtGui.QWidget):
             msgBox.exec_()
 
             if 'trilat' in status['status'] and len(status['status']['trilat']) and status['status']['trilat'][0]['system'] == self.systemNameLineEdit.text() and status['status']['trilat'][0]['coord']:
-                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(),  status['status']['trilat'][0]['coord'])
+                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(), status['status']['trilat'][0]['coord'])
             else:
-                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(),  self.main.flyLogger.edsc.getSystemCoords( self.systemNameLineEdit.text() ) )
+                self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(), self.main.flyLogger.edsc.getSystemCoords(self.systemNameLineEdit.text()))
             return
         elif status and "error" in status:
             errorMsg = str(status["error"][1])
@@ -686,7 +688,7 @@ class tool(QtGui.QWidget):
             model. setData(model.index(0, self.headerList.index("Date")), QtCore.QDateTime(entry["DateTime"]))
             model. setData(model.index(0, self.headerList.index("Comment")), entry["Comment"])
 
-        #self.listView.setModel(model)
+        # self.listView.setModel(model)
         self.proxyModel.setSourceModel(model)
         self.proxyModel.setFilterKeyColumn(self.headerList.index("System"))
 

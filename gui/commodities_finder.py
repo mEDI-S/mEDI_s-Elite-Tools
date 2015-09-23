@@ -15,6 +15,7 @@ __toolname__ = "Commodities Finder"
 __internalName__ = "CoFi"
 __statusTip__ = "Open A %s Window" % __toolname__
 
+
 class tool(QtGui.QWidget):
     main = None
     mydb = None
@@ -44,7 +45,7 @@ class tool(QtGui.QWidget):
             self.onlyLocation.setChecked(True)
         else:
             self.onlyLocation.setChecked(False)
-        self.onlyLocation.stateChanged.connect( self.searchItem )
+        self.onlyLocation.stateChanged.connect(self.searchItem)
         gridLayout.addWidget(self.onlyLocation, 1, 0)
 
 
@@ -52,7 +53,7 @@ class tool(QtGui.QWidget):
         if self.mydb.getConfig("option_cf_onlyLpadsize"):
             self.onlyLpadsize.setChecked(True)
         self.onlyLpadsize.setToolTip("Find only stations with a large landingpad")
-        self.onlyLpadsize.stateChanged.connect( self.searchItem )
+        self.onlyLpadsize.stateChanged.connect(self.searchItem)
         gridLayout.addWidget(self.onlyLpadsize, 2, 0)
 
 
@@ -72,11 +73,11 @@ class tool(QtGui.QWidget):
 
         allegiances = self.mydb.getAllegiances()
         self.allegiancesList = []
-        self.allegiancesComboBox.addItem( "Any" )
+        self.allegiancesComboBox.addItem("Any")
         self.allegiancesList.append(None)
 
         for allegiance in allegiances:
-            self.allegiancesComboBox.addItem( allegiance["Name"] )
+            self.allegiancesComboBox.addItem(allegiance["Name"])
             self.allegiancesList.append(allegiance["id"])
         if self.mydb.getConfig("option_cf_allegiances"):
             self.allegiancesComboBox.setCurrentIndex(self.mydb.getConfig("option_cf_allegiances"))
@@ -103,7 +104,7 @@ class tool(QtGui.QWidget):
         self.buySellComboBox = QtGui.QComboBox()
         buySellList = ["Any", "Buy", "Sell"]
         for item in buySellList:
-            self.buySellComboBox.addItem( item )
+            self.buySellComboBox.addItem(item)
         if self.mydb.getConfig("option_cf_buySell"):
             self.buySellComboBox.setCurrentIndex(self.mydb.getConfig("option_cf_buySell"))
         self.buySellComboBox.currentIndexChanged.connect(self.searchItem)
@@ -117,11 +118,11 @@ class tool(QtGui.QWidget):
 
         governments = self.mydb.getGovernments()
         self.governmentsList = []
-        self.governmentsComboBox.addItem( "Any" )
+        self.governmentsComboBox.addItem("Any")
         self.governmentsList.append(None)
 
         for government in governments:
-            self.governmentsComboBox.addItem( government["Name"] )
+            self.governmentsComboBox.addItem(government["Name"])
             self.governmentsList.append(government["id"])
         if self.mydb.getConfig("option_cf_governments"):
             self.governmentsComboBox.setCurrentIndex(self.mydb.getConfig("option_cf_governments"))
@@ -136,11 +137,11 @@ class tool(QtGui.QWidget):
         self.maxStartDistSpinBox.setSuffix("ls")
         self.maxStartDistSpinBox.setSingleStep(10)
         self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        maxStarDist = self.mydb.getConfig( 'option_cf_maxStarDist' )
+        maxStarDist = self.mydb.getConfig('option_cf_maxStarDist')
         if maxStarDist:
-            self.maxStartDistSpinBox.setValue( maxStarDist )
+            self.maxStartDistSpinBox.setValue(maxStarDist)
         else:
-            self.maxStartDistSpinBox.setValue( 1500 )
+            self.maxStartDistSpinBox.setValue(1500)
         gridLayout.addWidget(label, 2, 8)
         gridLayout.addWidget(self.maxStartDistSpinBox, 2, 9)
 
@@ -159,7 +160,7 @@ class tool(QtGui.QWidget):
 
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = guitools.LineEdit()
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
         self.locationlineEdit.textChanged.connect(self.searchItem)
 
 
@@ -168,11 +169,11 @@ class tool(QtGui.QWidget):
 
         items = self.mydb.getAllItemNames()
         self.itemList = []
-        self.itemComboBox.addItem( "Any" )
+        self.itemComboBox.addItem("Any")
         self.itemList.append(None)
 
         for item in items:
-            self.itemComboBox.addItem( item["name"] )
+            self.itemComboBox.addItem(item["name"])
             self.itemList.append(item["id"])
         if self.mydb.getConfig("option_cf_item"):
             self.itemComboBox.setCurrentIndex(self.mydb.getConfig("option_cf_item"))
@@ -181,7 +182,7 @@ class tool(QtGui.QWidget):
         self.showOptions = QtGui.QCheckBox("Show Options")
         if self.mydb.getConfig("option_cf_showOptions") != 0:
             self.showOptions.setChecked(True)
-        self.showOptions.stateChanged.connect( self.optionsGroupBoxToggleViewAction )
+        self.showOptions.stateChanged.connect(self.optionsGroupBoxToggleViewAction)
 
 
         self.searchbutton = QtGui.QPushButton("Search")
@@ -190,7 +191,7 @@ class tool(QtGui.QWidget):
 
 
         layout = QtGui.QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(locationLabel)
         layout.addWidget(locationButton)
@@ -206,7 +207,7 @@ class tool(QtGui.QWidget):
         locationGroupBox.setFlat(True)
         locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
-        #locationGroupBox.setFlat(True)
+        # locationGroupBox.setFlat(True)
         locationGroupBox.setLayout(layout)
 
 
@@ -231,7 +232,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setFlat(True)
 
         layout = QtGui.QVBoxLayout()
-        layout.setContentsMargins(6,2,6,6)
+        layout.setContentsMargins(6, 2, 6, 6)
 
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(locationGroupBox)
@@ -267,27 +268,27 @@ class tool(QtGui.QWidget):
 
 
     def setCurentLocation(self):
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
 
 
     def saveOptions(self):
-        self.mydb.setConfig( 'option_cf_onlyLpadsize', self.onlyLpadsize.isChecked() )
-        self.mydb.setConfig( 'option_cf_onlyLocation', self.onlyLocation.isChecked() )
-        self.mydb.setConfig( 'option_cf_maxSearchRange', self.searchRangeSpinBox.value() )
-        self.mydb.setConfig( 'option_cf_maxAge', self.maxAgeSpinBox.value() )
-        self.mydb.setConfig( 'option_cf_maxStarDist', self.maxStartDistSpinBox.value() )
-        self.mydb.setConfig( 'option_cf_showOptions', self.showOptions.isChecked() )
-        self.mydb.setConfig( 'option_cf_item', self.itemComboBox.currentIndex() )
-        self.mydb.setConfig( 'option_cf_buySell', self.buySellComboBox.currentIndex() )
-        self.mydb.setConfig( 'option_cf_allegiances', self.allegiancesComboBox.currentIndex() )
-        self.mydb.setConfig( 'option_cf_governments', self.governmentsComboBox.currentIndex() )
+        self.mydb.setConfig('option_cf_onlyLpadsize', self.onlyLpadsize.isChecked())
+        self.mydb.setConfig('option_cf_onlyLocation', self.onlyLocation.isChecked())
+        self.mydb.setConfig('option_cf_maxSearchRange', self.searchRangeSpinBox.value())
+        self.mydb.setConfig('option_cf_maxAge', self.maxAgeSpinBox.value())
+        self.mydb.setConfig('option_cf_maxStarDist', self.maxStartDistSpinBox.value())
+        self.mydb.setConfig('option_cf_showOptions', self.showOptions.isChecked())
+        self.mydb.setConfig('option_cf_item', self.itemComboBox.currentIndex())
+        self.mydb.setConfig('option_cf_buySell', self.buySellComboBox.currentIndex())
+        self.mydb.setConfig('option_cf_allegiances', self.allegiancesComboBox.currentIndex())
+        self.mydb.setConfig('option_cf_governments', self.governmentsComboBox.currentIndex())
 
         sectionPosList = []
-        for i in range( self.listView.header().count() ):
-            sectionPosList.append( self.listView.header().logicalIndex( i ) )
+        for i in range(self.listView.header().count()):
+            sectionPosList.append(self.listView.header().logicalIndex(i))
 
-        sectionPos = ",".join( map( str, sectionPosList ) )
-        self.mydb.setConfig( 'option_cf.header.sectionPos', sectionPos )
+        sectionPos = ",".join(map(str, sectionPosList))
+        self.mydb.setConfig('option_cf.header.sectionPos', sectionPos)
 
 
     def searchItem(self):
@@ -296,10 +297,10 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Permit","StarDist", "Station", "Distance", "Item", "Stock",  "Buy", "Demand", "Sell", "Age", ""]
+        self.headerList = ["System", "Permit", "StarDist", "Station", "Distance", "Item", "Stock", "Buy", "Demand", "Sell", "Age", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
-        for x,column in enumerate(self.headerList):
+        for x, column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
 
         location = self.locationlineEdit.text()
@@ -313,58 +314,58 @@ class tool(QtGui.QWidget):
         else:
             distance = self.searchRangeSpinBox.value()
             
-        maxAgeDate = datetime.utcnow() - timedelta(days = self.maxAgeSpinBox.value() )
+        maxAgeDate = datetime.utcnow() - timedelta(days=self.maxAgeSpinBox.value())
 
         itemID = self.itemList[ self.itemComboBox.currentIndex() ]
 
-        items = self.mydb.getPricesInDistance( systemID, distance, self.maxStartDistSpinBox.value(), maxAgeDate, itemID, self.onlyLpadsize.isChecked(), self.buySellComboBox.currentIndex(), self.allegiancesComboBox.currentIndex(), self.governmentsComboBox.currentIndex())
+        items = self.mydb.getPricesInDistance(systemID, distance, self.maxStartDistSpinBox.value(), maxAgeDate, itemID, self.onlyLpadsize.isChecked(), self.buySellComboBox.currentIndex(), self.allegiancesComboBox.currentIndex(), self.governmentsComboBox.currentIndex())
 
 
         for item in items:
             model.insertRow(0)
-            model.setData(model.index(0, self.headerList.index("System") ), item["System"])
+            model.setData(model.index(0, self.headerList.index("System")), item["System"])
 
-            model.setData(model.index(0, self.headerList.index("Permit") ),  "No" if not item["permit"] else "Yes" )
+            model.setData(model.index(0, self.headerList.index("Permit")), "No" if not item["permit"] else "Yes")
             model.item(0, self.headerList.index("Permit")).setTextAlignment(QtCore.Qt.AlignCenter)
 
-            model.setData(model.index(0, self.headerList.index("StarDist") ), item["StarDist"])
+            model.setData(model.index(0, self.headerList.index("StarDist")), item["StarDist"])
             model.item(0, self.headerList.index("StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Station") ), item["Station"])
+            model.setData(model.index(0, self.headerList.index("Station")), item["Station"])
 
-            if "dist" in item.keys() :
-                model.setData(model.index(0, self.headerList.index("Distance") ),  item["dist"])
+            if "dist" in item.keys():
+                model.setData(model.index(0, self.headerList.index("Distance")), item["dist"])
             else:
-                model.setData(model.index(0, self.headerList.index("Distance") ),  0)
+                model.setData(model.index(0, self.headerList.index("Distance")), 0)
             model.item(0, self.headerList.index("Distance")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Item") ),  item["name"])
+            model.setData(model.index(0, self.headerList.index("Item")), item["name"])
 
-            model.setData(model.index(0, self.headerList.index("Stock") ),  item["Stock"])
+            model.setData(model.index(0, self.headerList.index("Stock")), item["Stock"])
             model.item(0, self.headerList.index("Stock")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Buy") ),  item["StationSell"])
+            model.setData(model.index(0, self.headerList.index("Buy")), item["StationSell"])
             model.item(0, self.headerList.index("Buy")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Demand") ),  item["Dammand"])
+            model.setData(model.index(0, self.headerList.index("Demand")), item["Dammand"])
             model.item(0, self.headerList.index("Demand")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Sell") ),  item["StationBuy"])
+            model.setData(model.index(0, self.headerList.index("Sell")), item["StationBuy"])
             model.item(0, self.headerList.index("Sell")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(item["age"]) )
+            model.setData(model.index(0, self.headerList.index("Age")), guitools.convertDateimeToAgeStr(item["age"]))
             model.item(0, self.headerList.index("Age")).setTextAlignment(QtCore.Qt.AlignCenter)
 
         self.listView.setModel(model)
 
         if firstrun:
-            sectionPos  = self.mydb.getConfig( 'option_cf.header.sectionPos' )
+            sectionPos = self.mydb.getConfig('option_cf.header.sectionPos')
             if sectionPos:
-                sectionPosList = sectionPos.strip().split( ',' )
-                for i,pos in  enumerate(sectionPosList):    
-                    self.listView.header().moveSection( self.listView.header().visualIndex( int(pos) ) , i )
+                sectionPosList = sectionPos.strip().split(',')
+                for i, pos in enumerate(sectionPosList):
+                    self.listView.header().moveSection(self.listView.header().visualIndex(int(pos)), i)
 
-            self.listView.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
+            self.listView.sortByColumn(self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder)
 
-        for i in range(0, len(self.headerList) ):
+        for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)

@@ -3,8 +3,8 @@ Created on 30.08.2015
 
 @author: mEDI
 '''
-from PySide import QtCore, QtGui,QtSvg
-from datetime import datetime, timedelta
+from PySide import QtCore, QtGui, QtSvg
+from datetime import datetime
 
 
 class guitools(object):
@@ -61,7 +61,7 @@ class guitools(object):
         clip = []
         lastRowCount = None
         for item in indexes:
-            if lastRowCount == None:
+            if lastRowCount is None:
                 lastRowCount = item.row()
             elif lastRowCount != item.row():
                 lastRowCount = item.row()
@@ -80,6 +80,7 @@ class guitools(object):
             string = ", ".join(clip)
             self.parent.main.clipboard.setText( string.replace(", \n, ", "\n") )
 
+
 class LineEdit(QtGui.QLineEdit):
     def __init__(self, parent=None):
         QtGui.QLineEdit.__init__(self, parent)
@@ -94,8 +95,7 @@ def convertDateimeToAgeStr(dt=datetime.utcnow() ):
 
     if age.days >= 1:
         return "%dd" % age.days
-    elif age.seconds/60/60 >= 1:
-        return "%dh" % (age.seconds/60/60)
+    elif age.seconds / 60 / 60 >= 1:
+        return "%dh" % (age.seconds / 60 / 60)
     else:
-        return "%dm" % (age.seconds/60)
-
+        return "%dm" % (age.seconds / 60)

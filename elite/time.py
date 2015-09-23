@@ -3,10 +3,9 @@ Created on 07.08.2015
 
 @author: mEDI
 '''
-from elite import db 
+from elite import db
 import math
 
-# import elite
 
 class elitetime(object):
     '''
@@ -67,7 +66,7 @@ class elitetime(object):
             else:
                 print("warning: %d %s have no StarDist" % (stationBID, stationB["Station"]))
 
-            #docking time
+            # docking time
             if stationB["max_pad_size"] == "L":
                 time += self.landingTime_station
             else:
@@ -76,7 +75,7 @@ class elitetime(object):
         else:
             print("warning: no station data!?", systemAID, stationBID, SystemBID)
             
-        return  int(round(time, 0))
+        return int(round(time, 0))
 
     def calcTimeForDistance(self, dist):
         t = None

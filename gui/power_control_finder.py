@@ -14,6 +14,7 @@ __toolname__ = "Power Control Finder"
 __internalName__ = "PoCoFi"
 __statusTip__ = "Find controlled systems by Power"
 
+
 class tool(QtGui.QWidget):
     main = None
     mydb = None
@@ -40,11 +41,11 @@ class tool(QtGui.QWidget):
 
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = guitools.LineEdit()
-        configval = self.mydb.getConfig( 'option_pcf_location' )
+        configval = self.mydb.getConfig('option_pcf_location')
         if configval:
-            self.locationlineEdit.setText( configval )
+            self.locationlineEdit.setText(configval)
         else:
-            self.locationlineEdit.setText( self.main.location.getLocation() )
+            self.locationlineEdit.setText(self.main.location.getLocation())
         self.locationlineEdit.textChanged.connect(self.searchPower)
 
 
@@ -54,7 +55,7 @@ class tool(QtGui.QWidget):
         powers = self.mydb.getAllPowers()
         self.powerList = []
         for power in powers:
-            self.powerComboBox.addItem( power["Name"] )
+            self.powerComboBox.addItem(power["Name"])
             self.powerList.append(power["id"])
 
         if self.mydb.getConfig("option_pcf_power"):
@@ -129,13 +130,13 @@ class tool(QtGui.QWidget):
 
 
     def setCurentLocation(self):
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
 
 
     def saveOptions(self):
         # save last options
         self.mydb.setConfig('option_pcf_power', self.powerComboBox.currentIndex())
-        self.mydb.setConfig( 'option_pcf_location', self.locationlineEdit.text() )
+        self.mydb.setConfig('option_pcf_location', self.locationlineEdit.text())
 
 
     def searchPower(self):
@@ -147,7 +148,7 @@ class tool(QtGui.QWidget):
         self.headerList = ["System", "Distance", "Permit", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
-        for x,column in enumerate(self.headerList):
+        for x, column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
 
         location = self.locationlineEdit.text()
@@ -160,18 +161,18 @@ class tool(QtGui.QWidget):
 
         for system in systems:
             model.insertRow(0)
-            model.setData(model.index(0, self.headerList.index("System") ), system["System"])
+            model.setData(model.index(0, self.headerList.index("System")), system["System"])
 
-            model.setData(model.index(0, self.headerList.index("Distance") ),  system["dist"])
+            model.setData(model.index(0, self.headerList.index("Distance")), system["dist"])
             model.item(0, self.headerList.index("Distance")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Permit") ),  "No" if not system["permit"] else "Yes" )
+            model.setData(model.index(0, self.headerList.index("Permit")), "No" if not system["permit"] else "Yes")
             model.item(0, self.headerList.index("Permit")).setTextAlignment(QtCore.Qt.AlignCenter)
 
         self.listView.setModel(model)
 
         if firstrun:
-            self.listView.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
+            self.listView.sortByColumn(self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder)
 
-        for i in range(0, len(self.headerList) ):
+        for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)

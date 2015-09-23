@@ -41,16 +41,16 @@ __toolname__ = '%s'
 
 import sys
 
-__useragent__ = '%%s/%%s (%%s) %%s(%%s)' %% (__toolname__.replace(' ', ''), __version__, sys.platform, __buildid__, __builddate__.replace(' ', '').replace('-', '').replace(':', '') ) 
+__useragent__ = '%%s/%%s (%%s) %%s(%%s)' %% (__toolname__.replace(' ', ''), __version__, sys.platform, __buildid__, __builddate__.replace(' ', '').replace('-', '').replace(':', '') )
 
 """
 
 VERSION_HOMEPAGE = """buildid=%s;version=%s;file=%s;builddate=%s"""
 
 
-if sys.platform=='win32':
+if sys.platform == 'win32':
     # platform.architecture()[0]
-    base = 'Win32GUI' 
+    base = 'Win32GUI'
     mybuild_dir = 'build\exe.win32-3.4'
 else:
     base = None
@@ -62,12 +62,14 @@ if os.path.isdir(mybuild_dir):
     shutil.rmtree(mybuild_dir)
     pass
 
+
 def isInt(s):
     try:
         int(s)
         return True
     except ValueError:
         return False
+
 
 def update_version_py():
     global __buildid__, __version__
@@ -90,9 +92,9 @@ def update_version_py():
 
     ver = __buildid__.split("-")
     if isInt(ver[1]):
-        __version__ = "%s.%s" % (ver[0], ver[1]) 
+        __version__ = "%s.%s" % (ver[0], ver[1])
     else:
-        __version__ = "%s.%s" % (ver[0], 0) 
+        __version__ = "%s.%s" % (ver[0], 0)
         
     f = open("_version.py", "w")
     f.write(VERSION_PY % (__buildid__, __version__, __builddate__, __toolnameSave__))
@@ -108,7 +110,7 @@ update_version_py()
 __msiFile__ = "%s-%s-%s.msi" % (__toolnameSave__, __version__, sys.platform)
 
 ''' create versions file '''
-f = open(os.path.join(__destDisr__,"mediselitetools.version.txt"), "w")
+f = open(os.path.join(__destDisr__, "mediselitetools.version.txt"), "w")
 f.write(VERSION_HOMEPAGE % (__buildid__, __version__, __msiFile__, __builddate__))
 f.close()
 
@@ -119,70 +121,69 @@ f.close()
 
 
 imgPath = "img"
-#includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
-includeFilesList = [["db/rares.csv","db/rares.csv"], [zmq.libzmq.__file__, "libzmq.pyd" ], [__forceupdateFile__,__forceupdateFile__]]
+# includeFilesList = [["db/my.db","db/my.db"],["db/rares.csv","db/rares.csv"]]
+includeFilesList = [["db/rares.csv", "db/rares.csv"], [zmq.libzmq.__file__, "libzmq.pyd" ], [__forceupdateFile__, __forceupdateFile__]]
 
-#add img
+# add img
 for f in os.listdir(imgPath):
-    includeFilesList.append( [os.path.join(imgPath,f), os.path.join(imgPath,f) ] )
+    includeFilesList.append([os.path.join(imgPath, f), os.path.join(imgPath, f) ])
 
 
 shortcut_table = [
-    (
-     "DesktopShortcut",        # Shortcut
-     "DesktopFolder",          # Directory_
-     __toolname__,           # Name
-     "TARGETDIR",              # Component_
-     "[TARGETDIR]%s" % __exeName__,# Target
-     None,                     # Arguments
-     None,                     # Description
-     None,                     # Hotkey
-     None,                     # Icon
-     None,                     # IconIndex
-     None,                     # ShowCmd
-     "TARGETDIR",               # WkDir
-     ),
-    (
-     "Shortcut",        # Shortcut
-     "ProgramMenuFolder",          # Directory_
-     __toolname__,           # Name
-     "TARGETDIR",              # Component_
-     "[TARGETDIR]%s" % __exeName__,# Target
-     None,                     # Arguments
-     None,                     # Description
-     None,                     # Hotkey
-     None,                     # Icon
-     None,                     # IconIndex
-     None,                     # ShowCmd
-     "TARGETDIR",               # WkDir
-     ),
-
-    ]
+                    (
+                         "DesktopShortcut",  # Shortcut
+                         "DesktopFolder",  # Directory_
+                         __toolname__,  # Name
+                         "TARGETDIR",  # Component_
+                         "[TARGETDIR]%s" % __exeName__,  # Target
+                         None,  # Arguments
+                         None,  # Description
+                         None,  # Hotkey
+                         None,  # Icon
+                         None,  # IconIndex
+                         None,  # ShowCmd
+                         "TARGETDIR",  # WkDir
+                    ),
+                    (
+                         "Shortcut",  # Shortcut
+                         "ProgramMenuFolder",  # Directory_
+                         __toolname__,  # Name
+                         "TARGETDIR",  # Component_
+                         "[TARGETDIR]%s" % __exeName__,  # Target
+                         None,  # Arguments
+                         None,  # Description
+                         None,  # Hotkey
+                         None,  # Icon
+                         None,  # IconIndex
+                         None,  # ShowCmd
+                         "TARGETDIR",  # WkDir
+                    ),
+                  ]
 
 msi_data = {"Shortcut": shortcut_table}
 
 msiOptions = dict(
-                   upgrade_code = __GUID__,
-                   data = msi_data,
+                   upgrade_code=__GUID__,
+                   data=msi_data,
                  )
 
 buildOptions = dict(
-                    #build_exe = mybuild_dir,
-                    packages = [],
-                    excludes = [],
-
-                    includes = ['zmq.backend.cython'],
-                    optimize = 2,
-                    compressed =  True,
-                    icon = "img/logo.ico",
-                    replace_paths = "*=",
-                    include_files = includeFilesList,
-                    silent = True,
+                        # build_exe = mybuild_dir,
+                        packages=[],
+                        excludes=[],
+    
+                        includes=['zmq.backend.cython'],
+                        optimize=2,
+                        compressed=True,
+                        icon="img/logo.ico",
+                        replace_paths="*=",
+                        include_files=includeFilesList,
+                        silent=True,
                     )
 
 installOptions = dict(
-                    force  = True,
-                    skip_build = False,
+                        force=True,
+                        skip_build=False,
                     )
 
 
@@ -191,36 +192,37 @@ executables = [
     Executable(
                'main.py',
                base=base,
-               targetName = __exeName__,
+               targetName=__exeName__,
                compress=True,
-               shortcutName = __toolname__,
-               shortcutDir = None,
-               )
+               shortcutName=__toolname__,
+               shortcutDir=None,
+            )
 ]
 
 
 setup(name=__toolnameSave__,
-      version = __version__ ,
+      version=__version__,
       author="René Wunderlich",
-      description = 'Elite Tools',
-      options = dict(build_exe = buildOptions,
+      description='Elite Tools',
+      options=dict(
+                    build_exe=buildOptions,
                     # install_exe = installOptions,
-                    bdist_msi = msiOptions,
-                     ),
-      executables = executables)
+                    bdist_msi=msiOptions,
+                ),
+      executables=executables)
 
 
 ''' remove trigger file '''
-if os.path.isfile( __forceupdateFile__ ):
-    os.remove( __forceupdateFile__ )
+if os.path.isfile(__forceupdateFile__):
+    os.remove(__forceupdateFile__)
 
 ''' only for the zip fallback'''
 if _buildZip:
 
     ''' manipulate db clone '''
-    clonedDBpath = os.path.join(mybuild_dir, __sourceDB__ )
+    clonedDBpath = os.path.join(mybuild_dir, __sourceDB__)
     
-    shutil.copyfile(__sourceDB__ , clonedDBpath)
+    shutil.copyfile(__sourceDB__, clonedDBpath)
     
     
     if os.path.isfile(clonedDBpath):
@@ -249,9 +251,9 @@ if _buildZip:
         db.con.commit()
         cur.close()
 
-        lastOptimize = db.getConfig( 'lastOptimizeDatabase' )
+        lastOptimize = db.getConfig('lastOptimizeDatabase')
         if __OptimizeDB__ and lastOptimize:
-            lastOptimize = datetime.strptime(lastOptimize , "%Y-%m-%d %H:%M:%S")
+            lastOptimize = datetime.strptime(lastOptimize, "%Y-%m-%d %H:%M:%S")
             if lastOptimize + timedelta(days=1) < datetime.now():
                 db.optimizeDatabase()
     
@@ -266,7 +268,6 @@ if _buildZip:
     if os.path.isfile(outputfile):
         os.remove(outputfile)
 
-    #compress
+    # compress
     options = "-y -t7z -mx9"
-    os.spawnl(os.P_WAIT, zipexepath,"7z","a",outputfile , "./%s/*" % mybuild_dir,  options)
-
+    os.spawnl(os.P_WAIT, zipexepath, "7z", "a", outputfile, "./%s/*" % mybuild_dir, options)

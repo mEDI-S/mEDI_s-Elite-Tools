@@ -14,6 +14,7 @@ __toolname__ = "Shipyard Finder"
 __internalName__ = "ShFi"
 __statusTip__ = "Open A %s Window" % __toolname__
 
+
 class tool(QtGui.QWidget):
     main = None
     mydb = None
@@ -40,7 +41,7 @@ class tool(QtGui.QWidget):
 
         locationLabel = QtGui.QLabel("Location:")
         self.locationlineEdit = guitools.LineEdit()
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
         self.locationlineEdit.textChanged.connect(self.searchShip)
 
 
@@ -50,7 +51,7 @@ class tool(QtGui.QWidget):
         ships = self.mydb.getAllShipnames()
         self.shipList = []
         for ship in ships:
-            self.shipComboBox.addItem( ship["Name"] )
+            self.shipComboBox.addItem(ship["Name"])
             self.shipList.append(ship["id"])
         self.shipComboBox.currentIndexChanged.connect(self.searchShip)
 
@@ -74,7 +75,7 @@ class tool(QtGui.QWidget):
         locationGroupBox.setFlat(True)
         locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
-        #locationGroupBox.setFlat(True)
+        # locationGroupBox.setFlat(True)
         locationGroupBox.setLayout(layout)
 
 
@@ -125,7 +126,7 @@ class tool(QtGui.QWidget):
 
 
     def setCurentLocation(self):
-        self.locationlineEdit.setText( self.main.location.getLocation() )
+        self.locationlineEdit.setText(self.main.location.getLocation())
 
 
     def searchShip(self):
@@ -134,10 +135,10 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Permit","StarDist", "Station", "Distance", "Age", ""]
+        self.headerList = ["System", "Permit", "StarDist", "Station", "Distance", "Age", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
-        for x,column in enumerate(self.headerList):
+        for x, column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
 
         location = self.locationlineEdit.text()
@@ -150,25 +151,25 @@ class tool(QtGui.QWidget):
 
         for shipyard in shipyards:
             model.insertRow(0)
-            model.setData(model.index(0, self.headerList.index("System") ), shipyard["System"])
+            model.setData(model.index(0, self.headerList.index("System")), shipyard["System"])
 
-            model.setData(model.index(0, self.headerList.index("Permit") ),  "No" if not shipyard["permit"] else "Yes" )
+            model.setData(model.index(0, self.headerList.index("Permit")), "No" if not shipyard["permit"] else "Yes")
             model.item(0, self.headerList.index("Permit")).setTextAlignment(QtCore.Qt.AlignCenter)
 
-            model.setData(model.index(0, self.headerList.index("StarDist") ), shipyard["StarDist"])
+            model.setData(model.index(0, self.headerList.index("StarDist")), shipyard["StarDist"])
             model.item(0, self.headerList.index("StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Station") ), shipyard["Station"])
-            model.setData(model.index(0, self.headerList.index("Distance") ),  shipyard["dist"])
+            model.setData(model.index(0, self.headerList.index("Station")), shipyard["Station"])
+            model.setData(model.index(0, self.headerList.index("Distance")), shipyard["dist"])
             model.item(0, self.headerList.index("Distance")).setTextAlignment(QtCore.Qt.AlignRight)
 
-            model.setData(model.index(0, self.headerList.index("Age") ), guitools.convertDateimeToAgeStr(shipyard["age"]) )
+            model.setData(model.index(0, self.headerList.index("Age")), guitools.convertDateimeToAgeStr(shipyard["age"]))
             model.item(0, self.headerList.index("Age")).setTextAlignment(QtCore.Qt.AlignCenter)
 
         self.listView.setModel(model)
 
         if firstrun:
-            self.listView.sortByColumn( self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder )
+            self.listView.sortByColumn(self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder)
 
-        for i in range(0, len(self.headerList) ):
+        for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)

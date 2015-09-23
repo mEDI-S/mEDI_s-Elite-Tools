@@ -8,7 +8,6 @@ Created on 27.08.2015
 from PySide import QtCore, QtGui
 import PySide
 import elite
-import timeit
 from datetime import datetime, timedelta
 
 import gui.guitools as guitools
@@ -16,6 +15,7 @@ import gui.guitools as guitools
 __toolname__ = "Deals From To Finder"
 __internalName__ = "DeFrToFi"
 __statusTip__ = "Open A %s Window" % __toolname__
+
 
 class tool(QtGui.QWidget):
     main = None
@@ -44,7 +44,7 @@ class tool(QtGui.QWidget):
 
         self.autoUpdateLocation = QtGui.QCheckBox("Auto Switch/Location")
         self.autoUpdateLocation.setChecked(False)
-        self.autoUpdateLocation.stateChanged.connect( self.updateLocation )
+        self.autoUpdateLocation.stateChanged.connect(self.updateLocation)
         gridLayout.addWidget(self.autoUpdateLocation, 1, 0)
 
 
@@ -54,9 +54,9 @@ class tool(QtGui.QWidget):
         self.minProfitSpinBox.setSuffix("cr")
         self.minProfitSpinBox.setSingleStep(100)
         self.minProfitSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        minTradeProfit = self.mydb.getConfig( 'option_dft_minProfit' )
+        minTradeProfit = self.mydb.getConfig('option_dft_minProfit')
         if minTradeProfit:
-            self.minProfitSpinBox.setValue( minTradeProfit )
+            self.minProfitSpinBox.setValue(minTradeProfit)
         gridLayout.addWidget(label, 1, 2)
         gridLayout.addWidget(self.minProfitSpinBox, 1, 3)
 
@@ -66,11 +66,11 @@ class tool(QtGui.QWidget):
         self.maxAgeSpinBox.setRange(1, 1000)
         self.maxAgeSpinBox.setSuffix("Day")
         self.maxAgeSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        configval = self.mydb.getConfig( 'option_dft_maxAgeDate' )
+        configval = self.mydb.getConfig('option_dft_maxAgeDate')
         if configval:
-            self.maxAgeSpinBox.setValue( configval )
+            self.maxAgeSpinBox.setValue(configval)
         else:
-            self.maxAgeSpinBox.setValue( 14 )
+            self.maxAgeSpinBox.setValue(14)
         gridLayout.addWidget(label, 1, 5)
         gridLayout.addWidget(self.maxAgeSpinBox, 1, 6)
 
@@ -81,11 +81,11 @@ class tool(QtGui.QWidget):
         self.minStockSpinBox.setRange(0, 1000000)
         self.minStockSpinBox.setSingleStep(100)
         self.minStockSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        configval = self.mydb.getConfig( 'option_dft_minStock' )
+        configval = self.mydb.getConfig('option_dft_minStock')
         if configval:
-            self.minStockSpinBox.setValue( configval )
+            self.minStockSpinBox.setValue(configval)
         else:
-            self.minStockSpinBox.setValue( 100 )
+            self.minStockSpinBox.setValue(100)
         gridLayout.addWidget(label, 2, 2)
         gridLayout.addWidget(self.minStockSpinBox, 2, 3)
 
@@ -97,50 +97,50 @@ class tool(QtGui.QWidget):
         self.maxStartDistSpinBox.setSuffix("ls")
         self.maxStartDistSpinBox.setSingleStep(10)
         self.maxStartDistSpinBox.setAlignment(QtCore.Qt.AlignRight)
-        maxStarDist = self.mydb.getConfig( 'option_maxStarDist' )
+        maxStarDist = self.mydb.getConfig('option_maxStarDist')
         if maxStarDist:
-            self.maxStartDistSpinBox.setValue( maxStarDist )
+            self.maxStartDistSpinBox.setValue(maxStarDist)
         gridLayout.addWidget(label, 2, 5)
         gridLayout.addWidget(self.maxStartDistSpinBox, 2, 6)
 
 
         fromsystemlabel = QtGui.QLabel("From System:")
         self.fromSystem = guitools.LineEdit()
-        configval = self.mydb.getConfig( 'option_dft_fromSystem' )
+        configval = self.mydb.getConfig('option_dft_fromSystem')
         if configval:
-            self.fromSystem.setText( configval )
+            self.fromSystem.setText(configval)
 
         self.fromSystem.textChanged.connect(self.triggerFromSystemChanged)
 
         fromstationlabel = QtGui.QLabel("Station:")
         self.fromStation = guitools.LineEdit()
 
-        configval = self.mydb.getConfig( 'option_dft_fromStation' )
+        configval = self.mydb.getConfig('option_dft_fromStation')
         if configval:
-            self.fromStation.setText( configval )
+            self.fromStation.setText(configval)
         self.fromStation.textChanged.connect(self.triggerFromStationChanged)
 
 
         tosystemlabel = QtGui.QLabel("To System:")
         self.toSystem = guitools.LineEdit()
-        configval = self.mydb.getConfig( 'option_dft_toSystem' )
+        configval = self.mydb.getConfig('option_dft_toSystem')
         if configval:
-            self.toSystem.setText( configval )
+            self.toSystem.setText(configval)
 
         self.toSystem.textChanged.connect(self.triggerToSystemChanged)
 
 
         tostationlabel = QtGui.QLabel("Station:")
         self.toStation = guitools.LineEdit()
-        configval = self.mydb.getConfig( 'option_dft_toStation' )
+        configval = self.mydb.getConfig('option_dft_toStation')
         if configval:
-            self.toStation.setText( configval )
+            self.toStation.setText(configval)
         self.toStation.textChanged.connect(self.triggerToStationChanged)
 
         self.showOptions = QtGui.QCheckBox("Show Options")
         if self.mydb.getConfig("option_dft_showOptions") != 0:
             self.showOptions.setChecked(True)
-        self.showOptions.stateChanged.connect( self.optionsGroupBoxToggleViewAction )
+        self.showOptions.stateChanged.connect(self.optionsGroupBoxToggleViewAction)
 
         self.searchbutton = QtGui.QPushButton("Search")
         self.searchbutton.clicked.connect(self.searchDeals)
@@ -235,14 +235,12 @@ class tool(QtGui.QWidget):
         self.searchDeals()
 
     def triggerFromStationChanged(self):
-        system = self.fromSystem.text()
         station = self.fromStation.text()
 
         self.guitools.setSystemComplete(station, self.fromSystem)
         self.searchDeals()
 
     def triggerToStationChanged(self):
-        system = self.toSystem.text()
         station = self.toStation.text()
 
         self.guitools.setSystemComplete(station, self.toSystem)
@@ -260,7 +258,6 @@ class tool(QtGui.QWidget):
         menu = QtGui.QMenu(self)
         menu.addAction(self.copyAct)
 
-        indexes = self.listView.selectionModel().selectedIndexes()
         menu.addAction(self.markFakeItemAct)
 
         menu.exec_(self.listView.viewport().mapToGlobal(event))
@@ -273,11 +270,11 @@ class tool(QtGui.QWidget):
 
     def createTimer(self):
         self.autoUpdateLocationTimer = QtCore.QTimer()
-        self.autoUpdateLocationTimer.start(1000*60)
+        self.autoUpdateLocationTimer.start(1000 * 60)
         self.autoUpdateLocationTimer.timeout.connect(self.updateLocation)
 
     def setCurentLocation(self):
-        self.fromSystem.setText( self.main.location.getLocation() )
+        self.fromSystem.setText(self.main.location.getLocation())
         self.fromStation.setText("")
 
     def updateLocation(self):
@@ -319,7 +316,7 @@ class tool(QtGui.QWidget):
 
         if id:
             msg = "Warning: fake items are ignored everywhere and no longer displayed\n"
-            msg += "\nSet\n   From Station: %s\n   Item: %s\nas Facke" % (indexes[self.headerList.index("From")].data(), indexes[self.headerList.index("Item")].data() )
+            msg += "\nSet\n   From Station: %s\n   Item: %s\nas Facke" % (indexes[self.headerList.index("From")].data(), indexes[self.headerList.index("Item")].data())
             msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
                     "Warning", msg,
                     QtGui.QMessageBox.NoButton, self)
@@ -345,34 +342,34 @@ class tool(QtGui.QWidget):
         self.searchDeals()
 
     def saveOptions(self):
-        self.mydb.setConfig( 'option_dft_fromSystem', self.fromSystem.text() )
-        self.mydb.setConfig( 'option_dft_fromStation', self.fromStation.text() )
-        self.mydb.setConfig( 'option_dft_toSystem', self.toSystem.text() )
-        self.mydb.setConfig( 'option_dft_toStation', self.toStation.text() )
-        self.mydb.setConfig( 'option_dft_maxAgeDate', self.maxAgeSpinBox.value() )
-        self.mydb.setConfig( 'option_dft_minStock', self.minStockSpinBox.value() )
-        self.mydb.setConfig( 'option_dft_minProfit', self.minProfitSpinBox.value() )
+        self.mydb.setConfig('option_dft_fromSystem', self.fromSystem.text())
+        self.mydb.setConfig('option_dft_fromStation', self.fromStation.text())
+        self.mydb.setConfig('option_dft_toSystem', self.toSystem.text())
+        self.mydb.setConfig('option_dft_toStation', self.toStation.text())
+        self.mydb.setConfig('option_dft_maxAgeDate', self.maxAgeSpinBox.value())
+        self.mydb.setConfig('option_dft_minStock', self.minStockSpinBox.value())
+        self.mydb.setConfig('option_dft_minProfit', self.minProfitSpinBox.value())
 
-        self.mydb.setConfig( 'option_dft_showOptions', self.showOptions.isChecked() )
+        self.mydb.setConfig('option_dft_showOptions', self.showOptions.isChecked())
 
         sectionPosList = []
-        for i in range( self.listView.header().count() ):
-            sectionPosList.append( self.listView.header().logicalIndex( i ) )
+        for i in range(self.listView.header().count()):
+            sectionPosList.append(self.listView.header().logicalIndex(i))
 
-        sectionPos = ",".join( map( str, sectionPosList ) )
-        self.mydb.setConfig( 'option_dft.header.sectionPos', sectionPos )
+        sectionPos = ",".join(map(str, sectionPosList))
+        self.mydb.setConfig('option_dft.header.sectionPos', sectionPos)
 
     
     def searchDeals(self):
-        #self.saveOptions()
+        # self.saveOptions()
         firstrun = False
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["PriceID","Item","From","Buy", "Stock","To","Sell","Profit","FromAge","ToAge",""]
+        self.headerList = ["PriceID", "Item", "From", "Buy", "Stock", "To", "Sell", "Profit", "FromAge", "ToAge", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
-        for x,column in enumerate(self.headerList):
+        for x, column in enumerate(self.headerList):
             model.setHeaderData(x, QtCore.Qt.Horizontal, column)
 
 
@@ -388,7 +385,7 @@ class tool(QtGui.QWidget):
         toStation = self.toStation.text()
         toStationID = self.mydb.getStationID(toSystemID, toStation)
             
-        maxAgeDate = datetime.utcnow() - timedelta(days = self.maxAgeSpinBox.value() )
+        maxAgeDate = datetime.utcnow() - timedelta(days=self.maxAgeSpinBox.value())
         minStock = self.minStockSpinBox.value()
         startDist = self.maxStartDistSpinBox.value()
         
@@ -398,9 +395,9 @@ class tool(QtGui.QWidget):
 #        self.main.lockDB()
     
         if fromStationID and toStationID:
-            deals = self.mydb.getDealsFromTo( fromStationID,  toStationID, maxAgeDate , minStock )
+            deals = self.mydb.getDealsFromTo(fromStationID, toStationID, maxAgeDate, minStock)
         elif fromStationID and toSystemID:
-            deals = self.mydb.getDealsFromToSystem( fromStationID,  toSystemID, startDist, maxAgeDate , minStock )
+            deals = self.mydb.getDealsFromToSystem(fromStationID, toSystemID, startDist, maxAgeDate, minStock)
         else:
             deals = []
 
@@ -410,41 +407,38 @@ class tool(QtGui.QWidget):
             if self.minProfitSpinBox.value() <= deal["Profit"]:
                 model.insertRow(0)
                 
-                model.setData(model.index(0, self.headerList.index("PriceID") ), deal["priceAid"])
-                model.setData(model.index(0, self.headerList.index("From") ), deal["fromStation"])
-                model.setData(model.index(0, self.headerList.index("To") ), deal["toStation"])
-                model.setData(model.index(0, self.headerList.index("Item") ), deal["itemName"])
-                model.setData(model.index(0, self.headerList.index("Buy") ), deal["StationSell"])
+                model.setData(model.index(0, self.headerList.index("PriceID")), deal["priceAid"])
+                model.setData(model.index(0, self.headerList.index("From")), deal["fromStation"])
+                model.setData(model.index(0, self.headerList.index("To")), deal["toStation"])
+                model.setData(model.index(0, self.headerList.index("Item")), deal["itemName"])
+                model.setData(model.index(0, self.headerList.index("Buy")), deal["StationSell"])
                 model.item(0, self.headerList.index("Buy")).setTextAlignment(QtCore.Qt.AlignRight)
-                model.setData(model.index(0, self.headerList.index("Sell") ), deal["StationBuy"])
+                model.setData(model.index(0, self.headerList.index("Sell")), deal["StationBuy"])
                 model.item(0, self.headerList.index("Sell")).setTextAlignment(QtCore.Qt.AlignRight)
-                model.setData(model.index(0, self.headerList.index("Profit") ), deal["Profit"])
+                model.setData(model.index(0, self.headerList.index("Profit")), deal["Profit"])
                 model.item(0, self.headerList.index("Profit")).setTextAlignment(QtCore.Qt.AlignRight)
-                model.setData(model.index(0, self.headerList.index("Stock") ), deal["Stock"])
+                model.setData(model.index(0, self.headerList.index("Stock")), deal["Stock"])
                 model.item(0, self.headerList.index("Stock")).setTextAlignment(QtCore.Qt.AlignRight)
-                model.setData(model.index(0, self.headerList.index("FromAge") ), guitools.convertDateimeToAgeStr(deal["fromAge"]) )
+                model.setData(model.index(0, self.headerList.index("FromAge")), guitools.convertDateimeToAgeStr(deal["fromAge"]))
                 model.item(0, self.headerList.index("FromAge")).setTextAlignment(QtCore.Qt.AlignCenter)
-                model.setData(model.index(0, self.headerList.index("ToAge") ), guitools.convertDateimeToAgeStr(deal["toAge"]) )
+                model.setData(model.index(0, self.headerList.index("ToAge")), guitools.convertDateimeToAgeStr(deal["toAge"]))
                 model.item(0, self.headerList.index("ToAge")).setTextAlignment(QtCore.Qt.AlignCenter)
 
 
         self.listView.setModel(model)
 
         if firstrun:
-            sectionPos  = self.mydb.getConfig( 'option_dft.header.sectionPos' )
+            sectionPos = self.mydb.getConfig('option_dft.header.sectionPos')
             if sectionPos:
-                sectionPosList = sectionPos.strip().split( ',' )
-                for i,pos in  enumerate(sectionPosList):    
-                    self.listView.header().moveSection( self.listView.header().visualIndex( int(pos) ) , i )
+                sectionPosList = sectionPos.strip().split(',')
+                for i, pos in enumerate(sectionPosList):
+                    self.listView.header().moveSection(self.listView.header().visualIndex(int(pos)), i)
 
-            self.listView.sortByColumn( self.headerList.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder )
+            self.listView.sortByColumn(self.headerList.index("Profit"), PySide.QtCore.Qt.SortOrder.DescendingOrder)
 
             self.listView.hideColumn(self.headerList.index("PriceID"))
 
- #       self.main.unlockDB()
+#       self.main.unlockDB()
 
-        for i in range(0, len(self.headerList) ):
+        for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)
-
-
-

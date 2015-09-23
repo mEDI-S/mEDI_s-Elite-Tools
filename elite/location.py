@@ -10,6 +10,7 @@ import os
 import re
 from datetime import datetime
 
+
 class location(object):
     '''
     location.getLocation() return the current system
@@ -26,7 +27,7 @@ class location(object):
         Constructor
         '''
         self.mydb = mydb
-        self.eliteLogDir = self.mydb.getConfig( 'EliteLogDir' )
+        self.eliteLogDir = self.mydb.getConfig('EliteLogDir')
 
     def getLocation(self):
 
@@ -38,40 +39,40 @@ class location(object):
                 self.readLog(logfile)
 
         if not self.location:
-            self.location =  ""
+            self.location = ""
 
         return self.location
 
     def getLastLog(self):
-        if not os.path.isdir( self.eliteLogDir ):
+        if not os.path.isdir(self.eliteLogDir):
             print("Warning: EliteLogDir:'%s' does not exist" % self.eliteLogDir)
-            return (None,None)
+            return (None, None)
 
         logfiles = []
         for f in os.listdir(self.eliteLogDir):
-            if os.path.isfile( os.path.join(self.eliteLogDir, f) ) and len(f) > 4 and re.match(r"^netLog.*\.log$" ,f):
+            if os.path.isfile(os.path.join(self.eliteLogDir, f)) and len(f) > 4 and re.match(r"^netLog.*\.log$", f):
 
                 path = os.path.join(self.eliteLogDir, f)
-                cDate = datetime.fromtimestamp( os.path.getmtime(path) )
+                cDate = datetime.fromtimestamp(os.path.getmtime(path))
 
-                logfiles.append( [cDate, path] )
+                logfiles.append([cDate, path])
 
     
-        logfiles = sorted(logfiles , key=lambda f: f[0], reverse=True)
+        logfiles = sorted(logfiles, key=lambda f: f[0], reverse=True)
 
-        return (logfiles[0][0],logfiles[0][1] )
+        return (logfiles[0][0], logfiles[0][1])
 
-    def readLog(self, logfile ):
+    def readLog(self, logfile):
 
         fh = open(logfile, 'rb')
 
         if self._lastFile == logfile and self._lastPos:
-            fh.seek(self._lastPos,0)
+            fh.seek(self._lastPos, 0)
         else:
             self._lastFile = logfile
 
         for line in fh:
-            locationma = re.search("^\{\d{2}:\d{2}:\d{2}\} System\:\d+\((.*?)\) .*", line.decode(encoding='ascii',errors='replace') )
+            locationma = re.search("^\{\d{2}:\d{2}:\d{2}\} System\:\d+\((.*?)\) .*", line.decode(encoding='ascii', errors='replace'))
 
 
             if locationma:

@@ -6,19 +6,19 @@ Created on 19.08.2015
 @author: mEDI
 '''
 
-__defaultUpdateTime__ = 1000*30
+__defaultUpdateTime__ = 1000 * 30
 
 import logging
 import sys
 
 try:
-    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+    from _version import __buildid__, __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
     __builddate__ = "NONE"
     __toolname__ = "mEDI s Elite Tools"
-    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") )
 
 
 
@@ -28,7 +28,7 @@ class StreamToLogger(object):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
-        self.logger.log(logging.INFO,"version: %s (%s)" % (__version__, __buildid__) )
+        self.logger.log(logging.INFO, "version: %s (%s)" % (__version__, __buildid__) )
  
     def write(self, buf):
         for line in buf.rstrip().splitlines():
@@ -51,6 +51,7 @@ import elite
 import gui
 from PySide import QtCore, QtGui
 import base64
+
 
 class MainWindow(QtGui.QMainWindow):
 
@@ -75,7 +76,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks | QtGui.QMainWindow.AllowTabbedDocks)
 
         self.setStatusBar("Welcomme to mEDI's Elite Tools")
-        self.setMinimumSize(600,400)
+        self.setMinimumSize(600, 400)
 
         self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
 
@@ -86,7 +87,7 @@ class MainWindow(QtGui.QMainWindow):
         self.mydb = elite.db(guiMode=True)
         self.mydb.startStreamUpdater()
 
-        self.dbworker =  gui.dbworker.new(self)
+        self.dbworker = gui.dbworker.new(self)
 
         self.location = elite.location(self.mydb)
 
@@ -96,7 +97,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog] 
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog]
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
@@ -148,14 +149,14 @@ class MainWindow(QtGui.QMainWindow):
         
             widget = myWidget.getWideget()
     
-            pos = len(toolsList)-1
+            pos = len(toolsList) - 1
             title = "%s %d" % (tool.__toolname__, pos)
             self.addMyDockWidget( widget, title)
 
         tool._openDockWidget = createDockWidget
         toolsList.append(createDockWidget)
     
-        ''' tool to tools menu '''    
+        ''' tool to tools menu '''
         myAct = QtGui.QAction(tool.__toolname__, self,
                 statusTip=tool.__statusTip__, triggered=createDockWidget)
     
@@ -191,9 +192,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.statusBarProgressBarLabel = QtGui.QLabel("                      ")
         gridLayout = QtGui.QGridLayout()
-        gridLayout.setContentsMargins(0,0,0,0)
+        gridLayout.setContentsMargins(0, 0, 0, 0)
         gridLayout.addWidget(self.statusBarProgressBarLabel, 0, 0)
-        gridLayout.addWidget(self.statusBarProgressBar, 0, 1, 0,2 )
+        gridLayout.addWidget(self.statusBarProgressBar, 0, 1, 0, 2)
 
         GroupBox = QtGui.QGroupBox()
         GroupBox.setStyleSheet("border:0;margin:0;padding:0")
@@ -211,7 +212,7 @@ class MainWindow(QtGui.QMainWindow):
         dock.setWidget(widget)
 
 
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea , dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
     
         self.viewMenu.addAction(dock.toggleViewAction())
 
@@ -301,8 +302,10 @@ class MainWindow(QtGui.QMainWindow):
             if msg:
                 if isinstance(msg, gui.dbworker.statusMsg):
                     self.statusBarProgressBarLabel.setText(msg.msg)
-                    if msg.processCount: self.statusBarProgressBar.setRange(0, msg.processCount)
-                    if msg.processPos: self.statusBarProgressBar.setValue(msg.processPos)
+                    if msg.processCount:
+                        self.statusBarProgressBar.setRange(0, msg.processCount)
+                    if msg.processPos:
+                        self.statusBarProgressBar.setValue(msg.processPos)
 
                 else:
                     self.setStatusBar( msg )
@@ -316,7 +319,7 @@ class MainWindow(QtGui.QMainWindow):
         if status:
             self.updateDBtimer.start(__defaultUpdateTime__)
         else:
-            self.updateDBtimer.start(__defaultUpdateTime__*4)
+            self.updateDBtimer.start(__defaultUpdateTime__ * 4)
 
     def lockDB(self):
         self.dbworker.lockDB()
@@ -363,16 +366,16 @@ class MainWindow(QtGui.QMainWindow):
 
         self.mydb.setConfig( 'mainwindow.openWidgets', ",".join(openWidgetsList) )
         
-        if len(self.dealsFromToWidget) > 1: # save only from first windows
+        if len(self.dealsFromToWidget) > 1:  # save only from first windows
             self.dealsFromToWidget[1].saveOptions()
 
-        if len(self.multiHopRouteWidget) > 1: # save only from first windows
+        if len(self.multiHopRouteWidget) > 1:  # save only from first windows
             self.multiHopRouteWidget[1].saveOptions()
 
-        if len(self.powerControlFinderWidget) > 1: # save only from first windows
+        if len(self.powerControlFinderWidget) > 1:  # save only from first windows
             self.powerControlFinderWidget[1].saveOptions()
 
-        if len(self.commoditiesFinderWidget) > 1: # save only from first windows
+        if len(self.commoditiesFinderWidget) > 1:  # save only from first windows
             self.commoditiesFinderWidget[1].saveOptions()
 
 
@@ -438,7 +441,7 @@ class MainWindow(QtGui.QMainWindow):
                 if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
                     self.openUrl(url_update)
             else:
-                reply = QtGui.QMessageBox.information(self,
+                QtGui.QMessageBox.information(self,
                         "No new version available", "Congratulation, you are already using the latest version")
 
 

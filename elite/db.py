@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import elite.loader.maddavo
 import elite.loader.bpc
 import elite.loader.EDMarakedConnector
-import elite.loader.eddb 
+import elite.loader.eddb
 import elite.loader.raresimport
 import elite.loader.eddn
 
@@ -23,8 +23,9 @@ __forceupdateFile__ = "updatetrigger.txt"
 
 import sqlite3_functions
 
-__DBPATH__ = os.path.join("db","my.db")
+__DBPATH__ = os.path.join("db", "my.db")
 DBVERSION = 2
+
 
 class db(object):
 
@@ -35,7 +36,7 @@ class db(object):
     __itemIDCache = {}
     __streamUpdater = []
     loaderCount = __loaderCount__
-    sendProcessMsg=None
+    sendProcessMsg = None
     
     def __init__(self, guiMode=None, DBPATH=__DBPATH__):
 
@@ -49,37 +50,37 @@ class db(object):
             print("new db")
             new_db = True
 
-        self.con = sqlite3.connect(DBPATH, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, check_same_thread = False)
-        self.con.row_factory = sqlite3.Row    
+        self.con = sqlite3.connect(DBPATH, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, check_same_thread=False)
+        self.con.row_factory = sqlite3.Row
 
         sqlite3_functions.registerSQLiteFunktions(self.con)
 
         if new_db:
             self.initDB()
             self.importData()
-            self.getSystemPaths()        
+            self.getSystemPaths()
         else:
             pass
-            #self.initDB()
+            # self.initDB()
 
-        #self.fillCache()
+        # self.fillCache()
         self.con.execute("PRAGMA journal_mode = MEMORY")
         self.con.execute("PRAGMA recursive_triggers=True")
             
-        if self.getConfig( 'dbVersion' ) != DBVERSION:
+        if self.getConfig('dbVersion') != DBVERSION:
             ''' run on database update'''
             self.initDB()
-            self.getSystemPaths()        
+            self.getSystemPaths()
             self.setConfig('dbVersion', DBVERSION)
-        elif self.getConfig( 'initRun' ) == "1" or os.path.isfile( __forceupdateFile__ ):
+        elif self.getConfig('initRun') == "1" or os.path.isfile(__forceupdateFile__):
             ''' run on first start (install with build db or on update)'''
             print("init run")
             self.initDB()
-            self.getSystemPaths()        
+            self.getSystemPaths()
             self.setConfig('initRun', 0)
             ''' remove trigger file '''
-            if os.path.isfile( __forceupdateFile__ ):
-                os.remove( __forceupdateFile__ )
+            if os.path.isfile(__forceupdateFile__):
+                os.remove(__forceupdateFile__)
             
         if not self.guiMode:
             self.initDB()
@@ -100,13 +101,13 @@ class db(object):
         '''
         cur = self.cursor()
 
-        cur.execute( "select id, SystemID, Station from stations" )
+        cur.execute("select id, SystemID, Station from stations")
         result = cur.fetchall()
         for station in result:
-            key = "%d_%s" % (station["SystemID"],station["Station"]) 
+            key = "%d_%s" % (station["SystemID"], station["Station"])
             self.__stationIDCache[key] = station["id"]
 
-        cur.execute( "select id, System from systems" )
+        cur.execute("select id, System from systems")
         result = cur.fetchall()
         for system in result:
             self.__systemIDCache[system["System"] ] = system["id"]
@@ -117,10 +118,11 @@ class db(object):
         print("import data")
 
         elite.loader.raresimport.loader(self).importData('db/rares.csv')
+
     def startStreamUpdater(self):
         ''' Start this only from a gui or other running instances and not in single run scripts'''
 
-        self.__streamUpdater.append( elite.loader.eddn.newClient(self) ) 
+        self.__streamUpdater.append(elite.loader.eddn.newClient(self))
 
     def stopStreamUpdater(self):
         if self.__streamUpdater:
@@ -132,39 +134,49 @@ class db(object):
         update price date from all sources
         '''
         myPos = 0
-        if self._active != True: return
+        if self._active is not True:
+            return
 
         myPos += 1
-        if self.sendProcessMsg: self.sendProcessMsg("Update: EDDB", myPos, self.loaderCount)
+        if self.sendProcessMsg:
+            self.sendProcessMsg("Update: EDDB", myPos, self.loaderCount)
         elite.loader.eddb.updateAll(self)
-        if self._active != True: return
+        if self._active is not True:
+            return
 
         myPos += 1
-        if self.sendProcessMsg: self.sendProcessMsg("Update: EDMC", myPos, self.loaderCount)
+        if self.sendProcessMsg:
+            self.sendProcessMsg("Update: EDMC", myPos, self.loaderCount)
         elite.loader.EDMarakedConnector.loader(self).update()
-        if self._active != True: return
+        if self._active is not True:
+            return
 
         myPos += 1
-        if self.sendProcessMsg: self.sendProcessMsg("Update: Maddavo", myPos, self.loaderCount)
+        if self.sendProcessMsg:
+            self.sendProcessMsg("Update: Maddavo", myPos, self.loaderCount)
         elite.loader.maddavo.updateAll(self)
-        if self._active != True: return
+        if self._active is not True:
+            return
 
         myPos += 1
-        if self.sendProcessMsg: self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
+        if self.sendProcessMsg:
+            self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
         elite.loader.bpc.prices.loader(self).importData()
-        if self._active != True: return
+        if self._active is not True:
+            return
 
         myPos += 1
-        if self.sendProcessMsg: self.sendProcessMsg("Update: EDDN", myPos, self.loaderCount)
+        if self.sendProcessMsg:
+            self.sendProcessMsg("Update: EDDN", myPos, self.loaderCount)
         if self.__streamUpdater:
             for client in self.__streamUpdater:
                 client.update()
 
 
-        lastOptimize = self.getConfig( 'lastOptimizeDatabase' )
+        lastOptimize = self.getConfig('lastOptimizeDatabase')
         optimize = None
         if lastOptimize:
-            lastOptimize = datetime.strptime(lastOptimize , "%Y-%m-%d %H:%M:%S")
+            lastOptimize = datetime.strptime(lastOptimize, "%Y-%m-%d %H:%M:%S")
             if lastOptimize + timedelta(days=7) < datetime.now():
                 optimize = True
         else:
@@ -172,105 +184,107 @@ class db(object):
 
         if optimize:
             myPos += 1
-            if self.sendProcessMsg: self.sendProcessMsg("Optimize DB", myPos, self.loaderCount)
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Optimize DB", myPos, self.loaderCount)
             self.optimizeDatabase()
 
-        if myPos > self.loaderCount: self.loaderCount = myPos
+        if myPos > self.loaderCount:
+            self.loaderCount = myPos
 
     def initDB(self):
         print("create/update db")
         '''
         create tables
         '''
-        self.con.execute( "CREATE TABLE IF NOT EXISTS config(var TEXT,val)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS config_unique_var on config (var)" )
+        self.con.execute("CREATE TABLE IF NOT EXISTS config(var TEXT,val)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS config_unique_var on config (var)")
 
 
-        #systems
-        self.con.execute( "CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, government INT, allegiance INT, modified timestamp)" )
+        # systems
+        self.con.execute("CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, government INT, allegiance INT, modified timestamp)")
 
-        #stations
-        self.con.execute( "CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, government INT, allegiance INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS station_unique_system_Station on stations (SystemID, Station)" )
-
-
-        self.con.execute( "CREATE TABLE IF NOT EXISTS allegiances (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
-        self.con.execute( "CREATE TABLE IF NOT EXISTS governments (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+        # stations
+        self.con.execute("CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, government INT, allegiance INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS station_unique_system_Station on stations (SystemID, Station)")
 
 
-        #items
-        self.con.execute( "CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )" )
+        self.con.execute("CREATE TABLE IF NOT EXISTS allegiances (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS governments (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
+
+
+        # items
+        self.con.execute("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT COLLATE NOCASE UNIQUE, category TEXT COLLATE NOCASE, ui_sort TINYINT )")
 
         
-        #price
-        self.con.execute( "CREATE TABLE IF NOT EXISTS price (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS price_unique_System_Station_Item on price (SystemID,StationID,ItemID)" )
-        self.con.execute( "CREATE UNIQUE INDEX IF NOT EXISTS `price_index_StationID_ItemID` ON `price` (`StationID` ,`ItemID` )")
-        self.con.execute( "create index  IF NOT EXISTS price_modified on price (modified)" )
+        # price
+        self.con.execute("CREATE TABLE IF NOT EXISTS price (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, ItemID INT NOT NULL, StationSell INT NOT NULL DEFAULT 0, StationBuy INT NOT NULL DEFAULT 0, Dammand INT NOT NULL DEFAULT 0, Stock INT NOT NULL DEFAULT 0, modified timestamp, source INT NOT NULL)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS price_unique_System_Station_Item on price (SystemID,StationID,ItemID)")
+        self.con.execute("CREATE UNIQUE INDEX IF NOT EXISTS `price_index_StationID_ItemID` ON `price` (`StationID` ,`ItemID` )")
+        self.con.execute("create index  IF NOT EXISTS price_modified on price (modified)")
 
-        #fakePrice
-        self.con.execute( "CREATE TABLE IF NOT EXISTS fakePrice (priceID INTEGER PRIMARY KEY  )" )
+        # fakePrice
+        self.con.execute("CREATE TABLE IF NOT EXISTS fakePrice (priceID INTEGER PRIMARY KEY  )")
 
-        #blackmarketPrice
-        self.con.execute( "CREATE TABLE IF NOT EXISTS blackmarketPrice (priceID INTEGER PRIMARY KEY  )" )
+        # blackmarketPrice
+        self.con.execute("CREATE TABLE IF NOT EXISTS blackmarketPrice (priceID INTEGER PRIMARY KEY  )")
 
-        #default config
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "dbVersion", DBVERSION ) )
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EDMarkedConnector_cvsDir", r'c:\Users\mEDI\Documents\ED' ) )
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "EliteLogDir", r'C:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\Logs' ) )
-        self.con.execute( "insert or ignore into config(var,val) values (?,?)", ( "BPC_db_path", r'c:\Program Files (x86)\Slopeys ED BPC\ED4.db' ) )
+        # default config
+        self.con.execute("insert or ignore into config(var,val) values (?,?)", ("dbVersion", DBVERSION))
+        self.con.execute("insert or ignore into config(var,val) values (?,?)", ("EDMarkedConnector_cvsDir", r'c:\Users\mEDI\Documents\ED'))
+        self.con.execute("insert or ignore into config(var,val) values (?,?)", ("EliteLogDir", r'C:\Program Files (x86)\Steam\SteamApps\common\Elite Dangerous\Products\FORC-FDEV-D-1010\Logs'))
+        self.con.execute("insert or ignore into config(var,val) values (?,?)", ("BPC_db_path", r'c:\Program Files (x86)\Slopeys ED BPC\ED4.db'))
 
-        #rares
-        self.con.execute( "CREATE TABLE IF NOT EXISTS rares (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, Name TEXT, Price INT, MaxAvail INT, illegal BOOLEAN DEFAULT NULL, offline BOOLEAN DEFAULT NULL, modifydate timestamp, comment TEXT )" )
+        # rares
+        self.con.execute("CREATE TABLE IF NOT EXISTS rares (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT NOT NULL, StationID INT NOT NULL, Name TEXT, Price INT, MaxAvail INT, illegal BOOLEAN DEFAULT NULL, offline BOOLEAN DEFAULT NULL, modifydate timestamp, comment TEXT )")
 
-        #dealCache dynamic cache
-        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistances(dist FLOAT, priceAID INT, priceBID INT)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistances_unique_priceA_priceB on dealsInDistances (priceAID, priceBID)" )
+        # dealCache dynamic cache
+        self.con.execute("CREATE TABLE IF NOT EXISTS dealsInDistances(dist FLOAT, priceAID INT, priceBID INT)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS dealsInDistances_unique_priceA_priceB on dealsInDistances (priceAID, priceBID)")
 
-        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)" )
-        self.con.execute( "CREATE TABLE IF NOT EXISTS dealsInDistancesSystems_queue (systemID INTEGER PRIMARY KEY)" )
+        self.con.execute("CREATE TABLE IF NOT EXISTS dealsInDistancesSystems(systemID INT, dist FLOAT)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS dealsInDistancesSystems_unique_systemID on dealsInDistancesSystems (systemID)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS dealsInDistancesSystems_queue (systemID INTEGER PRIMARY KEY)")
 
-        #ships and shipyard
-        self.con.execute( "CREATE TABLE IF NOT EXISTS ships (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
-        self.con.execute( "CREATE TABLE IF NOT EXISTS shipyard (SystemID INT,StationID INT ,ShipID INT, Price INT, modifydate timestamp)" )
-        self.con.execute( "create UNIQUE index  IF NOT EXISTS shipyard_unique_systemID_StationID_ShipID on shipyard (systemID, StationID, ShipID)" )
+        # ships and shipyard
+        self.con.execute("CREATE TABLE IF NOT EXISTS ships (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS shipyard (SystemID INT,StationID INT ,ShipID INT, Price INT, modifydate timestamp)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS shipyard_unique_systemID_StationID_ShipID on shipyard (systemID, StationID, ShipID)")
 
-        #powers
-        self.con.execute( "CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)" )
+        # powers
+        self.con.execute("CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
 
-        #fly log
-        self.con.execute( "CREATE TABLE IF NOT EXISTS flylog (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT, optionalSystemName TEXT, Comment TEXT, DateTime timestamp)" )
+        # fly log
+        self.con.execute("CREATE TABLE IF NOT EXISTS flylog (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT, optionalSystemName TEXT, Comment TEXT, DateTime timestamp)")
 
         # trigger to controll the dynamic cache
-        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
+        self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
                             WHEN NEW.StationBuy != OLD.StationBuy OR NEW.StationSell != OLD.StationSell
                             BEGIN
                                 DELETE FROM dealsInDistances WHERE priceAID=OLD.id;
                                 DELETE FROM dealsInDistancesSystems WHERE systemID=OLD.SystemID;
-                            END; """ )
+                            END; """)
 
-        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_delete_price AFTER DELETE  ON  price
+        self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_delete_price AFTER DELETE  ON  price
                             BEGIN
                                 DELETE FROM dealsInDistances WHERE priceAID=OLD.id;
                                 DELETE FROM dealsInDistances WHERE priceBID=OLD.id;
                                 DELETE FROM dealsInDistancesSystems WHERE systemID=OLD.SystemID;
-                            END; """ )
+                            END; """)
 
-        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_insert_price AFTER INSERT  ON  price
+        self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_insert_price AFTER INSERT  ON  price
                             BEGIN
                                 DELETE FROM dealsInDistancesSystems WHERE systemID=NEW.SystemID;
-                            END; """ )
+                            END; """)
 
 
-        self.con.execute( """CREATE TRIGGER IF NOT EXISTS trigger_delete_dealsInDistancesSystems AFTER DELETE  ON  dealsInDistancesSystems
+        self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_delete_dealsInDistancesSystems AFTER DELETE  ON  dealsInDistancesSystems
                             BEGIN
                                 insert or ignore into dealsInDistancesSystems_queue (systemID) values(OLD.systemID);
-                            END; """ )
+                            END; """)
 
 
         ''' update db version'''
-        dbVersion  = self.getConfig( 'dbVersion' )
+        dbVersion = self.getConfig('dbVersion')
         if dbVersion:
             dbVersion = int(dbVersion)
         else:
@@ -278,14 +292,14 @@ class db(object):
         ''' 01 to 02 '''
         if dbVersion < 2:
             print("update database from %s to 2" % dbVersion)
-            self.con.execute( "ALTER TABLE systems ADD COLUMN government INT;" )
-            self.con.execute( "ALTER TABLE systems ADD COLUMN allegiance INT;" )
+            self.con.execute("ALTER TABLE systems ADD COLUMN government INT;")
+            self.con.execute("ALTER TABLE systems ADD COLUMN allegiance INT;")
     
-            self.con.execute( "ALTER TABLE stations ADD COLUMN government INT;" )
-            self.con.execute( "ALTER TABLE stations ADD COLUMN allegiance INT;" )
+            self.con.execute("ALTER TABLE stations ADD COLUMN government INT;")
+            self.con.execute("ALTER TABLE stations ADD COLUMN allegiance INT;")
     
-            self.con.execute( "vacuum systems;" )
-            self.con.execute( "vacuum stations;" )
+            self.con.execute("vacuum systems;")
+            self.con.execute("vacuum stations;")
 
         self.con.commit()
 
@@ -295,48 +309,48 @@ class db(object):
         '''
         cur = self.cursor()
 
-        cur.execute( "select * from sqlite_master where type = 'table' or type = 'index' order by type" )
+        cur.execute("select * from sqlite_master where type = 'table' or type = 'index' order by type")
         result = cur.fetchall()
 
         for table in result:
             print("vacuum %s" % table["name"])
-            self.con.execute( "vacuum '%s'" % table["name"]  )
+            self.con.execute("vacuum '%s'" % table["name"])
 
-        cur.execute( "select * from sqlite_master where type = 'table' order by rootpage" )
+        cur.execute("select * from sqlite_master where type = 'table' order by rootpage")
         result = cur.fetchall()
 
         for table in result:
             print("analyze %s" % table["name"])
-            cur.execute( "analyze '%s'" %  table["name"] )
+            cur.execute("analyze '%s'" % table["name"])
         self.con.commit()
         cur.close()
-        self.setConfig( 'lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
+        self.setConfig('lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         
-    def cursor( self ):
+    def cursor(self):
         cur = self.con.cursor()
-        #cur.execute("PRAGMA synchronous = OFF")
-        #cur.execute("PRAGMA journal_mode = MEMORY")
-        #cur.execute("PRAGMA journal_mode = OFF")
+        # cur.execute("PRAGMA synchronous = OFF")
+        # cur.execute("PRAGMA journal_mode = MEMORY")
+        # cur.execute("PRAGMA journal_mode = OFF")
         return cur
 
 
-    def setConfig( self, var, val ):
+    def setConfig(self, var, val):
 
         cur = self.cursor()
 
-        cur.execute( "insert or replace into config(var,val) values (?,?)", ( var, val ) )
+        cur.execute("insert or replace into config(var,val) values (?,?)", (var, val))
         self.con.commit()
         cur.close()
 
     def setFakePrice(self, id):
-        if isinstance( id, int):
-            self.con.execute( "insert or ignore into fakePrice (priceID) values(?);", ( id, ) )
+        if isinstance(id, int):
+            self.con.execute("insert or ignore into fakePrice (priceID) values(?);", (id,))
             self.con.commit()
 
         
-    def getConfig( self, var ):
+    def getConfig(self, var):
         cur = self.cursor()
-        cur.execute( "select val from config where var = ? limit 1", ( var, ) )
+        cur.execute("select val from config where var = ? limit 1", (var,))
         result = cur.fetchone()
         cur.close()
         if result:
@@ -344,7 +358,7 @@ class db(object):
         else:
             return False
 
-    def getSystemIDbyName(self,system):
+    def getSystemIDbyName(self, system):
 
         system = system.lower()
 
@@ -353,7 +367,7 @@ class db(object):
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from systems where LOWER(System) = ? limit 1", ( system, ) )
+        cur.execute("select id from systems where LOWER(System) = ? limit 1", (system,))
 
         result = cur.fetchone()
         cur.close()
@@ -365,15 +379,15 @@ class db(object):
         name = name.lower()
 
         cur = self.cursor()
-        cur.execute( "select id from ships where LOWER(Name)=? limit 1", ( name, ) )
+        cur.execute("select id from ships where LOWER(Name)=? limit 1", (name,))
         result = cur.fetchone()
         cur.close()
         if result:
             return result[0]
         
-    def getSystemname(self,SystemID):
+    def getSystemname(self, SystemID):
         cur = self.cursor()
-        cur.execute( "select System from systems where id = ? limit 1", ( SystemID, ) )
+        cur.execute("select System from systems where id = ? limit 1", (SystemID,))
 
         result = cur.fetchone()
         cur.close()
@@ -384,14 +398,14 @@ class db(object):
         if not systemID or not station:
             return
         station = station.lower()
-        key = "%d_%s" % (systemID,station) 
+        key = "%d_%s" % (systemID, station) 
 
-        result = self.__stationIDCache.get( key )
+        result = self.__stationIDCache.get(key)
         if result:
             return result
 
         cur = self.cursor()
-        cur.execute( "select id from stations where systemID = ? and LOWER(Station) = ? limit 1", (systemID, station, ) )
+        cur.execute("select id from stations where systemID = ? and LOWER(Station) = ? limit 1", (systemID, station,))
         result = cur.fetchone()
 
         cur.close()
@@ -399,10 +413,10 @@ class db(object):
             self.__stationIDCache[key] = result[0]
             return result[0]
 
-    def getStationname(self,stationID):
+    def getStationname(self, stationID):
 
         cur = self.cursor()
-        cur.execute( "select Station from stations where id = ? limit 1", (stationID, ) )
+        cur.execute("select Station from stations where id = ? limit 1", (stationID,))
         result = cur.fetchone()
         cur.close()
         if result:
@@ -422,22 +436,23 @@ class db(object):
         else:
             stationID = station
 
-        if not stationID: return
+        if not stationID:
+            return
         
         cur = self.cursor()
-        cur.execute( "select StarDist from stations where id = ? limit 1", ( stationID, ) )
+        cur.execute("select StarDist from stations where id = ? limit 1", (stationID,))
         result = cur.fetchone()
         cur.close()
         return result[0]
 
-    def getItemID(self,itemname):
+    def getItemID(self, itemname):
 
         result = self.__itemIDCache.get(itemname.lower())
         if result:
             return result
         
         cur = self.cursor()
-        cur.execute( "select id from items where LOWER(name) = ?  limit 1", (itemname.lower(), ) )
+        cur.execute("select id from items where LOWER(name) = ?  limit 1", (itemname.lower(),))
         result = cur.fetchone()
 
         cur.close()
@@ -449,7 +464,7 @@ class db(object):
 
         cur = self.cursor()
 
-        cur.execute( "select id ,name from items order by name" )
+        cur.execute("select id ,name from items order by name")
 
         result = cur.fetchall()
 
@@ -457,14 +472,14 @@ class db(object):
         if result:
             return result
 
-    def getSystemData(self,systemID):
+    def getSystemData(self, systemID):
         cur = self.cursor()
-        cur.execute( "select * from systems where id = ? limit 1", ( systemID, ) )
+        cur.execute("select * from systems where id = ? limit 1", (systemID,))
         result = cur.fetchone()
         cur.close()
         return result
 
-    def getStationsFromSystem(self,system):
+    def getStationsFromSystem(self, system):
 
         if isinstance(system, int):
             systemID = system
@@ -472,52 +487,53 @@ class db(object):
             systemID = self.getSystemIDbyName(system)
 
         cur = self.con.cursor()
-        cur.execute('SELECT id, Station FROM stations  where SystemID=? order by Station' , (systemID,))
+        cur.execute('SELECT id, Station FROM stations  where SystemID=? order by Station', (systemID,))
         rows = cur.fetchall()
         cur.close()
         stations = []
         for row in rows:
-            stations.append( [ row["id"], row["Station"] ] )
+            stations.append([ row["id"], row["Station"] ])
         return stations
         
-    def getStationData(self,stationID):
+    def getStationData(self, stationID):
         cur = self.cursor()
-        cur.execute( "select * from stations where id = ? limit 1", ( stationID, ) )
+        cur.execute("select * from stations where id = ? limit 1", (stationID,))
         result = cur.fetchone()
         cur.close()
         return result
 
 
-    def getItemPriceDataByID(self,systemID,stationID,itemID):
+    def getItemPriceDataByID(self, systemID, stationID, itemID):
         cur = self.cursor()
-        cur.execute( "select * from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", ( systemID,stationID,itemID, ) )
+        cur.execute("select * from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", (systemID, stationID, itemID,))
         result = cur.fetchone()
         cur.close()
         return result
 
-    def getItemPriceModifiedDate(self,systemID,stationID,itemID):
+    def getItemPriceModifiedDate(self, systemID, stationID, itemID):
         cur = self.cursor()
-        cur.execute( "select modified from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", ( systemID,stationID,itemID, ) )
+        cur.execute("select modified from price where SystemID = ? and StationID = ? AND ItemID = ? limit 1", (systemID, stationID, itemID,))
         result = cur.fetchone()
         cur.close()
-        if result: return result[0]
+        if result:
+            return result[0]
         return None
 
     def getSystemsInDistance(self, system, distance):
         # system is systemid or name
 
-        if isinstance(system,int):
+        if isinstance(system, int):
             systemID = system
         else:
             systemID = self.getSystemIDbyName(system)
 
         cur = self.cursor()
 
-        #get pos data from systemA
-        cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+        # get pos data from systemA
+        cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
         systemA = cur.fetchone()
 
-        cur.execute( "select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? order by dist", ( systemA["posX"],systemA["posY"],systemA["posZ"],distance, ) )
+        cur.execute("select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist, System  from systems where  dist <= ? order by dist", (systemA["posX"], systemA["posY"], systemA["posZ"], distance,))
         result = cur.fetchall()
 
         cur.close()
@@ -526,10 +542,10 @@ class db(object):
     def getDistanceFromTo(self, systemA, systemB):
         # system is systemid or name
 
-        if not isinstance(systemA,int):
+        if not isinstance(systemA, int):
             systemA = self.getSystemIDbyName(systemA)
 
-        if not isinstance(systemB,int):
+        if not isinstance(systemB, int):
             systemB = self.getSystemIDbyName(systemB)
 
         cur = self.cursor()
@@ -537,7 +553,7 @@ class db(object):
 
         cur.execute("""select calcDistance(a.posX, a.posY, a.posZ, b.posX, b.posY, b.posZ ) As dist FROM systems AS a
                     left JOIN systems AS b on b.id = ?
-                    where a.id = ? """  , ( systemA, systemB, )  )
+                    where a.id = ? """, (systemA, systemB,))
         
         result = cur.fetchone()
         cur.close()
@@ -549,19 +565,19 @@ class db(object):
     def getPricesInDistance(self, system, distance, maxStarDist, maxAgeDate, ItemID=None, onlyLpads=None, buyOrSell=None, allegiance=None, government=None):
         # system is systemid or name
 
-        if isinstance(system,int):
+        if isinstance(system, int):
             systemID = system
         else:
             systemID = self.getSystemIDbyName(system)
         cur = self.cursor()
 
-        if distance  == 0:
+        if distance == 0:
             distanceFromQuery = "FROM ( select * from systems where systems.id = '%s' ) as systems" % systemID
         else:
-            #get pos data from systemA
-            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            # get pos data from systemA
+            cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
             systemA = cur.fetchone()
-            distanceFromQuery = "FROM ( select calcDistance(%s, %s, %s, systems.posX, systems.posY, systems.posZ ) as dist, * from systems where dist <= %s ) as systems" % (systemA["posX"],systemA["posY"],systemA["posZ"], distance)
+            distanceFromQuery = "FROM ( select calcDistance(%s, %s, %s, systems.posX, systems.posY, systems.posZ ) as dist, * from systems where dist <= %s ) as systems" % (systemA["posX"], systemA["posY"], systemA["posZ"], distance)
             
         itemFilter = ""
         if ItemID:
@@ -584,9 +600,9 @@ class db(object):
 
         governmentFilter = ""
         if government:
-            governmentFilter =  "AND ( systems.government=%s OR stations.government=%s)" % (government, government)
+            governmentFilter = "AND ( systems.government=%s OR stations.government=%s)" % (government, government)
            
-        cur.execute("""select *, price.modified AS age 
+        cur.execute("""select *, price.modified AS age
                     %s
                     inner join price ON systems.id=price.SystemID
 
@@ -602,21 +618,21 @@ class db(object):
                         %s %s
                         AND price.modified >= ?
                         AND stations.StarDist <= ?
-                        """ % (distanceFromQuery, itemFilter, padsizeFilter, buyOrSellFilter, allegianceFilter, governmentFilter) , ( maxAgeDate, maxStarDist,  )  )
+                        """ % (distanceFromQuery, itemFilter, padsizeFilter, buyOrSellFilter, allegianceFilter, governmentFilter), (maxAgeDate, maxStarDist, ))
         
         result = cur.fetchall()
 
         cur.close()
         return result
 
-    def getDealsFromTo(self, fromStation,  toStation, maxAgeDate=datetime.utcnow()-timedelta(days=14), minStock=0 ):
+    def getDealsFromTo(self, fromStation, toStation, maxAgeDate=datetime.utcnow() - timedelta(days=14), minStock=0):
 
-        if isinstance(fromStation,int):
+        if isinstance(fromStation, int):
             fromStationID = fromStation
         else:
             return
 
-        if isinstance(toStation,int):
+        if isinstance(toStation, int):
             toStationID = toStation
         else:
             return
@@ -641,9 +657,9 @@ class db(object):
                     left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                     left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
-                    WHERE 
+                    WHERE
 
-                        priceA.StationID=? 
+                        priceA.StationID=?
                         AND priceA.StationSell > 0
                         AND priceA.Stock > ?
                         AND priceA.modified >= ?
@@ -659,7 +675,7 @@ class db(object):
         return result
 
 
-    def getDealsFromToSystem(self, fromStationID,  toSystemID, maxStarDist=999999999, maxAgeDate=datetime.utcnow()-timedelta(days=14), minStock=0 ):
+    def getDealsFromToSystem(self, fromStationID, toSystemID, maxStarDist=999999999, maxAgeDate=datetime.utcnow() - timedelta(days=14), minStock=0):
 
 
         cur = self.cursor()
@@ -682,9 +698,9 @@ class db(object):
                     left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                     left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
-                    WHERE 
+                    WHERE
 
-                        priceA.StationID=? 
+                        priceA.StationID=?
                         AND priceA.StationSell > 0
                         AND stationB.StarDist <= ?
                         AND priceA.Stock > ?
@@ -700,43 +716,45 @@ class db(object):
         return result
 
 
-    def calcDealsInDistancesCache(self, systemIDlist, maxAgeDate , minTradeProfit=1000,dist=51):
+    def calcDealsInDistancesCache(self, systemIDlist, maxAgeDate, minTradeProfit=1000, dist=51):
         print("calcDealsInDistancesCache", len(systemIDlist))
 
         cur = self.cursor()
 
         for myPos, system in enumerate(systemIDlist):
-            if self._active != True: return
+            if self._active is not True:
+                return
 
-            if self.sendProcessMsg: self.sendProcessMsg("rebuild cache", myPos+1, len(systemIDlist))
+            if self.sendProcessMsg:
+                self.sendProcessMsg("rebuild cache", myPos + 1, len(systemIDlist))
 
             systemID = system["id"]
 
-            cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems ( systemID, dist ) values (?, ? )", (systemID, dist )) 
+            cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems ( systemID, dist ) values (?, ? )", (systemID, dist))
 
-            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
             systemA = cur.fetchone()
     
-            cur.execute("""INSERT or IGNORE INTO dealsInDistances (dist,  priceAID,  priceBID ) 
+            cur.execute("""INSERT or IGNORE INTO dealsInDistances (dist,  priceAID,  priceBID )
 
-                            select dist, priceA.id AS priceAID, priceB.id AS priceBID 
-/*                            
+                            select dist, priceA.id AS priceAID, priceB.id AS priceBID
+/*
                             FROM price AS priceA
 
                             inner JOIN   (select priceB.id AS id , priceB.StationBuy, priceB.ItemID,  calcDistance(?, ?, ?, systemB.posX, systemB.posY, systemB.posZ ) AS dist
-                                            from systems AS systemB 
-                                            inner join price AS priceB ON priceB.SystemID=systemB.id 
-                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?) 
-                                AS priceB ON priceA.ItemID=priceB.ItemID 
+                                            from systems AS systemB
+                                            inner join price AS priceB ON priceB.SystemID=systemB.id
+                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?)
+                                AS priceB ON priceA.ItemID=priceB.ItemID
 
 */
                             FROM (select priceB.id AS id , priceB.StationBuy, priceB.ItemID,  calcDistance(?, ?, ?, systemB.posX, systemB.posY, systemB.posZ ) AS dist
-                                            from systems AS systemB 
-                                            inner join price AS priceB ON priceB.SystemID=systemB.id 
-                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?) 
-                                AS priceB  
+                                            from systems AS systemB
+                                            inner join price AS priceB ON priceB.SystemID=systemB.id
+                                            where priceB.StationBuy > 0 AND priceB.modified >= ? AND dist <= ?)
+                                AS priceB
 
-                            inner JOIN price AS priceA ON priceA.ItemID=priceB.ItemID       
+                            inner JOIN price AS priceA ON priceA.ItemID=priceB.ItemID
 
                             left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                             left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
@@ -744,14 +762,14 @@ class db(object):
                         where
                             priceA.SystemID = ?
                             AND priceA.modified >= ?
-                            AND priceA.StationSell > 0 
+                            AND priceA.StationSell > 0
 
-                            AND priceB.StationBuy > priceA.StationSell 
+                            AND priceB.StationBuy > priceA.StationSell
                             AND priceB.StationBuy - priceA.StationSell >= ?
 
                             AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
 
-                            """  , (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID,  maxAgeDate, minTradeProfit  )  )
+                            """, (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID, maxAgeDate, minTradeProfit))
 
             # delete system from queue
             cur.execute("DELETE FROM dealsInDistancesSystems_queue WHERE systemID=?", [systemID])
@@ -761,21 +779,21 @@ class db(object):
     def calcDealsInDistancesCacheQueue(self):
         cur = self.cursor()
 
-        cur.execute( "select systemID AS id  from dealsInDistancesSystems_queue")
+        cur.execute("select systemID AS id  from dealsInDistancesSystems_queue")
         systemList = cur.fetchall()
         if systemList:
-            maxAgeDate = datetime.utcnow() - timedelta(days=14) #TODO: save max age and use the max?
-            self.calcDealsInDistancesCache(systemList, maxAgeDate )
+            maxAgeDate = datetime.utcnow() - timedelta(days=14)  # TODO: save max age and use the max?
+            self.calcDealsInDistancesCache(systemList, maxAgeDate)
 
 
     def checkDealsInDistancesCache(self):
         cur = self.cursor()
 
-        cur.execute( """select * from dealsInDistances
+        cur.execute("""select * from dealsInDistances
                     left join price AS priceA ON priceA.id=dealsInDistances.priceAID
                     left join price AS priceB ON priceB.id=dealsInDistances.priceBID
                      where
-                       priceB.StationBuy < priceA.StationSell 
+                       priceB.StationBuy < priceA.StationSell
                        OR priceB.StationBuy IS NULL
                        OR priceA.StationSell IS NULL
                      """)
@@ -786,26 +804,26 @@ class db(object):
     def rebuildFullDistancesCache(self):
         cur = self.cursor()
 
-        cur.execute( """ DELETE FROM dealsInDistances""")
-        cur.execute( """ DELETE FROM dealsInDistancesSystems""")
+        cur.execute(""" DELETE FROM dealsInDistances""")
+        cur.execute(""" DELETE FROM dealsInDistancesSystems""")
         self.con.commit()
 
     def deleteDealsInDistancesSystems_queue(self):
         cur = self.cursor()
 
-        cur.execute( """ DELETE FROM dealsInDistancesSystems_queue""")
+        cur.execute(""" DELETE FROM dealsInDistancesSystems_queue""")
         self.con.commit()
 
-    def getBestDealsinDistance(self, system, distance,maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50, onlyLpads=None):
-        if isinstance(system,int):
+    def getBestDealsinDistance(self, system, distance, maxSearchRange, maxAgeDate, maxStarDist, minProfit, minStock, resultLimit=50, onlyLpads=None):
+        if isinstance(system, int):
             systemID = system
         else:
             systemID = self.getSystemIDbyName(system)
 
         cur = self.cursor()
 
-        #get pos data from systemA
-        cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+        # get pos data from systemA
+        cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
         systemA = cur.fetchone()
 
         padsizePart = ""
@@ -824,24 +842,24 @@ class db(object):
 
                     where
                         priceA.modified >= ?
-                        AND priceA.StationSell>0 
+                        AND priceA.StationSell>0
                         AND priceA.Stock>=?
                         AND systemA.permit != 1
                         AND stationA.StarDist <= ?
                         %s
                     group by systemA.id
                     
-                        """ % (padsizePart)   ,
-                         ( systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist)  ) 
+                        """ % (padsizePart),
+                         (systemA["posX"], systemA["posY"], systemA["posZ"], maxSearchRange, maxAgeDate, minStock, maxStarDist))
 
         # check the dealsIndistance cache
-        cur.execute( """select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
-                             from TEAMP_selectSystemA AS systems 
+        cur.execute("""select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
+                             from TEAMP_selectSystemA AS systems
                              
                              LEFT join dealsInDistancesSystems  ON systems.id=dealsInDistancesSystems.SystemID
                              where  distn<=? AND dealsInDistancesSystems.dist is NULL group by id
                              
-                             """, ( systemA["posX"], systemA["posY"], systemA["posZ"],  distance, ) )
+                             """, (systemA["posX"], systemA["posY"], systemA["posZ"], distance,))
         systemList = cur.fetchall()
         if systemList:
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
@@ -855,7 +873,7 @@ class db(object):
                         priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
                         systemA.System AS SystemA, priceA.id AS priceAid, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
                         systemB.System AS SystemB, priceB.id AS priceBid, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
-                        dist, systemA.startDist AS startDist, items.name AS itemName 
+                        dist, systemA.startDist AS startDist, items.name AS itemName
 
                         from TEAMP_selectSystemA AS systemA
 
@@ -876,16 +894,16 @@ class db(object):
 
                     where
                         priceA.modified >= ?
-                        AND priceA.StationSell>0 
+                        AND priceA.StationSell>0
                         AND priceA.Stock>=?
                         AND stationA.StarDist <= ?
 
                         AND priceB.modified >= ?
-                        AND priceB.StationBuy>0 
+                        AND priceB.StationBuy>0
                         AND systemB.permit != 1
                         AND stationB.StarDist <= ?
 
-                        AND  priceB.StationBuy > priceA.StationSell 
+                        AND  priceB.StationBuy > priceA.StationSell
                         AND priceB.StationBuy-priceA.StationSell >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
                         %s
@@ -894,7 +912,7 @@ class db(object):
 
                         limit ?
 
-                        """ % (padsizePart)   , ( distance, maxAgeDate, minStock, maxStarDist, maxAgeDate, maxStarDist, minProfit, resultLimit)  ) #  
+                        """ % (padsizePart), (distance, maxAgeDate, minStock, maxStarDist, maxAgeDate, maxStarDist, minProfit, resultLimit))
 
         result = cur.fetchall()
 
@@ -902,23 +920,23 @@ class db(object):
         return result
 
 
-    def getBestDealsFromStationInDistance(self,stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock, reslultLimit=20, onlyLpads=None):
+    def getBestDealsFromStationInDistance(self, stationID, distance, maxAgeDate, maxStarDist, minProfit, minStock, reslultLimit=20, onlyLpads=None):
 
         cur = self.cursor()
 
-        #get pos data from systemA
-        cur.execute( "select * from stations left join systems on systems.id=stations.SystemID  where stations.id = ?  limit 1", ( stationID, ) )
+        # get pos data from systemA
+        cur.execute("select * from stations left join systems on systems.id=stations.SystemID  where stations.id = ?  limit 1", (stationID,))
         stationA = cur.fetchone()
 
 
         # check the dealsIndistance cache
-        cur.execute( """select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
-                             from TEAMP_selectSystemA AS systems 
+        cur.execute("""select id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn, dealsInDistancesSystems.dist
+                             from TEAMP_selectSystemA AS systems
                              
                              LEFT join dealsInDistancesSystems  ON systems.id=dealsInDistancesSystems.SystemID
                              where  distn<=? AND dealsInDistancesSystems.dist is NULL group by id
                              
-                             """, ( stationA["posX"], stationA["posY"], stationA["posZ"],  distance, ) )
+                             """, (stationA["posX"], stationA["posY"], stationA["posZ"], distance,))
         systemList = cur.fetchall()
         if systemList:
             self.calcDealsInDistancesCache(systemList, maxAgeDate)
@@ -955,40 +973,40 @@ class db(object):
                         AND priceB.modified >= ?
                         AND systemB.permit != 1
                         
-                        AND priceA.StationSell>0 
+                        AND priceA.StationSell>0
                         AND stationB.StarDist <= ?
                         AND priceB.StationBuy > priceA.StationSell
-                        AND profit >= ? 
+                        AND profit >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
 
                         %s
                         
                         order by profit DESC
                         limit ?
-                        """ % (padsizePart) ,
-                        ( stationID, minStock,  distance, maxAgeDate, maxAgeDate, maxStarDist,minProfit, reslultLimit  )  )
+                        """ % (padsizePart),
+                        (stationID, minStock, distance, maxAgeDate, maxAgeDate, maxStarDist, minProfit, reslultLimit))
         
         result = cur.fetchall()
 
         cur.close()
         return result
 
-    def getPricesFrom(self,system, maxStarDist, maxAgeDate):
+    def getPricesFrom(self, system, maxStarDist, maxAgeDate):
         # system is name, systemID or systemID list (maximal 999 systems)
 
-        if isinstance(system,int):
+        if isinstance(system, int):
             systemIDs = [system]
             systemBseq = "?"
-        elif isinstance(system,list):
-            #print(len(system))
+        elif isinstance(system, list):
+            # print(len(system))
             systemIDs = system
-            systemBseq=','.join(['?']*len(systemIDs))
+            systemBseq = ','.join(['?'] * len(systemIDs))
         else:
             systemIDs = [self.getSystemIDbyName(system)]
             systemBseq = "?"
-        #print(systemBseq)
+        # print(systemBseq)
 
-        #print(systemAID, systemBID)
+        # print(systemAID, systemBID)
         cur = self.cursor()
 
         # add maxAgeDate to list end
@@ -1003,7 +1021,7 @@ class db(object):
                     where  price.systemID in (%s)
                     AND  price.modified >= ?
                     AND stations.StarDist <= ?
-                    """ % (systemBseq) , systemIDs  )
+                    """ % (systemBseq), systemIDs)
 
         result = cur.fetchall()
 
@@ -1049,15 +1067,15 @@ class db(object):
         cur.close()
         return result
 
-    def getShipyardWithShip(self,shipID,systemID=None):
+    def getShipyardWithShip(self, shipID, systemID=None):
 
         cur = self.cursor()
 
         if systemID:
-            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
             systemA = cur.fetchone()
         else:
-            systemA = {"posX":0.0, "posY":0.0, "posZ":0.0}
+            systemA = {"posX": 0.0, "posY": 0.0, "posZ": 0.0}
 
 
         cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
@@ -1066,9 +1084,9 @@ class db(object):
                     left JOIN systems on systems.id = shipyard.SystemID
                     left JOIN stations on stations.id = shipyard.StationID
                /*     left JOIN ships on ships.id = shipyard.ShipID */
-                where 
-                ShipID=? 
-                """ , (systemA["posX"],systemA["posY"],systemA["posZ"],shipID,))
+                where
+                ShipID=?
+                """, (systemA["posX"], systemA["posY"], systemA["posZ"], shipID, ))
         result = cur.fetchall()
 
         cur.close()
@@ -1077,18 +1095,18 @@ class db(object):
     def getSystemPaths(self):
         print("getSystemPaths")
         logPath = None
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             from PySide import QtCore
             InstallLocation = None
             ''' Elite Dangerous (steam install) path '''
-            #HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320\InstallLocation
-            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320",QtCore.QSettings.NativeFormat)
+            # HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320\InstallLocation
+            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 359320", QtCore.QSettings.NativeFormat)
             if settings:
                 InstallLocation = settings.value("InstallLocation")
 
 
             ''' Elite Dangerous (default install) path '''
-            #https://support.frontier.co.uk/kb/faq.php?id=108
+            # https://support.frontier.co.uk/kb/faq.php?id=108
             if not InstallLocation:
                 path = r'C:\Program Files (x86)\Frontier'
                 if os.path.isdir(path):
@@ -1096,30 +1114,30 @@ class db(object):
 
 
             if InstallLocation:
-                productsList = ['FORC-FDEV-D-1010','FORC-FDEV-D-1008','FORC-FDEV-D-1003','FORC-FDEV-D-1002','FORC-FDEV-D-1001','FORC-FDEV-D-1000']
+                productsList = ['FORC-FDEV-D-1010', 'FORC-FDEV-D-1008', 'FORC-FDEV-D-1003', 'FORC-FDEV-D-1002', 'FORC-FDEV-D-1001', 'FORC-FDEV-D-1000']
 
                 for path in productsList:
-                    mypath = os.path.join(InstallLocation,'Products', path, 'Logs')
-                    if os.path.isdir( mypath ):
+                    mypath = os.path.join(InstallLocation, 'Products', path, 'Logs')
+                    if os.path.isdir(mypath):
                         logPath = mypath
                         break
     
                 if os.path.isdir(logPath):
                     self.setConfig('EliteLogDir', logPath)
-                    #print("set %s" % logPath)
+                    # print("set %s" % logPath)
 
 
             ''' EDMarketConnector settings import '''
-            #HKEY_CURRENT_USER\Software\Marginal\EDMarketConnector\outdir
+            # HKEY_CURRENT_USER\Software\Marginal\EDMarketConnector\outdir
             settings = QtCore.QSettings("Marginal", "EDMarketConnector")
             outdir = settings.value("outdir")
             if outdir and os.path.isdir(outdir):
                 self.setConfig('EDMarkedConnector_cvsDir', outdir)
-                #print("set %s" % outdir)
+                # print("set %s" % outdir)
 
             ''' Slopeys ED BPC path import '''
-            #HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC\UninstallString
-            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC",QtCore.QSettings.NativeFormat)
+            # HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC\UninstallString
+            settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Slopeys ED BPC", QtCore.QSettings.NativeFormat)
             uninstallerPath = settings.value(r"UninstallString")
             if uninstallerPath:
                 path = uninstallerPath.split("\\")
@@ -1128,7 +1146,7 @@ class db(object):
                 path = "\\".join(path)
                 if os.path.isfile(path):
                     self.setConfig('BPC_db_path', path)
-                    #print("set %s" % path)
+                    # print("set %s" % path)
                     
     def close(self):
         self.con.close()
@@ -1137,7 +1155,7 @@ class db(object):
         power = power.lower()
 
         cur = self.cursor()
-        cur.execute( "select id from powers where LOWER(Name)=? limit 1", ( power, ) )
+        cur.execute("select id from powers where LOWER(Name)=? limit 1", (power,))
         result = cur.fetchone()
         cur.close()
         if result:
@@ -1157,16 +1175,16 @@ class db(object):
         cur = self.cursor()
 
         if systemID:
-            cur.execute( "select * from systems  where id = ?  limit 1", ( systemID, ) )
+            cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
             systemA = cur.fetchone()
         else:
-            systemA = {"posX":0.0, "posY":0.0, "posZ":0.0}
+            systemA = {"posX": 0.0, "posY": 0.0, "posZ": 0.0}
 
         cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
                      FROM systems
-                where 
-                power_control=? 
-                """ , (systemA["posX"], systemA["posY"], systemA["posZ"], powerID,))
+                where
+                power_control=?
+                """, (systemA["posX"], systemA["posY"], systemA["posZ"], powerID,))
         result = cur.fetchall()
 
         cur.close()
@@ -1177,13 +1195,13 @@ class db(object):
             return
 
         cur = self.cursor()
-        cur.execute( "select id from allegiances where LOWER(Name)=? limit 1", ( allegiance.lower(), ) )
+        cur.execute("select id from allegiances where LOWER(Name)=? limit 1", (allegiance.lower(),))
 
         result = cur.fetchone()
 
         if not result and addUnknown:
-            cur.execute( "insert or IGNORE into allegiances (Name) values (?) ", ( allegiance, ))
-            cur.execute( "select id from allegiances where Name=? limit 1", ( allegiance, ) )
+            cur.execute("insert or IGNORE into allegiances (Name) values (?) ", (allegiance,))
+            cur.execute("select id from allegiances where Name=? limit 1", (allegiance,))
 
             result = cur.fetchone()
 
@@ -1194,7 +1212,7 @@ class db(object):
     def getAllegiances(self):
 
         cur = self.cursor()
-        cur.execute( "select id, Name from allegiances " )
+        cur.execute("select id, Name from allegiances ")
 
         result = cur.fetchall()
 
@@ -1208,13 +1226,13 @@ class db(object):
             return
         
         cur = self.cursor()
-        cur.execute( "select id from governments where LOWER(Name)=? limit 1", ( government.lower(), ) )
+        cur.execute("select id from governments where LOWER(Name)=? limit 1", (government.lower(),))
 
         result = cur.fetchone()
 
         if not result and addUnknown:
-            cur.execute( "insert or IGNORE into governments (Name) values (?) ", ( government, ))
-            cur.execute( "select id from governments where Name=? limit 1", ( government, ) )
+            cur.execute("insert or IGNORE into governments (Name) values (?) ", (government,))
+            cur.execute("select id from governments where Name=? limit 1", (government,))
 
             result = cur.fetchone()
 
@@ -1226,7 +1244,7 @@ class db(object):
     def getGovernments(self):
 
         cur = self.cursor()
-        cur.execute( "select id, Name from governments " )
+        cur.execute("select id, Name from governments ")
 
         result = cur.fetchall()
 
@@ -1236,5 +1254,5 @@ class db(object):
 
 
 if __name__ == '__main__':
-    #mydb = db()
+    # mydb = db()
     pass
