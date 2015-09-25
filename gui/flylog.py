@@ -108,14 +108,18 @@ class flyLogger(object):
             systemID = self.mydb.getSystemIDbyName(location)
 
             if not systemID:
-                edsmCoords = self.edsm.getSystemCoords(location)
+
+                edsmCoords = None
+                if self.mydb.getConfig("plugin_edsm") is not 0:
+                    edsmCoords = self.edsm.getSystemCoords(location)
+                    
                 if edsmCoords:
                     print("update coord data from edsm for %s" % location)
                     cur.execute("insert or IGNORE into systems (System, posX, posY, posZ) values (?,?,?,?) ",
                                         (location, float(edsmCoords['x']), float(edsmCoords['y']), float(edsmCoords['z'])))
                     
                     systemID = self.mydb.getSystemIDbyName(location)
-                else:
+                elif self.mydb.getConfig("plugin_edsc") is not 0:
                     ''' ask edsc '''
                     edscSystem = self.edsc.getSystemCoords(location)
                     if edscSystem:
@@ -470,8 +474,12 @@ class tool(QtGui.QWidget):
 
             layout = QtGui.QVBoxLayout()
             layout.addWidget(label)
-            layout.addWidget(submitEDSMButton)
-            layout.addWidget(submitEDSCButton)
+
+            if self.mydb.getConfig("plugin_edsm") is not 0:
+                layout.addWidget(submitEDSMButton)
+
+            if self.mydb.getConfig("plugin_edsc") is not 0:
+                layout.addWidget(submitEDSCButton)
 
             page.setLayout(layout)
         

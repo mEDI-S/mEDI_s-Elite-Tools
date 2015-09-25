@@ -251,6 +251,9 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip="clearing the cache will slow down the search the first time, but the update speed",
                 triggered=self.deleteDistancesCache)
 
+        self.preferenceAct = QtGui.QAction("Preference", self,
+                triggered=self.openConfig)
+
        
     def createMenus(self):
         self.menuBar().clear()
@@ -266,6 +269,7 @@ class MainWindow(QtGui.QMainWindow):
         self.maintenanceMenu.addAction(self.rebuildFullCacheAct)
         self.maintenanceMenu.addAction(self.deleteDistancesCacheAct)
 
+        self.editMenu.addAction(self.preferenceAct)
 
         self.toolsMenu = self.menuBar().addMenu("Tools")
         self.toolsMenu.addSeparator()
@@ -478,6 +482,12 @@ class MainWindow(QtGui.QMainWindow):
             self.mydb.deleteDealsInDistancesSystems_queue()
             self.unlockDB()
 
+    def openConfig(self):
+        self.configWindows = gui.config.ConfigDialog(self)
+
+        self.lockDB()
+        self.configWindows.exec_()
+        self.unlockDB()
             
 if __name__ == '__main__':
 

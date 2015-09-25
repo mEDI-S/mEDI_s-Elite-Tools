@@ -13,16 +13,16 @@ class guitools(object):
     def __init__(self, parent):
         self.parent = parent
 
-    def getPixmapFromSvg(self, svgfile):
+    def getPixmapFromSvg(self, svgfile, w=48, h=48):
         svg_renderer = QtSvg.QSvgRenderer(svgfile)
-        image = QtGui.QImage(48, 48, QtGui.QImage.Format_ARGB32)
+        image = QtGui.QImage(w, h, QtGui.QImage.Format_ARGB32)
         image.fill(0x00000000)
         svg_renderer.render(QtGui.QPainter(image))
         pixmap = QtGui.QPixmap.fromImage(image)
         return pixmap
     
-    def getIconFromsvg(self, svgfile):
-        pixmap = self.getPixmapFromSvg(svgfile)
+    def getIconFromsvg(self, svgfile, w=48, h=48):
+        pixmap = self.getPixmapFromSvg(svgfile, w, h)
         icon = QtGui.QIcon(pixmap)
         return icon
 

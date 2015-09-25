@@ -122,13 +122,15 @@ class db(object):
     def startStreamUpdater(self):
         ''' Start this only from a gui or other running instances and not in single run scripts'''
 
-        self.__streamUpdater.append(elite.loader.eddn.newClient(self))
+        if self.getConfig("plugin_eddn") is not 0:
+            self.__streamUpdater.append(elite.loader.eddn.newClient(self))
 
     def stopStreamUpdater(self):
         if self.__streamUpdater:
             for client in self.__streamUpdater:
                 client.stop()
-        
+                self.__streamUpdater.remove(client)
+
     def updateData(self):
         '''
         update price date from all sources
@@ -137,40 +139,45 @@ class db(object):
         if self._active is not True:
             return
 
-        myPos += 1
-        if self.sendProcessMsg:
-            self.sendProcessMsg("Update: EDDB", myPos, self.loaderCount)
-        elite.loader.eddb.updateAll(self)
-        if self._active is not True:
-            return
+        if self.getConfig("plugin_eddb") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: EDDB", myPos, self.loaderCount)
+            elite.loader.eddb.updateAll(self)
+            if self._active is not True:
+                return
 
-        myPos += 1
-        if self.sendProcessMsg:
-            self.sendProcessMsg("Update: EDMC", myPos, self.loaderCount)
-        elite.loader.EDMarakedConnector.loader(self).update()
-        if self._active is not True:
-            return
+        if self.getConfig("plugin_edmc") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: EDMC", myPos, self.loaderCount)
+            elite.loader.EDMarakedConnector.loader(self).update()
+            if self._active is not True:
+                return
 
-        myPos += 1
-        if self.sendProcessMsg:
-            self.sendProcessMsg("Update: Maddavo", myPos, self.loaderCount)
-        elite.loader.maddavo.updateAll(self)
-        if self._active is not True:
-            return
+        if self.getConfig("plugin_mms") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: Maddavo", myPos, self.loaderCount)
+            elite.loader.maddavo.updateAll(self)
+            if self._active is not True:
+                return
 
-        myPos += 1
-        if self.sendProcessMsg:
-            self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
-        elite.loader.bpc.prices.loader(self).importData()
-        if self._active is not True:
-            return
+        if self.getConfig("plugin_bpc") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
+            elite.loader.bpc.prices.loader(self).importData()
+            if self._active is not True:
+                return
 
-        myPos += 1
-        if self.sendProcessMsg:
-            self.sendProcessMsg("Update: EDDN", myPos, self.loaderCount)
-        if self.__streamUpdater:
-            for client in self.__streamUpdater:
-                client.update()
+        if self.getConfig("plugin_eddn") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: EDDN", myPos, self.loaderCount)
+            if self.__streamUpdater:
+                for client in self.__streamUpdater:
+                    client.update()
 
 
         lastOptimize = self.getConfig('lastOptimizeDatabase')
@@ -188,7 +195,7 @@ class db(object):
                 self.sendProcessMsg("Optimize DB", myPos, self.loaderCount)
             self.optimizeDatabase()
 
-        if myPos > self.loaderCount:
+        if myPos is not self.loaderCount:
             self.loaderCount = myPos
 
     def initDB(self):
