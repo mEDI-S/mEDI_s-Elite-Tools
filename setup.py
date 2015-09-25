@@ -91,7 +91,7 @@ def update_version_py():
     __buildid__ = stdout.strip().decode("utf-8")
 
     ver = __buildid__.split("-")
-    if isInt(ver[1]):
+    if len(ver) > 1 and isInt(ver[1]):
         __version__ = "%s.%s" % (ver[0], ver[1])
     else:
         __version__ = "%s.%s" % (ver[0], 0)
