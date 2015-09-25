@@ -19,7 +19,7 @@ statusbarMsg = None
 processCount = 0
 processPos = 0
 processMsg = None
-
+loaderCount = None
 
 class statusMsg(object):
     processCount = 0
@@ -39,7 +39,7 @@ class _updateDBchild(threading.Thread):
     updatedb child job
     '''
     name = "updateDBchild"
-
+    
     def sendMsg(self, newmsg):
         global statusbarMsg
         mutex.lock()
@@ -59,7 +59,7 @@ class _updateDBchild(threading.Thread):
         mutex.unlock()
         
     def run(self):
-        global databaseLock
+        global databaseLock, loaderCount
         self._active = True
 
         mutex.lock()
@@ -76,12 +76,18 @@ class _updateDBchild(threading.Thread):
 
         self.mydb = elite.db(guiMode=True)
 
-        self.sendProcessMsg("Start Update", 0, self.mydb.loaderCount)
+        if not loaderCount:
+            loaderCount = self.mydb.loaderCount
+        else:
+            self.mydb.loaderCount = loaderCount
+ 
+        self.sendProcessMsg("Start Update", 0, loaderCount)
 
         self.mydb.sendProcessMsg = self.sendProcessMsg
 
         try:
             self.mydb.updateData()
+            loaderCount = self.mydb.loaderCount
         except:
             traceback.print_exc()
 
