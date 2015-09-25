@@ -132,13 +132,15 @@ class new(object):
         if self._updatedb:
             self.waitQuit()
 
+        if self.isLocked():
+            return
+
         self._updatedb = _updateDBchild()
         self._updatedb.daemon = True
         self._updatedb.setName("updateDBchildThread")
         self._updatedb.start()
 
     def updateDB(self):
-
 
         if self._updatedb and self._updatedb.is_alive():
             return
@@ -160,18 +162,32 @@ class new(object):
             while self._updatedb.is_alive():
                 self._updatedb.join(0.10)
 
+    def isLocked(self):
+        global databaseLock
+
+        mutex.lock()
+        lock = databaseLock
+        mutex.unlock()
+
+        if lock:
+            return True
+
     def lockDB(self):
+        global databaseLock
+
         mutex.lock()
         databaseLock = True
         mutex.unlock()
 
     def unlockDB(self):
+        global databaseLock
+
         mutex.lock()
+        databaseLock = None
+        mutex.unlock()
 
         databaseAccessWait.wakeOne()
-        databaseLock = None
 
-        mutex.unlock()
 
     def getStatusbarMsg(self):
         global statusbarMsg, processMsg, processPos, processCount
