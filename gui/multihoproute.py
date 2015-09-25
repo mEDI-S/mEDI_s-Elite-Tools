@@ -615,6 +615,7 @@ class tool(QtGui.QWidget):
                 menu.addAction(self.addRouteHopAsFromSystemInDealsFromToFinderAct)
                 menu.addAction(self.addRouteHopAsTargetSystemInDealsFromToFinderAct)
             menu.addAction(self.markFakeItemAct)
+            menu.addAction(self.markIgnorePriceTempAct)
 
         elif isinstance(indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
@@ -861,6 +862,9 @@ class tool(QtGui.QWidget):
         self.markFakeItemAct = QtGui.QAction("Set Item as Fake", self,
                 statusTip="Set not existing items as Fake and filter it on next search", triggered=self.markFakeItem)
 
+        self.markIgnorePriceTempAct = QtGui.QAction("Ignore Item temporarily", self,
+                statusTip="ignored items are hidden until application restart", triggered=self.markIgnorePriceTemp)
+
         self.clipbordRouteHelperAct = QtGui.QAction("Start clipboard Route Helper", self, checkable=True,
                 statusTip="Start a helper job to set automatly the next routehop to clipboard", triggered=self.clipbordRouteHelper)
 
@@ -963,6 +967,25 @@ class tool(QtGui.QWidget):
                 print("set %s as fakeprice" % priceID)
                 self.main.lockDB()
                 self.mydb.setFakePrice(priceID)
+                self.main.unlockDB()
+
+    def markIgnorePriceTemp(self):
+
+        route, hopID = self.getSelectedRouteHopID()
+        priceID = self.route.getPriceID(route, hopID)
+        if priceID:
+
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Warning,
+                    "Warning", "Warning: ignored items are hidden until application restart",
+                    QtGui.QMessageBox.NoButton, self)
+
+            msgBox.addButton("Ignore Item", QtGui.QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+            if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+                print("set %s as IgnorePriceTemp" % priceID)
+                self.main.lockDB()
+                self.mydb.setIgnorePriceTemp(priceID)
                 self.main.unlockDB()
 
     def getSelectedRouteHopID(self):

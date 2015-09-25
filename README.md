@@ -8,6 +8,7 @@ Tools for Elite:Dangerous
 * Live data update and import from many sources
 * Fast search
 * Fake Item Filter for not existig items (Pirate data entrys)
+* Ignore Item temporarily (ignored items are hidden until application restart) `over route contextmenü`
 * Multi Hop Route Finder
  * Clippord Helper (push next navi point to clipbord) `start over route contextmenü`
  * Current location and active route colored 

@@ -85,7 +85,8 @@ class db(object):
         if not self.guiMode:
             self.initDB()
             self.updateData()
-    
+
+        self.cleanIgnorePriceTemp()
 
     def cleanCache(self):
         '''
@@ -231,6 +232,7 @@ class db(object):
 
         # fakePrice
         self.con.execute("CREATE TABLE IF NOT EXISTS fakePrice (priceID INTEGER PRIMARY KEY  )")
+        self.con.execute("CREATE TABLE IF NOT EXISTS ignorePriceTemp (priceID INTEGER PRIMARY KEY  )")
 
         # blackmarketPrice
         self.con.execute("CREATE TABLE IF NOT EXISTS blackmarketPrice (priceID INTEGER PRIMARY KEY  )")
@@ -353,6 +355,15 @@ class db(object):
         if isinstance(id, int):
             self.con.execute("insert or ignore into fakePrice (priceID) values(?);", (id,))
             self.con.commit()
+
+    def setIgnorePriceTemp(self, id):
+        if isinstance(id, int):
+            self.con.execute("insert or ignore into ignorePriceTemp (priceID) values(?);", (id,))
+            self.con.commit()
+
+    def cleanIgnorePriceTemp(self):
+        self.con.execute("DELETE FROM ignorePriceTemp")
+        self.con.commit()
 
         
     def getConfig(self, var):
@@ -617,9 +628,11 @@ class db(object):
                     left JOIN stations on stations.id = price.StationID
 
                     left JOIN fakePrice AS fakePriceA ON price.id=fakePriceA.priceID
+                    left JOIN ignorePriceTemp ON price.id=ignorePriceTemp.priceID
 
                     where
                         fakePriceA.priceID IS NULL
+                        AND ignorePriceTemp.priceID IS NULL
                         %s
                         %s %s
                         %s %s
@@ -664,6 +677,9 @@ class db(object):
                     left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                     left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
+                    left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
+                    left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+
                     WHERE
 
                         priceA.StationID=?
@@ -672,6 +688,7 @@ class db(object):
                         AND priceA.modified >= ?
                         AND priceB.modified >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                        AND ignorePriceTempA.priceID IS NULL and ignorePriceTempB.priceID IS NULL
                     order by profit DESC
                     ''', (toStationID, fromStationID, minStock, maxAgeDate, maxAgeDate))
         
@@ -705,6 +722,9 @@ class db(object):
                     left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                     left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
+                    left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
+                    left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+
                     WHERE
 
                         priceA.StationID=?
@@ -714,6 +734,7 @@ class db(object):
                         AND priceA.modified >= ?
                         AND priceB.modified >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                        AND ignorePriceTempA.priceID IS NULL and ignorePriceTempB.priceID IS NULL
                     order by profit DESC
                     ''', (toSystemID, fromStationID, maxStarDist, minStock, maxAgeDate, maxAgeDate))
         
@@ -766,6 +787,9 @@ class db(object):
                             left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                             left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
+                            left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
+                            left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+
                         where
                             priceA.SystemID = ?
                             AND priceA.modified >= ?
@@ -775,6 +799,7 @@ class db(object):
                             AND priceB.StationBuy - priceA.StationSell >= ?
 
                             AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                            AND ignorePriceTempA.priceID IS NULL and ignorePriceTempB.priceID IS NULL
 
                             """, (systemA["posX"], systemA["posY"], systemA["posZ"], maxAgeDate, dist, systemID, maxAgeDate, minTradeProfit))
 
@@ -899,6 +924,9 @@ class db(object):
                         left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                         left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
+                        left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
+                        left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+
                     where
                         priceA.modified >= ?
                         AND priceA.StationSell>0
@@ -913,6 +941,7 @@ class db(object):
                         AND  priceB.StationBuy > priceA.StationSell
                         AND priceB.StationBuy-priceA.StationSell >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                        AND ignorePriceTempA.priceID IS NULL and ignorePriceTempB.priceID IS NULL
                         %s
 
                     order by profit DESC
@@ -972,6 +1001,9 @@ class db(object):
                         left JOIN fakePrice AS fakePriceA ON priceA.id=fakePriceA.priceID
                         left JOIN fakePrice AS fakePriceB ON priceB.id=fakePriceB.priceID
 
+                        left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
+                        left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+
                     where
                         priceA.StationID=?
                         AND priceA.Stock>=?
@@ -985,6 +1017,7 @@ class db(object):
                         AND priceB.StationBuy > priceA.StationSell
                         AND profit >= ?
                         AND fakePriceA.priceID IS NULL and fakePriceB.priceID IS NULL
+                        AND ignorePriceTempA.priceID IS NULL and ignorePriceTempB.priceID IS NULL
 
                         %s
                         
