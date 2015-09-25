@@ -10,6 +10,7 @@ from datetime import datetime
 import sys
 from PySide import QtCore
 import threading
+import traceback
 
 databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
@@ -82,8 +83,8 @@ class _updateDBchild(threading.Thread):
         try:
             self.mydb.updateData()
         except:
-            e = sys.exc_info()
-            print("except", e)
+            traceback.print_exc()
+
             self.close()
             return
 
