@@ -65,14 +65,15 @@ class loader(object):
 
         cur.execute( "select id, System from systems" )
         result = cur.fetchall()
-        systemIDCache_DB= {}
+        systemIDCache_DB = {}
         for system in result:
             systemIDCache_DB[system["System"].lower()] = system["id"]
-        result= None
+        result = None
 
-        systemJosmIDtoDBIDCache= {} # build josmID to dbID
+        systemJosmIDtoDBIDCache = {}  # build josmID to dbID
         for system in stationJosnData:
-            systemJosmIDtoDBIDCache[system["id"]] = systemIDCache_DB[ system["name"].lower() ]
+            if system["name"].lower() in systemIDCache_DB:
+                systemJosmIDtoDBIDCache[system["id"]] = systemIDCache_DB[ system["name"].lower() ]
 
 
         #build itemIDCach translator cache 
@@ -130,7 +131,12 @@ class loader(object):
             modified = datetime.fromtimestamp(station["updated_at"]) - utcOffeset
             #print(station["name"])
 
-            systemID = systemJosmIDtoDBIDCache[station["system_id"]]
+            if station["system_id"] in systemJosmIDtoDBIDCache:
+                systemID = systemJosmIDtoDBIDCache[station["system_id"]]
+            else:
+                print("bug in eddb 1:system_id %s" % station["system_id"])
+                continue  # this dadaset is buged, drop it
+            
             stationCacheKey = "%s_%s" % (systemID, station["name"].lower() )
 
             allegianceID = self.mydb.getAllegianceID(station["allegiance"], True )

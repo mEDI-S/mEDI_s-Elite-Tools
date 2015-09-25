@@ -85,7 +85,7 @@ class loader(object):
                 cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, government, allegiance, modified) values (?,?,?,?,?,?,?,?,?) ",
                                         (system["name"] , float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified))
 
-            elif system["name"].lower() in systemCache and systemCache[ system["name"].lower() ][1] < modified:
+            elif system["name"].lower() in systemCache and (not systemCache[ system["name"].lower() ][1] or systemCache[ system["name"].lower() ][1] < modified):
                 updateCount += 1
                 updateSystem.append([system["name"], float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ]) 
 
