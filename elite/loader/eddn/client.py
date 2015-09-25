@@ -159,7 +159,6 @@ class loader(object):
             self.start()
 
     def importCommodity2Data(self, timestamp):
-
         systemID = self.mydb.getSystemIDbyName(self.jsonData["message"]["systemName"])
         stationID = self.mydb.getStationID(systemID, self.jsonData["message"]["stationName"])
         if not stationID:
@@ -179,6 +178,8 @@ class loader(object):
             cur.executemany(" UPDATE price SET StationBuy=?, StationSell=?, Dammand=?, Stock=?, modified=?, source=5 where StationID=? AND ItemID=? AND modified<?", updateItems)
             if cur.rowcount:
                 print("update in %s:%s %s items " % (self.jsonData["message"]["systemName"], self.jsonData["message"]["stationName"], cur.rowcount))
+
+            self.mydb.con.commit()
     
     def importShipyard1Data(self, timestamp):
         systemID = self.mydb.getSystemIDbyName(self.jsonData["message"]["systemName"])
@@ -210,6 +211,7 @@ class loader(object):
         gatewayTime = convertStrptimeToDatetimeUTC(self.jsonData["header"]["gatewayTimestamp"])
 
         if not timestamp or not gatewayTime:
+            print("times wrong?", timestamp, gatewayTime)
             return
         
         ''' drop data with wrong datetime time or older or newer as 10 min'''
@@ -221,11 +223,12 @@ class loader(object):
         if gatewayTime < timestamp:  # Sender computer is in the future
             timestamp = gatewayTime
             
-        if self.jsonData['$schemaRef'] is 'http://schemas.elite-markets.net/eddn/commodity/2':
+        if self.jsonData['$schemaRef'] == 'http://schemas.elite-markets.net/eddn/commodity/2':
             self.importCommodity2Data(timestamp)
-        elif self.jsonData['$schemaRef'] is 'http://schemas.elite-markets.net/eddn/shipyard/1':
+        elif self.jsonData['$schemaRef'] == 'http://schemas.elite-markets.net/eddn/shipyard/1':
             self.importShipyard1Data(timestamp)
-
+        else:
+            print("unkonwn schema %s" % self.jsonData['$schemaRef'] )
 
         self.mydb.con.commit()
 
