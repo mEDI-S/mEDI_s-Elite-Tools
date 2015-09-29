@@ -12,7 +12,6 @@ from PySide import QtCore
 import threading
 import traceback
 
-databaseAccessWait = QtCore.QWaitCondition()
 databaseLock = None
 mutex = QtCore.QMutex()
 statusbarMsg = None
@@ -20,6 +19,7 @@ processCount = 0
 processPos = 0
 processMsg = None
 loaderCount = None
+
 
 class statusMsg(object):
     processCount = 0
@@ -98,7 +98,13 @@ class _updateDBchild(threading.Thread):
             self.close()
             return
 
-        self.mydb.calcDealsInDistancesCacheQueue()
+        try:
+            self.mydb.calcDealsInDistancesCacheQueue()
+        except:
+            traceback.print_exc()
+
+            self.close()
+            return
 
         if self._active is not True:
             self.close()
@@ -113,9 +119,11 @@ class _updateDBchild(threading.Thread):
     def close(self):
         global databaseLock
         self.mydb.close()
-        mutex.lock()
-        databaseLock = None
-        mutex.unlock()
+
+        if self._active:
+            mutex.lock()
+            databaseLock = None
+            mutex.unlock()
 
 
     def stop(self):
@@ -178,6 +186,7 @@ class new(object):
         if lock:
             return True
 
+
     def lockDB(self):
         global databaseLock
 
@@ -191,8 +200,6 @@ class new(object):
         mutex.lock()
         databaseLock = None
         mutex.unlock()
-
-        databaseAccessWait.wakeOne()
 
 
     def getStatusbarMsg(self):
