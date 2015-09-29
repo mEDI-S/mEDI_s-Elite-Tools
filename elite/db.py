@@ -86,7 +86,6 @@ class db(object):
             self.initDB()
             self.updateData()
 
-        self.cleanIgnorePriceTemp()
 
     def cleanCache(self):
         '''

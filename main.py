@@ -85,6 +85,7 @@ class MainWindow(QtGui.QMainWindow):
         self.clipboard = QtGui.QClipboard()
 
         self.mydb = elite.db(guiMode=True)
+        self.mydb.cleanIgnorePriceTemp()
         self.mydb.startStreamUpdater()
 
         self.dbworker = gui.dbworker.new(self)
