@@ -37,7 +37,7 @@ except ImportError:
     import urllib.request as urllib2
     from urllib.parse import urlencode
 
-__APIUrl__ = "https://43h3di62h7.execute-api.eu-west-1.amazonaws.com/beta/commodities"
+__APIUrl__ = "https://43h3di62h7.execute-api.eu-west-1.amazonaws.com/beta"
 
 
 def epochMicroseconds2datetime(epoch):
@@ -74,23 +74,25 @@ class loader(object):
         if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
             print("update EDDN on DynamoDB")
 
-            apiurl = "%s/%s" % (__APIUrl__, lastUpdateTime.strftime("%Y-%m-%d") )
             epochFrom = datetime2epochMicroseconds( lastUpdateTime )
             lastGatewayTime = None
-            
+
+            '''
+            commoditie data
+            '''
             activeDonwload = True
             while activeDonwload:
 #                activeDonwload = False
                 getRequest = {"from": epochFrom, }
     
                 correntUpdateTime = datetime.utcnow() + timedelta(hours=2)
+                
+                apiurl = "%s/commodities/%s" % (__APIUrl__, epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d") )
 
                 josnData = self.sendAPIRequest(apiurl, getRequest)
     
                 if josnData:
                     if 'Count' in josnData and int(josnData['Count']) > 0:
-#                        print(josnData['Count'])
-
                         for item in josnData['Items']:
                             self.EDDNimport.importData(item)
                             lastGTime = self.EDDNimport.convertStrptimeToDatetimeUTC(item["header"]["gatewayTimestamp"])
@@ -98,34 +100,52 @@ class loader(object):
                             if not lastGatewayTime or lastGatewayTime < lastGTime:
                                 lastGatewayTime = lastGTime
                     else:
-#                        print("no Count")
                         activeDonwload = False
-
 
                     if 'LastEvaluatedTimestamp' in josnData:
                         epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
                     else:
-#                        print("no LastEvaluatedTimestamp")
                         activeDonwload = False
 
                 else:
-                    print("no josnData")
-                    print(josnData)
+                    activeDonwload = False
+
+            '''
+            save last update time
+            '''
+            if correntUpdateTime:
+                self.mydb.setConfig('last_EDDN_DynamoDB_Update', correntUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
+
+            '''
+            shipyard data
+            '''
+            epochFrom = datetime2epochMicroseconds( lastUpdateTime )
+
+            activeDonwload = True
+            while activeDonwload:
+#                activeDonwload = False
+                getRequest = {"from": epochFrom, }
+                
+                apiurl = "%s/shipyards/%s" % (__APIUrl__, epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d") )
+
+                josnData = self.sendAPIRequest(apiurl, getRequest)
+    
+                if josnData:
+                    if 'Count' in josnData and int(josnData['Count']) > 0:
+                        for item in josnData['Items']:
+                            self.EDDNimport.importData(item)
+                    else:
+                        activeDonwload = False
+
+                    if 'LastEvaluatedTimestamp' in josnData:
+                        epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
+                    else:
+                        activeDonwload = False
+                else:
                     activeDonwload = False
 
 
-            if correntUpdateTime:
-                self.mydb.setConfig('last_EDDN_DynamoDB_Update', correntUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
-            
-#            elif epochFrom:
-#                self.mydb.setConfig('last_EDDN_DynamoDB_Update', epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d %H:%M:%S") )
-
             self.mydb.con.commit()
-#            if lastGatewayTime:
-#                lastGatewayTimeEpoch = datetime2epochMicroseconds(lastGatewayTime)
-#                print(lastGatewayTimeEpoch, lastGatewayTime.isoformat())
-#            print(epochFrom, epochMicroseconds2datetime(epochFrom).isoformat() )
-#            print(datetime2epochMicroseconds(correntUpdateTime), correntUpdateTime.isoformat() )
 
     def sendAPIRequest(self, apiurl, getRequest=None, postRequest=None):
 
