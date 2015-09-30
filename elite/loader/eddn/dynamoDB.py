@@ -47,7 +47,7 @@ def epochMicroseconds2datetime(epoch):
 
 def datetime2epochMicroseconds(dt):
     if dt:
-        return int( dt.replace(tzinfo=None).timestamp() * 1000000 )
+        return int( dt.timestamp() * 1000000 )
 
 
 class loader(object):
@@ -66,9 +66,9 @@ class loader(object):
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
         else:
-            lastUpdateTime = datetime.utcnow().replace(hour=0, minute=0, second=0)
+            lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
 
-        correntUpdateTime = datetime.utcnow() + timedelta(hours=2)
+        correntUpdateTime = datetime.now()
 
 
         if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
@@ -85,7 +85,7 @@ class loader(object):
 #                activeDonwload = False
                 getRequest = {"from": epochFrom, }
     
-                correntUpdateTime = datetime.utcnow() + timedelta(hours=2)
+                correntUpdateTime = datetime.now()
                 
                 apiurl = "%s/commodities/%s" % (__APIUrl__, epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d") )
 
@@ -108,6 +108,8 @@ class loader(object):
                         activeDonwload = False
 
                 else:
+                    if epochFrom:
+                        correntUpdateTime = epochMicroseconds2datetime(epochFrom)
                     activeDonwload = False
 
             '''
@@ -123,7 +125,6 @@ class loader(object):
 
             activeDonwload = True
             while activeDonwload:
-#                activeDonwload = False
                 getRequest = {"from": epochFrom, }
                 
                 apiurl = "%s/shipyards/%s" % (__APIUrl__, epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d") )
