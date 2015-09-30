@@ -98,8 +98,7 @@ class flyLogger(object):
         location = self.main.location.getLocation()
 
         if not location:
-            print("disable flyLog, no location avalibel!")
-            self.flyLogTimer.stop()
+            print("no location avalibel!")
             return
         
         if self.lastPos != location:
