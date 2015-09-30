@@ -120,6 +120,10 @@ class ConfigurationPage_Source(QtGui.QWidget):
         if self.mydb.getConfig("plugin_eddn") is not 0:
             self.eddnOptions.setChecked(True)
 
+        self.eddndynamoDBOptions = QtGui.QCheckBox("EDDN on DynamoDB")
+        if self.mydb.getConfig("plugin_eddndynamoDB") is not 0:
+            self.eddndynamoDBOptions.setChecked(True)
+
         self.eddbOptions = QtGui.QCheckBox("EDDB - Elite:Dangerous Database")
         if self.mydb.getConfig("plugin_eddb") is not 0:
             self.eddbOptions.setChecked(True)
@@ -148,6 +152,7 @@ class ConfigurationPage_Source(QtGui.QWidget):
 
         tradingLayout = QtGui.QVBoxLayout()
         tradingLayout.addWidget(self.eddnOptions)
+        tradingLayout.addWidget(self.eddndynamoDBOptions)
         tradingLayout.addWidget(self.eddbOptions)
         tradingLayout.addWidget(self.mmsOptions)
         tradingLayout.addWidget(self.edmcOptions)
@@ -181,6 +186,7 @@ class ConfigurationPage_Source(QtGui.QWidget):
             restartStreamer = True
             
         self.mydb.setConfig('plugin_eddn', self.eddnOptions.isChecked())
+        self.mydb.setConfig('plugin_eddndynamoDB', self.eddndynamoDBOptions.isChecked())
         self.mydb.setConfig('plugin_eddb', self.eddbOptions.isChecked())
         self.mydb.setConfig('plugin_mms', self.mmsOptions.isChecked())
         self.mydb.setConfig('plugin_edmc', self.edmcOptions.isChecked())

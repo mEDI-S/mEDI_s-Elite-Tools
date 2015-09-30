@@ -18,7 +18,7 @@ import elite.loader.eddb
 import elite.loader.raresimport
 import elite.loader.eddn
 
-__loaderCount__ = 5
+__loaderCount__ = 6
 __forceupdateFile__ = "updatetrigger.txt"
 
 import sqlite3_functions
@@ -171,6 +171,7 @@ class db(object):
             if self._active is not True:
                 return
 
+
         if self.getConfig("plugin_eddn") is not 0:
             myPos += 1
             if self.sendProcessMsg:
@@ -178,6 +179,14 @@ class db(object):
             if self.__streamUpdater:
                 for client in self.__streamUpdater:
                     client.update()
+
+        if self.getConfig("plugin_eddndynamoDB") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: EDDN dynamoDB", myPos, self.loaderCount)
+            elite.loader.eddn.dynamoDB.loader(self).update()
+            if self._active is not True:
+                return
 
 
         lastOptimize = self.getConfig('lastOptimizeDatabase')

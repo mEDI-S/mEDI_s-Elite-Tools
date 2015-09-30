@@ -30,6 +30,7 @@ Tools for Elite:Dangerous
 * [Slopey's BPC Market Tool `local installation`](https://forums.frontier.co.uk/showthread.php?t=76081)
 * [EDSM - Elite Dangerous Star Map](http://www.edsm.net)
 * [EDSC - EDStarCoordinator](http://edstarcoordinator.com)
+* [EDDN on DynamoDB](http://edcodex.info/?m=tools&entry=133)
 
 ## Screenshot's ##
 ![Deals And Mult Route screenshot](screenshots/dealsAndMultRoute.jpg)
