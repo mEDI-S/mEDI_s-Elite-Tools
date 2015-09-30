@@ -134,7 +134,7 @@ class loader(object):
                 data = self.data.get()
                 if data:
                     data = data.decode(encoding='utf-8', errors='replace')
-                    print("import", data)
+                    #print("import", data)
                     self.EDDNimport.importData(data)
 
             self.mydb.con.commit()
