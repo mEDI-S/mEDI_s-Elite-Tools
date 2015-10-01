@@ -21,7 +21,6 @@ import time
 import random
 import threading
 import queue
-import elite
 from elite.loader.eddn.EDDNimport import EDDNimport
 
 

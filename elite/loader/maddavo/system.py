@@ -8,7 +8,8 @@ import or update db with system data from http://www.davek.com.au/td/System.csv
 
 '''
 import csv
-from datetime import datetime, date, time
+from datetime import datetime
+
 
 class loader(object):
     '''
@@ -17,14 +18,15 @@ class loader(object):
 
     mydb = None
     
-    def __init__(self,mydb):
+    def __init__(self, mydb):
         '''
         Constructor
         '''
         self.mydb = mydb
 
-    def importData(self,filename=None):
-        if not filename: filename = 'db/System.csv'
+    def importData(self, filename=None):
+        if not filename:
+            filename = 'db/System.csv'
         
         with open(filename) as csvfile:
             simpelreader = csv.reader(csvfile, delimiter=',', quotechar="'")
@@ -32,33 +34,33 @@ class loader(object):
             cur = self.mydb.cursor()
 
 
-            #get all systems 
-            cur.execute( "select id, modified from systems" )
+            # get all systems
+            cur.execute("select id, modified from systems")
             result = cur.fetchall()
-            systemCache= {}
+            systemCache = {}
             for system in result:
                 systemCache[system["id"]] = system["modified"]
-            result= None
+            result = None
         
             for row in list(simpelreader)[1:]:
-                #print(row)
+                # print(row)
                 name = row[0].lower()
                 posX = float(row[1])
                 posY = float(row[2])
                 posZ = float(row[3])
-                modifydate = datetime.strptime(row[5],"%Y-%m-%d %H:%M:%S")
+                modifydate = datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S")
 
                 systemID = self.mydb.getSystemIDbyName(name)
 
                 if not systemID:
-                    cur.execute( "insert or IGNORE into systems (System, posX, posY, posZ, modified) values (?,?,?,?,?) ",
-                                                                ( name, posX, posY, posZ, modifydate) )
+                    cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, modified) values (?,?,?,?,?) ",
+                                                                (name, posX, posY, posZ, modifydate))
                 else:
                     # update
                     if systemCache[systemID] < modifydate:
 
-                        cur.execute( "update systems SET posX=?, posY=?, posZ=?, modified=? where id = ?" ,
-                                                    (  posX, posY, posZ, modifydate, systemID) )
+                        cur.execute("update systems SET posX=?, posY=?, posZ=?, modified=? where id = ?",
+                                                    (posX, posY, posZ, modifydate, systemID))
 
             self.mydb.con.commit()
             cur.close()

@@ -7,7 +7,7 @@ import or update data from http://eddb.io/archive/v3/stations.json
 '''
 import os
 
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 import json
 
 import gzip
@@ -15,18 +15,19 @@ import io
 import sys
 
 try:
-    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+    from _version import __buildid__, __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
     __builddate__ = "NONE"
     __toolname__ = "mEDI s Elite Tools"
-    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", ""))
 
 try:
     import urllib2
 except ImportError:
     import urllib.request as urllib2
+
 
 class loader(object):
     '''
@@ -46,7 +47,7 @@ class loader(object):
 
         fienameItems = "db/commodities.json"
         fienameSystems = "db/systems.json"
-        utcOffeset =  datetime.now() - datetime.utcnow() 
+        utcOffeset = datetime.now() - datetime.utcnow()
 
         cur = self.mydb.cursor()
         
@@ -57,13 +58,14 @@ class loader(object):
         if not josnData:
             return
 
-        #build systemIDCache = translator cache
+        # build systemIDCache = translator cache
         fp = open(fienameSystems)
         stationJosnData = json.load(fp)
         fp.close()
-        if not stationJosnData: return
+        if not stationJosnData:
+            return
 
-        cur.execute( "select id, System from systems" )
+        cur.execute("select id, System from systems")
         result = cur.fetchall()
         systemIDCache_DB = {}
         for system in result:
@@ -76,20 +78,21 @@ class loader(object):
                 systemJosmIDtoDBIDCache[system["id"]] = systemIDCache_DB[ system["name"].lower() ]
 
 
-        #build itemIDCach translator cache 
+        # build itemIDCach translator cache
         fp = open(fienameItems)
         itemsJosnData = json.load(fp)
         fp.close()
-        if not itemsJosnData: return
+        if not itemsJosnData:
+            return
 
-        cur.execute( "select id, name from items" )
+        cur.execute("select id, name from items")
         result = cur.fetchall()
-        itemIDCache_DB= {}
+        itemIDCache_DB = {}
         for system in result:
             itemIDCache_DB[ system["name"].lower() ] = system["id"]
-        result= None
+        result = None
 
-        itemJosmIDtoDBIDCache= {} # build josmID to dbID
+        itemJosmIDtoDBIDCache = {}  # build josmID to dbID
         for item in itemsJosnData:
             itemJosmIDtoDBIDCache[item["id"]] = itemIDCache_DB[ item["name"].lower() ]
 
@@ -106,14 +109,14 @@ class loader(object):
 
 
         # build itemPriceCache
-        cur.execute( "select id, StationID, ItemID, modified from price" )
+        cur.execute("select id, StationID, ItemID, modified from price")
         result = cur.fetchall()
-        itemPriceCache= {}
+        itemPriceCache = {}
 
         for item in result:
-            cacheKey = "%d_%d" % ( item["StationID"], item["ItemID"])
+            cacheKey = "%d_%d" % (item["StationID"], item["ItemID"])
             itemPriceCache[cacheKey] = [item["id"], item["modified"]]
-        result= None
+        result = None
 
 
         insertCount = 0
@@ -129,22 +132,22 @@ class loader(object):
         for station in josnData:
             totalCount += 1
             modified = datetime.fromtimestamp(station["updated_at"]) - utcOffeset
-            #print(station["name"])
+            # print(station["name"])
 
             if station["system_id"] in systemJosmIDtoDBIDCache:
                 systemID = systemJosmIDtoDBIDCache[station["system_id"]]
             else:
                 print("bug in eddb 1:system_id %s" % station["system_id"])
-                continue  # this dadaset is buged, drop it
+                continue  # this dataset is buged, drop it
             
-            stationCacheKey = "%s_%s" % (systemID, station["name"].lower() )
+            stationCacheKey = "%s_%s" % (systemID, station["name"].lower())
 
-            allegianceID = self.mydb.getAllegianceID(station["allegiance"], True )
+            allegianceID = self.mydb.getAllegianceID(station["allegiance"], True)
 
-            governmentID = self.mydb.getGovernmentID(station["government"], True )
+            governmentID = self.mydb.getGovernmentID(station["government"], True)
 
             '''
-            update or insert Stations 
+            update or insert Stations
             '''
             if stationCacheKey not in stationCache:
                 insertCount += 1
@@ -153,17 +156,17 @@ class loader(object):
                     (systemID, station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified))
 
                 
-                stationID = self.mydb.getStationID(systemID,station["name"])
+                stationID = self.mydb.getStationID(systemID, station["name"])
 
             elif stationCache[stationCacheKey][1] < modified:
                 updateCount += 1
                 stationID = stationCache[stationCacheKey][0]
-                updateStation.append( [station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified, stationID] )
+                updateStation.append([station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified, stationID])
             else:
                 stationID = stationCache[stationCacheKey][0]
 
             '''
-            update or insert items 
+            update or insert items
             '''
             for item in station["listings"]:
                 itemCount += 1
@@ -176,12 +179,12 @@ class loader(object):
                 if itemPriceCacheKey not in itemPriceCache:
                     insertItemCount += 1
 
-                    insertItems.append( [ systemID, stationID, itemID, item["sell_price"] , item["buy_price"], item["demand"], item["supply"], modified ] )
+                    insertItems.append([ systemID, stationID, itemID, item["sell_price"], item["buy_price"], item["demand"], item["supply"], modified ])
 
                 elif itemPriceCache[itemPriceCacheKey][1] < modified:
                     updateItemCount += 1
                     
-                    updateItems.append( [ item["sell_price"] , item["buy_price"], item["demand"], item["supply"], modified,  itemPriceCache[itemPriceCacheKey][0] ] ) 
+                    updateItems.append([ item["sell_price"], item["buy_price"], item["demand"], item["supply"], modified, itemPriceCache[itemPriceCacheKey][0] ])
                     
 
 
@@ -189,16 +192,16 @@ class loader(object):
             cur.executemany("UPDATE stations SET Station=?, StarDist=?, government=?, allegiance=?, blackmarket=?, max_pad_size=?, market=?, shipyard=?, outfitting=?, rearm=?, refuel=?, repair=?, modified=? where id = ?", updateStation)
 
         if insertItems:
-            cur.executemany( "insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand, Stock, modified, source) values (?,?,?,?,?,?,?,?,4) ", insertItems)
+            cur.executemany("insert or IGNORE into price (SystemID, StationID, ItemID, StationBuy, StationSell, Dammand, Stock, modified, source) values (?,?,?,?,?,?,?,?,4) ", insertItems)
 
 
         if updateItems:
-            cur.executemany( "UPDATE price SET StationBuy=?, StationSell=?, Dammand=?, Stock=?, modified=?, source=4 where id = ?", updateItems)
+            cur.executemany("UPDATE price SET StationBuy=?, StationSell=?, Dammand=?, Stock=?, modified=?, source=4 where id = ?", updateItems)
 
             
             
         if updateCount or insertCount or insertItemCount or updateItemCount:
-            print("update stations", updateCount, "insert stations", insertCount, "from", totalCount, "systems","insert items",insertItemCount,"update items",updateItemCount,"from items",itemCount)
+            print("update stations", updateCount, "insert stations", insertCount, "from", totalCount, "systems", "insert items", insertItemCount, "update items", updateItemCount, "from items", itemCount)
 
         self.mydb.con.commit()
         cur.close()
@@ -227,11 +230,10 @@ class loader(object):
         else:  # download file not exists
             self.updateFromUrl(filename, eddbUrl_systems)
 
-        #self.importData(filename)
-#        self.updateFromUrl(filename, eddbUrl_systems)
 
     def updateFromUrl(self, filename, url):
-        if not url: return
+        if not url:
+            return
 
         print("download %s" % url)
 

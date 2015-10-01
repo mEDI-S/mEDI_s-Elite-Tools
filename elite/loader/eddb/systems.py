@@ -7,7 +7,7 @@ import or update data from http://eddb.io/archive/v3/systems.json
 '''
 import os
 
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 import json
 
 import gzip
@@ -15,18 +15,19 @@ import io
 import sys
 
 try:
-    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+    from _version import __buildid__, __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
     __builddate__ = "NONE"
     __toolname__ = "mEDI s Elite Tools"
-    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", ""))
 
 try:
     import urllib2
 except ImportError:
     import urllib.request as urllib2
+
 
 class loader(object):
     '''
@@ -48,7 +49,8 @@ class loader(object):
         josnData = json.load(fp)
         fp.close()
 
-        if not josnData: return
+        if not josnData:
+            return
     
         cur = self.mydb.cursor()
 
@@ -70,28 +72,28 @@ class loader(object):
 
             powerID = None
             if system["power_control_faction"]:
-                powerID = self.mydb.getPowerID( system["power_control_faction"] )
+                powerID = self.mydb.getPowerID(system["power_control_faction"])
                 if not powerID:
-                    cur.execute( "insert or IGNORE into powers (Name) values (?) ", ( system["power_control_faction"] ,))
-                    powerID = self.mydb.getPowerID( system["power_control_faction"] )
+                    cur.execute("insert or IGNORE into powers (Name) values (?) ", (system["power_control_faction"], ))
+                    powerID = self.mydb.getPowerID(system["power_control_faction"])
 
-            allegianceID = self.mydb.getAllegianceID( system["allegiance"], True )
+            allegianceID = self.mydb.getAllegianceID(system["allegiance"], True)
 
-            governmentID = self.mydb.getGovernmentID( system["government"], True )
+            governmentID = self.mydb.getGovernmentID(system["government"], True)
 
 
             if system["name"].lower() not in systemCache:
                 insertCount += 1
                 cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, government, allegiance, modified) values (?,?,?,?,?,?,?,?,?) ",
-                                        (system["name"] , float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified))
+                                        (system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified))
 
             elif system["name"].lower() in systemCache and (not systemCache[ system["name"].lower() ][1] or systemCache[ system["name"].lower() ][1] < modified):
                 updateCount += 1
-                updateSystem.append([system["name"], float(system["x"]) , float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ]) 
+                updateSystem.append([system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ])
 
                 
         if updateSystem:
-            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, power_control=?, government=?, allegiance=?, modified=? where id is ?" , updateSystem)
+            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, power_control=?, government=?, allegiance=?, modified=? where id is ?", updateSystem)
 
         if updateCount or insertCount:
             print("update", updateCount, "insert", insertCount, "from", totalCount, "systems")
@@ -123,11 +125,12 @@ class loader(object):
         else:  # download file not exists
             self.updateFromUrl(filename, eddbUrl_systems)
 
-        #self.importData(filename)
+        # self.importData(filename)
 #        self.updateFromUrl(filename, eddbUrl_systems)
 
     def updateFromUrl(self, filename, url):
-        if not url: return
+        if not url:
+            return
 
         print("download %s" % url)
 

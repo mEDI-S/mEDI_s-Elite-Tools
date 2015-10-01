@@ -1079,7 +1079,7 @@ class tool(QtGui.QWidget):
                 if hopID > hopCount:
                     hopID = 0
                 self.activeRoutePointer["lastHop"] = hopID
-                print("return", hopID)
+
                 return hopID
 
     def updateConnectedDealsFromToWindow(self, init=None):

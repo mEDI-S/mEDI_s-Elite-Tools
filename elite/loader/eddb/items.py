@@ -7,7 +7,7 @@ import or update data from http://eddb.io/archive/v3/commodities.json
 '''
 import os
 
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 import json
 
 import gzip
@@ -15,19 +15,20 @@ import io
 import sys
 
 try:
-    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+    from _version import __buildid__, __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
     __builddate__ = "NONE"
     __toolname__ = "mEDI s Elite Tools"
-    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", ""))
 
 
 try:
     import urllib2
 except ImportError:
     import urllib.request as urllib2
+
 
 class loader(object):
     '''
@@ -49,13 +50,12 @@ class loader(object):
         josnData = json.load(fp)
         fp.close()
 
-        if not josnData: return
+        if not josnData:
+            return
 
         cur = self.mydb.cursor()
 
         for item in josnData:
-#            print(item["category"]["name"])
-#            print(item["name"])
 
             itemID = self.mydb.getItemID(item["name"])
 
@@ -63,10 +63,11 @@ class loader(object):
                 print("insert new item %s" % item["name"])
 
                 category = item["category"]["name"]
-                if category == "Unknown" : category = None
+                if category == "Unknown":
+                    category = None
 
                 cur.execute("insert or IGNORE into items (name, category ) values (?,?) ",
-                                                            (item["name"] , category))
+                                                            (item["name"], category))
 
 
         self.mydb.con.commit()
@@ -99,7 +100,8 @@ class loader(object):
 #        self.updateFromUrl(filename, eddbUrl_commodities)
 
     def updateFromUrl(self, filename, url):
-        if not url: return
+        if not url:
+            return
 
         print("download %s" % url)
 
