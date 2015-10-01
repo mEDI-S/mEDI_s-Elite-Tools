@@ -259,7 +259,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
         layout = QtGui.QVBoxLayout()
-        layout.setContentsMargins(6, 2, 6, 6)
+        layout.setContentsMargins(6, 6, 6, 6)
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.listView)
         layout.addWidget(infosGroupBox)

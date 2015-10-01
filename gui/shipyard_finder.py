@@ -61,6 +61,7 @@ class tool(QtGui.QWidget):
 
 
         layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(locationLabel)
         layout.addWidget(locationButton)
@@ -100,6 +101,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setFlat(True)
 
         layout = QtGui.QVBoxLayout()
+        layout.setContentsMargins(6, 6, 6, 6)
 
         layout.addWidget(locationGroupBox)
         layout.addWidget(self.listView)

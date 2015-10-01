@@ -157,6 +157,7 @@ class tool(QtGui.QWidget):
 
 
         searchgridLayout = QtGui.QGridLayout()
+        searchgridLayout.setContentsMargins(2, 2, 2, 2)
 
 
         searchgridLayout.addWidget(self.locationButton, 0, 0)
@@ -211,6 +212,8 @@ class tool(QtGui.QWidget):
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
         layout = QtGui.QVBoxLayout()
+        layout.setContentsMargins(6, 6, 6, 6)
+
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(self.searchGroupBox)
         layout.addWidget(self.listView)

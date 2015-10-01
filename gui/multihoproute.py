@@ -556,6 +556,7 @@ class tool(QtGui.QWidget):
         locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
 
         layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.showOptions = QtGui.QCheckBox("Show Options")
         if self.mydb.getConfig("option_mhr_showOptions") != 0:
@@ -591,6 +592,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setFlat(True)
 
         layout = QtGui.QVBoxLayout()
+        layout.setContentsMargins(6, 6, 6, 6)
 
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(locationGroupBox)

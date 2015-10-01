@@ -232,7 +232,7 @@ class tool(QtGui.QWidget):
         vGroupBox.setFlat(True)
 
         layout = QtGui.QVBoxLayout()
-        layout.setContentsMargins(6, 2, 6, 6)
+        layout.setContentsMargins(6, 6, 6, 6)
 
         layout.addWidget(self.optionsGroupBox)
         layout.addWidget(locationGroupBox)
