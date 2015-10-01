@@ -273,6 +273,12 @@ class db(object):
         # fly log
         self.con.execute("CREATE TABLE IF NOT EXISTS flylog (id INTEGER PRIMARY KEY AUTOINCREMENT, SystemID INT, optionalSystemName TEXT, Comment TEXT, DateTime timestamp)")
 
+
+        # bookmarks
+        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT, Type INT, SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
+        self.con.execute("create UNIQUE index IF NOT EXISTS bookmarkChilds_unique_BookmarkID on bookmarkChilds (BookmarkID, Pos)")
+
         # trigger to controll the dynamic cache
         self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
                             WHEN NEW.StationBuy != OLD.StationBuy OR NEW.StationSell != OLD.StationSell
@@ -910,7 +916,7 @@ class db(object):
 
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.id, priceB.id,
-                        priceA.ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
+                        priceA.ItemID AS ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
                         systemA.System AS SystemA, priceA.id AS priceAid, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
                         systemB.System AS SystemB, priceB.id AS priceBid, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
                         dist, systemA.startDist AS startDist, items.name AS itemName
@@ -1300,7 +1306,20 @@ class db(object):
         if result:
             return result
 
+    def saveBookmark(self, name, routeList):
+#        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT)")
+#        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT, Type INT, SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
 
+        cur = self.cursor()
+        cur.execute("insert into bookmarks (Name) values (?) ", (name,))
+        if cur.lastrowid:
+            BookmarkID = cur.lastrowid
+            for i, hop in enumerate(routeList):
+                cur.execute("insert into bookmarkChilds (BookmarkID, Pos, Type, SystemID, StationID, ItemID) values (?, ?, ?, ?, ?, ?) ",
+                            (BookmarkID, i, hop['Type'], hop['SystemID'], hop['StationID'], hop['ItemID'] ) )
+
+        self.con.commit()
+        cur.close()
 if __name__ == '__main__':
     # mydb = db()
     pass

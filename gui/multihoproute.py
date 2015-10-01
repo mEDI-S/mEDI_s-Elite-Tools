@@ -339,7 +339,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                 # print(d.keys())
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
-                                                                                                before["StarDist"], d["itemName"], d["StationSell"],
+                                                                                                before["StarDist"], self.route.getItemName(deal, hopID), d["StationSell"],
                                                                                                 d["StationBuy"], d["profit"], d["dist"],
                                                                                                 self.route.getSystemB(deal, hopID),
                                                                                                 self.route.getStationB(deal, hopID))
@@ -364,7 +364,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                 # print(deal["backToStartDeal"].keys())
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
-                                                                                                before["StarDist"], deal["backToStartDeal"]["itemName"],
+                                                                                                before["StarDist"], self.route.getItemName(deal, hopID),
                                                                                                 deal["backToStartDeal"]["StationSell"],
                                                                                                 deal["backToStartDeal"]["StationBuy"],
                                                                                                 deal["backToStartDeal"]["profit"],
@@ -626,6 +626,8 @@ class tool(QtGui.QWidget):
                     self.connectToDealsFromToWindowsAct.setChecked(True)
                     menu.addAction(self.disconnectFromDealsFromToWindowAct)
 
+            menu.addAction(self.saveSelectedRouteAct)
+
         else:
             print(type(indexes[0].internalPointer()))
 
@@ -882,6 +884,11 @@ class tool(QtGui.QWidget):
 
         self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
 
+        self.saveSelectedRouteAct = QtGui.QAction("Bookmark Route", self,
+                statusTip="save a bookmark", triggered=self.saveSelectedRoute)
+
+
+
     def setActiveRoutePointer(self):
         indexes = self.listView.selectionModel().selectedIndexes()
  
@@ -1114,3 +1121,45 @@ class tool(QtGui.QWidget):
 
         self.connectedDealsFromToWindows.toSystem.setText(systemB)
         self.connectedDealsFromToWindows.toStation.setText(stationB)
+
+
+    def saveSelectedRoute(self):
+        
+        indexes = self.listView.selectionModel().selectedIndexes()
+        route = indexes[0].internalPointer().getInternalRoutePointer()
+
+        defName = ""
+
+        for i in range(0, self.route.countHops(route)):
+            systemA = self.route.getSystemA(route, i)
+
+            stationA = self.route.getStationA(route, i)
+
+            itemName = self.route.getItemName(route, i)
+
+            if defName:
+                defName += " -> "
+            defName += "%s:%s (%s)" % (systemA, stationA, itemName)
+
+        defName = "Deals Route:" + defName
+
+        text, ok = QtGui.QInputDialog.getText(self, "Bockmark Name",
+                "Bockmark Name:", QtGui.QLineEdit.Normal, defName)
+
+        if ok and text != '':
+            routeData = []
+
+            for i in range(0, self.route.countHops(route)):
+                systemAid = self.route.getSystemAid(route, i)
+                stationAid = self.route.getStationAid(route, i)
+                itemId = self.route.getItemId(route, i)
+
+                routeData.append(   {
+                                    'Type': 0,
+                                    'SystemID': systemAid,
+                                    'StationID': stationAid,
+                                    'ItemID': itemId
+                                    })
+            self.main.lockDB()
+            self.mydb.saveBookmark(text, routeData)
+            self.main.unlockDB()

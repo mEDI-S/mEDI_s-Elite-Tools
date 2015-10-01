@@ -61,6 +61,12 @@ class route(object):
 
         return route["path"][hopID - 1]["StationB"]
 
+    def getStationAid(self, route, hopID):
+        if hopID == 0:
+            return route["path"][hopID]["StationAID"]
+
+        return route["path"][hopID - 1]["StationBID"]
+
     def getStationB(self, route, hopID):
         if hopID < len(route["path"]):
             return route["path"][hopID]["StationB"]
@@ -72,6 +78,12 @@ class route(object):
             return route["path"][hopID]["SystemA"]
 
         return route["path"][hopID - 1]["SystemB"]
+
+    def getSystemAid(self, route, hopID):
+        if hopID == 0:
+            return route["path"][hopID]["SystemAID"]
+
+        return route["path"][hopID - 1]["SystemBID"]
 
     def getSystemB(self, route, hopID):
         if hopID < len(route["path"]):
@@ -88,6 +100,25 @@ class route(object):
             return route["path"][hopID]["priceAid"]
         else:
             return route["backToStartDeal"]["priceAid"]
+
+    def getItemName(self, route, hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["itemName"]
+        else:
+            return route["backToStartDeal"]["itemName"]
+
+    def getItemId(self, route, hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["ItemID"]
+        else:
+            return route["backToStartDeal"]["ItemID"]
+
+
+    def countHops(self, route):
+        ''' real size is route["path"] + route["backToStartDeal"]'''
+        if route:
+            return len(route["path"]) + 1
+
 
     def limitCalc(self, accuracy=0):
         ''' ["normal","fast","nice","slow","all"] '''
