@@ -255,6 +255,10 @@ class MainWindow(QtGui.QMainWindow):
         self.preferenceAct = QtGui.QAction("Preference", self,
                 triggered=self.openConfig)
 
+        self.forceOptimizeAct = QtGui.QAction("Force Optimize DB", self,
+                statusTip="Force Optimize DB after next Update",
+                triggered=self.forceOptimize)
+
        
     def createMenus(self):
         self.menuBar().clear()
@@ -269,6 +273,7 @@ class MainWindow(QtGui.QMainWindow):
         self.maintenanceMenu.addSeparator()
         self.maintenanceMenu.addAction(self.rebuildFullCacheAct)
         self.maintenanceMenu.addAction(self.deleteDistancesCacheAct)
+        self.maintenanceMenu.addAction(self.forceOptimizeAct)
 
         self.editMenu.addAction(self.preferenceAct)
 
@@ -489,7 +494,22 @@ class MainWindow(QtGui.QMainWindow):
         self.lockDB()
         self.configWindows.exec_()
         self.unlockDB()
-            
+
+    def forceOptimize(self):
+        msg = "do you really want to force an optimization?"
+
+        msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                "Force Optimize", msg,
+                QtGui.QMessageBox.NoButton, self)
+
+        msgBox.addButton("Optimize", QtGui.QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+        if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+            self.lockDB()
+            self.mydb.setConfig("lastOptimizeDatabase", None)
+            self.unlockDB()
+        
 if __name__ == '__main__':
 
     app = QtGui.QApplication(sys.argv)
