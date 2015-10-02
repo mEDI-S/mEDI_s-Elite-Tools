@@ -335,8 +335,11 @@ class db(object):
         cur.execute("select * from sqlite_master where type = 'table' or type = 'index' order by type")
         result = cur.fetchall()
 
-        for table in result:
+        for i, table in enumerate(result):
             print("vacuum %s" % table["name"])
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Optimize DB", i + 1, len(result) )
+
             self.con.execute("vacuum '%s'" % table["name"])
 
         cur.execute("select * from sqlite_master where type = 'table' order by rootpage")
@@ -344,7 +347,11 @@ class db(object):
 
         for table in result:
             print("analyze %s" % table["name"])
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Analyze DB", i + 1, len(result) )
+
             cur.execute("analyze '%s'" % table["name"])
+
         self.con.commit()
         cur.close()
         self.setConfig('lastOptimizeDatabase', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
