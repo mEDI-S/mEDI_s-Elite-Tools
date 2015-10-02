@@ -758,6 +758,17 @@ class db(object):
         return result
 
 
+    def addSystemToDealsInDistancesCacheQueue(self, systemIDlist):
+        cur = self.cursor()
+
+        for system in systemIDlist:
+            systemID = system["id"]
+            cur.execute("INSERT or IGNORE INTO dealsInDistancesSystems_queue ( systemID ) values (?)", (systemID, ))
+
+        self.con.commit()
+        cur.close()
+
+
     def calcDealsInDistancesCache(self, systemIDlist, maxAgeDate, minTradeProfit=1000, dist=51):
         print("calcDealsInDistancesCache", len(systemIDlist))
 
@@ -908,7 +919,10 @@ class db(object):
                              """, (systemA["posX"], systemA["posY"], systemA["posZ"], distance,))
         systemList = cur.fetchall()
         if systemList:
-            self.calcDealsInDistancesCache(systemList, maxAgeDate)
+            if self.getConfig("option_calcDistance") != 1:
+                self.calcDealsInDistancesCache(systemList, maxAgeDate)
+            else:
+                self.addSystemToDealsInDistancesCacheQueue(systemList)
 
         padsizePart = ""
         if onlyLpads:
@@ -989,7 +1003,10 @@ class db(object):
                              """, (stationA["posX"], stationA["posY"], stationA["posZ"], distance,))
         systemList = cur.fetchall()
         if systemList:
-            self.calcDealsInDistancesCache(systemList, maxAgeDate)
+            if self.getConfig("option_calcDistance") != 1:
+                self.calcDealsInDistancesCache(systemList, maxAgeDate)
+            else:
+                self.addSystemToDealsInDistancesCacheQueue(systemList)
 
         padsizePart = ""
         if onlyLpads:
@@ -1307,9 +1324,6 @@ class db(object):
             return result
 
     def saveBookmark(self, name, routeList):
-#        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT)")
-#        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT, Type INT, SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
-
         cur = self.cursor()
         cur.execute("insert into bookmarks (Name) values (?) ", (name,))
         if cur.lastrowid:

@@ -201,6 +201,47 @@ class ConfigurationPage_Source(QtGui.QWidget):
             self.mydb.startStreamUpdater()
 
 
+class ConfigurationPage_Search(QtGui.QWidget):
+    def __init__(self, parent=None):
+        super(ConfigurationPage_Search, self).__init__(parent)
+
+        if parent and hasattr(parent, "mydb"):
+            self.mydb = parent.mydb
+
+        self.guitools = guitools.guitools(self)
+
+
+        gridLayout = QtGui.QGridLayout()
+
+        calcDistanceOptionsList = ["when searching", "After searching in the background"]
+
+        label = QtGui.QLabel("calculate missing Distances:")
+        self.calcDistanceOption = QtGui.QComboBox()
+        for option in calcDistanceOptionsList:
+            self.calcDistanceOption.addItem(option)
+
+        if self.mydb.getConfig("option_calcDistance"):
+            self.calcDistanceOption.setCurrentIndex(self.mydb.getConfig("option_calcDistance"))
+
+        gridLayout.addWidget(label, 1, 1)
+        gridLayout.addWidget(self.calcDistanceOption, 1, 2)
+
+
+        configGroup = QtGui.QGroupBox("Search Configuration")
+        configGroup.setLayout(gridLayout)
+
+
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.addWidget(configGroup)
+        mainLayout.addStretch(1)
+
+        self.setLayout(mainLayout)
+
+    def saveOptions(self):
+        print("search saveOptions")
+        self.mydb.setConfig('option_calcDistance', self.calcDistanceOption.currentIndex())
+
+
 class ConfigDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         super(ConfigDialog, self).__init__(parent)
@@ -223,6 +264,7 @@ class ConfigDialog(QtGui.QDialog):
 
         self.pagesWidget.addWidget(ConfigurationPage_Path(self))
         self.pagesWidget.addWidget(ConfigurationPage_Source(self))
+        self.pagesWidget.addWidget(ConfigurationPage_Search(self))
         
 
         closeButton = QtGui.QPushButton("Close")
@@ -260,6 +302,10 @@ class ConfigDialog(QtGui.QDialog):
             if hasattr(configWidget, "saveOptions" ):
                 configWidget.saveOptions()
 
+
+
+
+
     def changePage(self, current, previous):
         if not current:
             current = previous
@@ -279,6 +325,13 @@ class ConfigDialog(QtGui.QDialog):
         configButton_Source.setText("Source")
         configButton_Source.setTextAlignment(QtCore.Qt.AlignHCenter)
         configButton_Source.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
+        configButton_Source = QtGui.QListWidgetItem(self.contentsWidget)
+        configButton_Source.setIcon( self.guitools.getIconFromsvg("img/searchOptions.svg", __iconSize__[0], __iconSize__[1]))
+        configButton_Source.setText("Search")
+        configButton_Source.setTextAlignment(QtCore.Qt.AlignHCenter)
+        configButton_Source.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+
 
         self.contentsWidget.currentItemChanged.connect(self.changePage)
 
