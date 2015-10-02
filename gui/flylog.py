@@ -671,6 +671,8 @@ class tool(QtGui.QWidget):
 
         lastSystem = None
 
+        utcDelta = datetime.now() - datetime.utcnow()
+
         for entry in lastLog:
             model.insertRow(0)
             model.setData(model.index(0, self.headerList.index("Id")), entry["id"])
@@ -692,7 +694,7 @@ class tool(QtGui.QWidget):
             else:
                 lastSystem = None
 
-            model. setData(model.index(0, self.headerList.index("Date")), QtCore.QDateTime(entry["DateTime"]))
+            model. setData(model.index(0, self.headerList.index("Date")), QtCore.QDateTime(entry["DateTime"] + utcDelta))
             model. setData(model.index(0, self.headerList.index("Comment")), entry["Comment"])
 
         # self.listView.setModel(model)
