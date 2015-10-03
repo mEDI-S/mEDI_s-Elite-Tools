@@ -58,9 +58,11 @@ class location(object):
                 logfiles.append([cDate, path])
 
     
-        logfiles = sorted(logfiles, key=lambda f: f[0], reverse=True)
-
-        return (logfiles[0][0], logfiles[0][1])
+        if logfiles:
+            logfiles = sorted(logfiles, key=lambda f: f[0], reverse=True)
+            return (logfiles[0][0], logfiles[0][1])
+        else:
+            return (None, None)
 
     def readLog(self, logfile):
 
