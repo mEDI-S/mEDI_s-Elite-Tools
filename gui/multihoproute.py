@@ -731,7 +731,7 @@ class tool(QtGui.QWidget):
 #        self.route.printList()
 
 
-        self.routeModel = RouteTreeModel(self.route, self, forceHops)
+        self.routeModel = RouteTreeModel(self.route, None, forceHops)
         
         QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL('layoutAboutToBeChanged()'), self.routeModellayoutAboutToBeChanged)
         QtCore.QObject.connect(self.routeModel, QtCore.SIGNAL('layoutChanged()'), self.routeModellayoutChanged)
