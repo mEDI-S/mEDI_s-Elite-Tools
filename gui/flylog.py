@@ -18,7 +18,7 @@ import random
 __toolname__ = "Fly Log"
 __internalName__ = "FlLo"
 __statusTip__ = "Show ur Fly Log"
-__defaultUpdateTime__ = 1000 * 30
+__defaultUpdateTime__ = 1000 * 15
 
 
 class flyLogger(object):
