@@ -34,6 +34,7 @@ class db(object):
     __stationIDCache = {}
     __systemIDCache = {}
     __itemIDCache = {}
+    __configCache = {}
     __streamUpdater = []
     loaderCount = __loaderCount__
     sendProcessMsg = None
@@ -366,6 +367,8 @@ class db(object):
 
     def setConfig(self, var, val):
 
+        self.__configCache[var] = val
+
         cur = self.cursor()
 
         cur.execute("insert or replace into config(var,val) values (?,?)", (var, val))
@@ -388,11 +391,17 @@ class db(object):
 
         
     def getConfig(self, var):
+
+        if self.__configCache.get(var):
+            return self.__configCache.get(var)
+        
         cur = self.cursor()
         cur.execute("select val from config where var = ? limit 1", (var,))
         result = cur.fetchone()
         cur.close()
+
         if result:
+            self.__configCache[var] = result[0]
             return result[0]
         else:
             return False
