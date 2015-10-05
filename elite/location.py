@@ -27,7 +27,6 @@ class location(object):
         Constructor
         '''
         self.mydb = mydb
-        self.eliteLogDir = self.mydb.getConfig('EliteLogDir')
 
     def getLocation(self):
 
@@ -44,15 +43,17 @@ class location(object):
         return self.location
 
     def getLastLog(self):
-        if not os.path.isdir(self.eliteLogDir):
-            print("Warning: EliteLogDir:'%s' does not exist" % self.eliteLogDir)
+        eliteLogDir = self.mydb.getConfig('EliteLogDir')
+
+        if not os.path.isdir(eliteLogDir):
+            print("Warning: EliteLogDir:'%s' does not exist" % eliteLogDir)
             return (None, None)
 
         logfiles = []
-        for f in os.listdir(self.eliteLogDir):
-            if os.path.isfile(os.path.join(self.eliteLogDir, f)) and len(f) > 4 and re.match(r"^netLog.*\.log$", f):
+        for f in os.listdir(eliteLogDir):
+            if os.path.isfile(os.path.join(eliteLogDir, f)) and len(f) > 4 and re.match(r"^netLog.*\.log$", f):
 
-                path = os.path.join(self.eliteLogDir, f)
+                path = os.path.join(eliteLogDir, f)
                 cDate = datetime.fromtimestamp(os.path.getmtime(path))
 
                 logfiles.append([cDate, path])
