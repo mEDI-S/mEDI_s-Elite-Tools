@@ -796,6 +796,11 @@ class tool(QtGui.QWidget):
         self.autoUpdateLocationTimer.start(1000 * 60)
         self.autoUpdateLocationTimer.timeout.connect(self.updateLocation)
 
+        self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
+        self.timer_setNextRouteHopToClipbord.start(1000 * 60)
+        self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
+        self.timer_setNextRouteHopToClipbord.stop()
+
     def updateLocation(self):
         if self.autoUpdateLocation.isChecked():
 
@@ -907,11 +912,17 @@ class tool(QtGui.QWidget):
         self.activeRoutePointer = None
 
     def clipbordRouteHelper(self):
+
+        indexes = self.listView.selectionModel().selectedIndexes()
+        if self.activeRoutePointer and self.timer_setNextRouteHopToClipbord.isActive() and self.activeRoutePointer == indexes[0].internalPointer().getInternalRoutePointer():
+
+            self.clipbordRouteHelperAct.setChecked(False)
+            self.timer_setNextRouteHopToClipbord.stop()
+            return
+
         self.setActiveRoutePointer()
 
-        self.timer_setNextRouteHopToClipbord = QtCore.QTimer()
-        self.timer_setNextRouteHopToClipbord.start(1000 * 60)
-        self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
+        self.timer_setNextRouteHopToClipbord.start()
 
         self.clipbordRouteHelperAct.setChecked(True)
         self.setNextRouteHopToClipbord(init=True)
@@ -947,7 +958,7 @@ class tool(QtGui.QWidget):
                 self.lastClipboardEntry = systemB
                 print("setNextRouteHopToClipbord1 set clipboard to", systemB)
 
-        if not self.lastClipboardEntry:
+        elif not self.lastClipboardEntry:
             # not in route? set the first hop to clipboard
             system = self.route.getSystemA(self.activeRoutePointer, 0)
             if system:
