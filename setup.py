@@ -247,6 +247,8 @@ if _buildZip:
 
         ''' drop private tables '''
         cur.execute("DROP TABLE flylog")
+        cur.execute("DROP TABLE bookmarks")
+        cur.execute("DROP TABLE bookmarkChilds")
 
         db.con.commit()
         cur.close()
