@@ -95,7 +95,7 @@ class ConfigurationPage_Path(QtGui.QWidget):
             self.logPathLineEdit.setText(directory)
 
     def getEDMarkedConPath(self):
-        directory = QtGui.QFileDialog.getExistingDirectory(self, "E:D Marked Connector dir", self.EDMarkedConPathLineEdit.text() )
+        directory = QtGui.QFileDialog.getExistingDirectory(self, "E:D Market Connector dir", self.EDMarkedConPathLineEdit.text() )
 
         if directory:
             self.EDMarkedConPathLineEdit.setText(directory)
