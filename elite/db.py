@@ -275,8 +275,8 @@ class db(object):
 
 
         # bookmarks
-        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT)")
-        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT, Type INT, SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
+        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER PRIMARY KEY AUTOINCREMENT, Type INT, Name TEXT)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT,  SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
         self.con.execute("create UNIQUE index IF NOT EXISTS bookmarkChilds_unique_BookmarkID on bookmarkChilds (BookmarkID, Pos)")
 
         # trigger to controll the dynamic cache
@@ -1182,6 +1182,12 @@ class db(object):
             if settings:
                 InstallLocation = settings.value("InstallLocation")
 
+            ''' Elite Dangerous (steam on Win 10) path? '''
+            if not InstallLocation:
+                settings = QtCore.QSettings(r"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Valve\Steam\Apps\359320", QtCore.QSettings.NativeFormat)
+                if settings:
+                    InstallLocation = settings.value("InstallLocation")
+
 
             ''' Elite Dangerous (default install) path '''
             # https://support.frontier.co.uk/kb/faq.php?id=108
@@ -1330,17 +1336,52 @@ class db(object):
         if result:
             return result
 
-    def saveBookmark(self, name, routeList):
+    def saveBookmark(self, name, routeList, typ):
         cur = self.cursor()
-        cur.execute("insert into bookmarks (Name) values (?) ", (name,))
+        cur.execute("insert into bookmarks (Name, Type) values (?, ?) ", (name, typ))
         if cur.lastrowid:
             BookmarkID = cur.lastrowid
             for i, hop in enumerate(routeList):
-                cur.execute("insert into bookmarkChilds (BookmarkID, Pos, Type, SystemID, StationID, ItemID) values (?, ?, ?, ?, ?, ?) ",
-                            (BookmarkID, i, hop['Type'], hop['SystemID'], hop['StationID'], hop['ItemID'] ) )
+                cur.execute("insert into bookmarkChilds (BookmarkID, Pos, SystemID, StationID, ItemID) values (?, ?, ?, ?, ?) ",
+                            (BookmarkID, i, hop['SystemID'], hop['StationID'], hop['ItemID'] ) )
 
         self.con.commit()
         cur.close()
-if __name__ == '__main__':
-    # mydb = db()
-    pass
+
+    def deleteBookmark(self, bid):
+        if not id:
+            return
+
+        cur = self.cursor()
+
+        cur.execute("DELETE from bookmarkChilds where BookmarkID=? ", (bid, ) )
+        cur.execute("DELETE from bookmarks where id=? ", (bid, ) )
+
+        self.con.commit()
+        cur.close()
+
+    def getBookmarks(self):
+        cur = self.cursor()
+        cur.execute("""SELECT * FROM bookmarks order by id """)
+        result = cur.fetchall()
+
+        data = []
+        for bookmark in result:
+            cur.execute("""SELECT * FROM bookmarkChilds
+                    left JOIN systems on systems.id = bookmarkChilds.SystemID
+                    left JOIN stations on stations.id = bookmarkChilds.StationID
+                    left JOIN items on items.id = bookmarkChilds.ItemID
+
+                    where BookmarkID=?
+                    order by BookmarkID, Pos
+                     """, (bookmark['id'], ) )
+
+            childresult = cur.fetchall()
+
+            data.append({ 'id': bookmark['id'],
+                          'Name': bookmark['Name'],
+                          'Type': bookmark['Type'],
+                          'childs': childresult,
+                          })
+        
+        return data

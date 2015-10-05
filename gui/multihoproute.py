@@ -1157,11 +1157,10 @@ class tool(QtGui.QWidget):
                 itemId = self.route.getItemId(route, i)
 
                 routeData.append(   {
-                                    'Type': 0,
                                     'SystemID': systemAid,
                                     'StationID': stationAid,
                                     'ItemID': itemId
                                     })
             self.main.lockDB()
-            self.mydb.saveBookmark(text, routeData)
+            self.mydb.saveBookmark(text, routeData, 0)
             self.main.unlockDB()

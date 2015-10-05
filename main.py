@@ -64,6 +64,7 @@ class MainWindow(QtGui.QMainWindow):
     shipyardFinderWidget = []
     powerControlFinderWidget = []
     flyLogWidget = []
+    BookmarksWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -75,7 +76,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("mEDI's Elite Tools")
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks | QtGui.QMainWindow.AllowTabbedDocks)
 
-        self.setStatusBar("Welcomme to mEDI's Elite Tools")
+        self.setStatusBar("Welcome to mEDI's Elite Tools")
         self.setMinimumSize(600, 400)
 
         self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
@@ -98,7 +99,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog]
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks]
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
@@ -106,6 +107,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.shipyard_finder, self.shipyardFinderWidget)
         self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
         self.addTool( gui.flylog, self.flyLogWidget)
+        self.addTool( gui.bookmarks, self.BookmarksWidget)
 
         self.show()
 

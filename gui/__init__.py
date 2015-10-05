@@ -5,5 +5,6 @@ from gui import power_control_finder
 from gui import flylog
 from gui import commodities_finder
 from gui import config
+from gui import bookmarks
 
 from gui import dbworker
