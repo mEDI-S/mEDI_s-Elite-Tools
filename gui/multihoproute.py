@@ -622,12 +622,11 @@ class tool(QtGui.QWidget):
         elif isinstance(indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
             if len(self.main.dealsFromToWidget) > 1:
-                self.connectToDealsFromToWindowsAct.setChecked(False)
-                menu.addAction(self.connectToDealsFromToWindowsAct)
                 if self.connectedDealsFromToWindows:
-                    self.connectToDealsFromToWindowsAct.setChecked(True)
                     menu.addAction(self.disconnectFromDealsFromToWindowAct)
-
+                else:
+                    menu.addAction(self.connectToDealsFromToWindowsAct)
+                    
             menu.addAction(self.saveSelectedRouteAct)
 
         else:
@@ -878,7 +877,7 @@ class tool(QtGui.QWidget):
         self.addRouteHopAsFromSystemInDealsFromToFinderAct = QtGui.QAction("Set as From in (Deals From To Finder 1)", self,
                 statusTip="Set System/Station as From in Deals Finder", triggered=self.addRouteHopAsFromSystemInDealsFromToFinder)
 
-        self.connectToDealsFromToWindowsAct = QtGui.QAction("Connect Route to (Deals From To Finder 1)", self, checkable=True,
+        self.connectToDealsFromToWindowsAct = QtGui.QAction("Connect Route to (Deals From To Finder 1)", self,
                 statusTip="Update (Deals From To Finder 1) with current Route position", triggered=self.connectToDealsFromToWindows)
 
         self.disconnectFromDealsFromToWindowAct = QtGui.QAction("Disconnect (Deals From To Finder 1)", self,
