@@ -392,7 +392,7 @@ class tool(QtGui.QWidget):
 
             beforeSystem = self.main.flyLogger.getLastPosWithKnowCords()
             refSystems = self.mydb.getSystemsInDistance(beforeSystem['SystemID'], 50)
-            excludeList = ['Sector']
+            excludeList = ['Sector', 'ICZ ']
             refsyslist = []
             # refsyslist.append(beforeSystem['System'])
             for i in range(1, 5):
@@ -418,7 +418,6 @@ class tool(QtGui.QWidget):
             self.refSyslist = []
 
             for i, system in enumerate(refsyslist):
-                print(system)
             
                 nameLabel = QtGui.QLabel("Ref. System %d:" % (i + 1))
                 LineEdit = QtGui.QLineEdit()
@@ -470,7 +469,6 @@ class tool(QtGui.QWidget):
             submitEDSCButton = QtGui.QPushButton("Send to EDSC")
             submitEDSCButton.clicked.connect(self.submitDistancesEDSC)
            
-
             layout = QtGui.QVBoxLayout()
             layout.addWidget(label)
 
@@ -492,7 +490,7 @@ class tool(QtGui.QWidget):
         self.submitDistancesWizard.addPage(createSubmitPage())
         
         self.submitDistancesWizard.setWindowTitle("EDSC Submit Distances")
-        self.submitDistancesWizard.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+        self.submitDistancesWizard.setWindowFlags(QtCore.Qt.Drawer | QtCore.Qt.WindowStaysOnTopHint)
 #        submitDistancesWizard.setOptions(QtGui.QWizard.NoBackButtonOnStartPage)
         self.submitDistancesWizard.show()
 
@@ -502,9 +500,26 @@ class tool(QtGui.QWidget):
             self.mydb.setConfig('option_commanderName', self.commanderNameLineEdit.text())
             self.showLog()
 
+    def removeOnTopFromWizard(self):
+        self.submitDistancesWizard.setWindowFlags( QtCore.Qt.Drawer )
+        pos = self.submitDistancesWizard.pos()
+
+        if pos.x() < 0:
+            pos.setX(0)
+
+        if pos.y() < 0:
+            pos.setY(0)
+
+        self.submitDistancesWizard.move(pos)
+        self.submitDistancesWizard.show()
+        self.submitDistancesWizard.activateWindow()
+
 
     def submitDistancesEDSM(self):
         print("submitDistancesEDSM")
+
+        self.removeOnTopFromWizard()
+
         refList = []
         fail = ""
         if self.systemNameLineEdit.text():
@@ -576,12 +591,15 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+
             
-        # {'input': [{'status': {'statusnum': 0, 'msg': 'Success'}}]}
 
 
     def submitDistancesEDSC(self):
         print("submitDistancesEDSC")
+
+        self.removeOnTopFromWizard()
+
         refList = []
         fail = ""
         if self.systemNameLineEdit.text():
@@ -652,7 +670,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
-            
+
 
     def showLog(self):
 
