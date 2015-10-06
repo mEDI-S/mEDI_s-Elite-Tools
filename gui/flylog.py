@@ -150,6 +150,16 @@ class flyLogger(object):
                     self.main.flyLogWidget[flylog].showLog()
 
 
+    def updateComment(self, logID, comment):
+        if not logID:
+            return
+
+        cur = self.mydb.cursor()
+        cur.execute("UPDATE flylog SET  Comment=? where id=?", (comment, logID) )
+        cur.close()
+        return True
+
+
 def initRun(self):
 
     self.flyLogger = flyLogger(self)
@@ -695,6 +705,7 @@ class tool(QtGui.QWidget):
             model.insertRow(0)
             model.setData(model.index(0, self.headerList.index("Id")), entry["id"])
             model.item(0, self.headerList.index("Id")).setTextAlignment(QtCore.Qt.AlignRight)
+            model.item(0, self.headerList.index("Id")).setEditable(False)
 
             if entry["System"]:
                 model.setData(model.index(0, self.headerList.index("System")), entry["System"])
@@ -702,20 +713,27 @@ class tool(QtGui.QWidget):
                 model.setData(model.index(0, self.headerList.index("System")), entry["optionalSystemName"])
                 model.item(0, self.headerList.index("System")).setBackground(QtGui.QColor(255, 0, 0, 128))
 
+            model.item(0, self.headerList.index("System")).setEditable(False)
+
             if entry["System"]:
                 if lastSystem:
                     distance = calcDistance(lastSystem["posX"], lastSystem["posY"], lastSystem["posZ"], entry["posX"], entry["posY"], entry["posZ"])
                     model.setData(model.index(0, self.headerList.index("Distance")), distance)
                     model.item(0, self.headerList.index("Distance")).setTextAlignment(QtCore.Qt.AlignRight)
+                    model.item(0, self.headerList.index("Distance")).setEditable(False)
 
                 lastSystem = entry
             else:
                 lastSystem = None
 
-            model. setData(model.index(0, self.headerList.index("Date")), QtCore.QDateTime(entry["DateTime"] + utcDelta))
-            model. setData(model.index(0, self.headerList.index("Comment")), entry["Comment"])
+            model.setData(model.index(0, self.headerList.index("Date")), QtCore.QDateTime(entry["DateTime"] + utcDelta))
+            model.item(0, self.headerList.index("Date")).setEditable(False)
 
-        # self.listView.setModel(model)
+            model.setData(model.index(0, self.headerList.index("Comment")), entry["Comment"])
+            model.item(0, self.headerList.index("Comment")).setEditable(True)
+
+        model.itemChanged.connect(self.saveItemEdit)
+
         self.proxyModel.setSourceModel(model)
         self.proxyModel.setFilterKeyColumn(self.headerList.index("System"))
 
@@ -724,3 +742,18 @@ class tool(QtGui.QWidget):
 
         for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)
+
+
+    def saveItemEdit(self, item):
+
+        changesSaved = None
+        logID = self.proxyModel.sourceModel().item(item.row(), self.headerList.index("Id")).data(0)
+
+        print(logID, item.data(0), item.column())
+
+        if self.headerList.index("Comment") == item.column() and item.data(0) is not None:
+            print("save new Comment")
+            changesSaved = self.main.flyLogger.updateComment(logID, item.data(0) )
+
+        if changesSaved:
+            self.main.setStatusBar("changes saved")
