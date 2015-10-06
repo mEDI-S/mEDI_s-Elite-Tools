@@ -21,6 +21,7 @@ Tools for Elite:Dangerous
 * Power Control Finder
 * Fly Log
  * Submit Distances Wizard for EDSM and EDSC (add easy and fast new systems) `only avalibel inside a new system in contextmenü over the unknow system`
+* Rares Finder
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)

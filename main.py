@@ -65,6 +65,7 @@ class MainWindow(QtGui.QMainWindow):
     powerControlFinderWidget = []
     flyLogWidget = []
     BookmarksWidget = []
+    raresFinderWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -99,7 +100,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks]
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks, gui.rares_finder]
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
@@ -108,6 +109,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.power_control_finder, self.powerControlFinderWidget)
         self.addTool( gui.flylog, self.flyLogWidget)
         self.addTool( gui.bookmarks, self.BookmarksWidget)
+        self.addTool( gui.rares_finder, self.raresFinderWidget)
 
         self.show()
 
