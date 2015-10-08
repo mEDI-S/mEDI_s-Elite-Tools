@@ -7,5 +7,6 @@ from gui import commodities_finder
 from gui import config
 from gui import bookmarks
 from gui import rares_finder
- 
+from gui import profit_calculator
+
 from gui import dbworker

@@ -66,6 +66,7 @@ class MainWindow(QtGui.QMainWindow):
     flyLogWidget = []
     BookmarksWidget = []
     raresFinderWidget = []
+    profitCalculatorWidget = []
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -100,7 +101,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks, gui.rares_finder]
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks, gui.rares_finder, gui.profit_calculator]
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
@@ -110,6 +111,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.flylog, self.flyLogWidget)
         self.addTool( gui.bookmarks, self.BookmarksWidget)
         self.addTool( gui.rares_finder, self.raresFinderWidget)
+        self.addTool( gui.profit_calculator, self.profitCalculatorWidget)
 
         self.show()
 
@@ -391,6 +393,9 @@ class MainWindow(QtGui.QMainWindow):
 
         if len(self.commoditiesFinderWidget) > 1:  # save only from first windows
             self.commoditiesFinderWidget[1].saveOptions()
+
+        if len(self.profitCalculatorWidget) > 1:
+            self.profitCalculatorWidget[1].saveOptions()
 
 
 

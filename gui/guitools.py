@@ -99,3 +99,11 @@ def convertDateimeToAgeStr(dt=datetime.utcnow() ):
         return "%dh" % (age.seconds / 60 / 60)
     else:
         return "%dm" % (age.seconds / 60)
+
+
+def isInt(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False

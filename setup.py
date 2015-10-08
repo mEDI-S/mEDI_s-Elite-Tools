@@ -244,6 +244,7 @@ if _buildZip:
         db.setConfig('mainwindow.State', '')
         db.setConfig('mainwindow.openWidgets', '')
 
+        db.setConfig('option_cargoSpace', '')
 
         ''' drop private tables '''
         cur.execute("DROP TABLE flylog")
