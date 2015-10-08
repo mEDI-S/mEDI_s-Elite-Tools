@@ -10,6 +10,7 @@ from PySide import QtCore, QtGui
 from datetime import datetime, timedelta
 
 import gui.guitools as guitools
+from builtins import isinstance
 
 __toolname__ = "Profit Calculator"
 __internalName__ = "PrCa"
@@ -30,6 +31,7 @@ class tool(QtGui.QWidget):
         self.guitools = guitools.guitools(self)
         self.createActions()
         self.createTimer()
+        self.calcTimeSum = timedelta(0)
 
     def getWideget(self):
 
@@ -39,9 +41,8 @@ class tool(QtGui.QWidget):
 
         label = QtGui.QLabel("Start Balance:")
         self.startBalance = QtGui.QLineEdit()
-        self.startBalance.textChanged.connect(self.calc)
+        self.startBalance.textChanged.connect(self.formatGuiImput)
         self.startBalance.setAlignment(QtCore.Qt.AlignRight)
-
         gridLayout.addWidget(label, 1, 1)
         gridLayout.addWidget(self.startBalance, 1, 2)
 
@@ -50,14 +51,14 @@ class tool(QtGui.QWidget):
         label = QtGui.QLabel("Current Balance:")
         self.currentBalance = QtGui.QLineEdit()
         self.currentBalance.setAlignment(QtCore.Qt.AlignRight)
-        self.currentBalance.textChanged.connect(self.calc)
+        self.currentBalance.textChanged.connect(self.formatGuiImput)
         gridLayout.addWidget(label, 1, 3)
         gridLayout.addWidget(self.currentBalance, 1, 4)
 
 
         label = QtGui.QLabel("Cargo Space.:")
         self.cargoSpace = QtGui.QLineEdit()
-        self.cargoSpace.textChanged.connect(self.calc)
+        self.cargoSpace.textChanged.connect(self.formatGuiImput)
         self.cargoSpace.setAlignment(QtCore.Qt.AlignRight)
         if self.mydb.getConfig("option_cargoSpace"):
             self.cargoSpace.setText( self.mydb.getConfig("option_cargoSpace") )
@@ -139,7 +140,35 @@ class tool(QtGui.QWidget):
 
         return vGroupBox
 
+    def removeFormat(self, val):
+        if isinstance(val, int):
+            return val
+        return val.replace(",", "")
 
+    def formatImput(self, text):
+        if guitools.isInt(self.removeFormat(text)):
+            return "{:,}".format( int( self.removeFormat(text)))
+        else:
+            return text
+
+    def formatLineEdit(self, edit):
+        if edit.text():
+            lastPos = edit.cursorPosition()
+            lastlen = len(edit.text())
+            edit.setText(self.formatImput(edit.text()))
+
+            lastPos += len(edit.text()) - lastlen
+
+            edit.setCursorPosition(lastPos)
+
+    def formatGuiImput(self):
+        if self.startBalance.isVisible():
+            self.formatLineEdit(self.startBalance)
+            self.formatLineEdit(self.currentBalance)
+            self.formatLineEdit(self.cargoSpace)
+    
+            self.calc()
+        
     def timeChanged(self):
 #        print("timeChanged")
         if not self.autoUpdateTimer.isActive():
@@ -161,13 +190,15 @@ class tool(QtGui.QWidget):
 
 
     def pauseCalcTimer(self):
-        self.autoUpdateTimer.stop()
-        self.calcTimeSum = self.calcTimeSum + datetime.now() - self.calcTimeStart
-
+        if self.calcTimeStart:
+            self.autoUpdateTimer.stop()
+            self.calcTimeSum = self.calcTimeSum + datetime.now() - self.calcTimeStart
+            self.calcTimeStart = None
 
     def resetCalcTimer(self, setGui=True):
         self.calcTimeSum = timedelta(0)
-        self.calcTimeStart = datetime.now()
+        if self.calcTimeStart:
+            self.calcTimeStart = datetime.now()
         if setGui:
             self.timeEdit.setTime( QtCore.QTime(0, 0, 0) )
 
@@ -186,42 +217,49 @@ class tool(QtGui.QWidget):
         return QtCore.QTime().addSecs(td.total_seconds())
 
     def calc(self):
-        if not self.calcTimeStart:
-            return
 
-        tdelta = datetime.now() - self.calcTimeStart
-        timeSum = self.calcTimeSum + tdelta
+        if self.calcTimeStart:
+            tdelta = datetime.now() - self.calcTimeStart
+            timeSum = self.calcTimeSum + tdelta
+        else:
+            timeSum = self.calcTimeSum
+
         self.timeEdit.setTime( self.timedelta2qtime(timeSum) )
 
-        if guitools.isInt(self.startBalance.text()):
-            startBalance = int(self.startBalance.text())
+        startBalance = self.removeFormat(self.startBalance.text())
+        if guitools.isInt( startBalance ):
+            startBalance = int( startBalance )
         else:
             return
 
-        if guitools.isInt(self.currentBalance.text()):
-            currentBalance = int(self.currentBalance.text())
+        currentBalance = self.removeFormat(self.currentBalance.text())
+        if guitools.isInt(currentBalance):
+            currentBalance = int(currentBalance)
         else:
             return
 
         totalProfit = currentBalance - startBalance
-        self.totalProfit.setText( str(totalProfit) )
+        self.totalProfit.setText( self.formatImput(totalProfit) )
 
         if timeSum.total_seconds() <= 0:
             return
+
         hourProfit = ( totalProfit / timeSum.total_seconds() ) * 60 * 60
         hourProfit = int(round(hourProfit, 0))
 
-        self.hourProfit.setText( str(hourProfit) )
+        self.hourProfit.setText( self.formatImput(hourProfit) )
 
-        if guitools.isInt(self.cargoSpace.text()):
-            cargoSpace = int(self.cargoSpace.text())
+        cargoSpace = self.removeFormat(self.cargoSpace.text())
+        if guitools.isInt(cargoSpace):
+            cargoSpace = int(cargoSpace)
         else:
             return
+
         cargoProfit = totalProfit / cargoSpace
-        self.tonProfit.setText( str( int(round(cargoProfit, 0)) ) )
+        self.tonProfit.setText( self.formatImput( int(round(cargoProfit, 0)) ) )
 
         cargoHourProfit = ( cargoProfit / timeSum.total_seconds() ) * 60 * 60
-        self.tonHourProfit.setText( str(int(round(cargoHourProfit, 0))) )
+        self.tonHourProfit.setText( self.formatImput(int(round(cargoHourProfit, 0))) )
 
     def saveOptions(self):
         self.mydb.setConfig('option_cargoSpace', self.cargoSpace.text())
