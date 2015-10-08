@@ -9,6 +9,8 @@ from dateutil.parser import parse as dateutil_parse
 import json
 from datetime import timedelta
 
+_mountList = ['Fixed', 'Gimballed', 'Turreted']
+
 
 class EDDNimport(object):
 
@@ -62,6 +64,8 @@ class EDDNimport(object):
             self.importCommodity2Data(timestamp, jsonData)
         elif jsonData['$schemaRef'] == 'http://schemas.elite-markets.net/eddn/shipyard/1':
             self.importShipyard1Data(timestamp, jsonData)
+        elif jsonData['$schemaRef'] == 'http://schemas.elite-markets.net/eddn/outfitting/1':
+            self.importOutfitting1Data(timestamp, jsonData)
         else:
             print("unkonwn schema %s" % jsonData['$schemaRef'] )
 
@@ -111,4 +115,33 @@ class EDDNimport(object):
             if shipID:
                 cur.execute("insert or ignore into shipyard (SystemID, StationID, ShipID, modifydate ) values (?,?,?,?) ", (systemID, stationID, shipID, timestamp))
 
+        cur.close()
+
+    def importOutfitting1Data(self, timestamp, jsonData):
+        systemID = self.mydb.getSystemIDbyName(jsonData["message"]["systemName"])
+        stationID = self.mydb.getStationID(systemID, jsonData["message"]["stationName"])
+        if not stationID:
+            return
+
+        cur = self.mydb.cursor()
+
+        for modules in jsonData["message"]["modules"]:
+            categoryID = self.mydb.getOutfittingCategoryID(modules['category'], True)
+            nameID = self.mydb.getOutfittingNameID(modules['name'], True)
+            classID = modules['class']
+
+            guidanceID = None
+            if 'guidance' in modules:
+                guidanceID = self.mydb.getOutfittingGuidanceID(modules['guidance'], True)
+
+            mountID = None
+            if 'mount' in modules:
+                mountID = self.mydb.getOutfittingMountID(modules['mount'], True)
+
+            rating = modules['rating']
+
+            if categoryID and nameID:
+                cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?) ",
+                             (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, timestamp))
+            
         cur.close()
