@@ -23,6 +23,7 @@ Tools for Elite:Dangerous
  * Submit Distances Wizard for EDSM and EDSC (add easy and fast new systems) `only avalibel inside a new system in contextmenü over the unknow system`
 * Rares Finder
 * Profit Calculator
+* Outfitting Finder
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)
@@ -48,6 +49,9 @@ multiple open tools
 
 ![Commodities Finder](screenshots/CommoditiesFinder.jpg)
 Commodities Finder
+
+![Outfitting Finder](screenshots/OutfittingFinder.jpg)
+Outfitting Finder
 
 ## Usage ##
 1. Select in Tools menü ur wanted tool
