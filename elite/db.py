@@ -269,12 +269,12 @@ class db(object):
         self.con.execute("create UNIQUE index  IF NOT EXISTS shipyard_unique_systemID_StationID_ShipID on shipyard (systemID, StationID, ShipID)")
 
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_category (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT UNIQUE)")
-        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_modulename (id INTEGER PRIMARY KEY AUTOINCREMENT, modulename TEXT UNIQUE)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_modulename (id INTEGER PRIMARY KEY AUTOINCREMENT, modulname TEXT UNIQUE)")
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_mount (id INTEGER PRIMARY KEY AUTOINCREMENT, mount TEXT UNIQUE)")
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_guidance (id INTEGER PRIMARY KEY AUTOINCREMENT, guidance TEXT UNIQUE)")
 
-        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT, NameID INT, Class INT, MountID INT, CategoryID INT, Rating TEXT, GuidanceID INT, modifydate timestamp)")
-        self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating on outfitting (StationID, NameID, Class, MountID, Rating)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT, NameID INT, Class INT, MountID INT, CategoryID INT, Rating TEXT, GuidanceID INT, shipID INT, modifydate timestamp)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
 
         # powers
         self.con.execute("CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
@@ -431,12 +431,18 @@ class db(object):
             self.__systemIDCache[system] = result[0]
             return result[0]
 
-    def getShiptID(self, name):
+    def getShipID(self, name, addUnknown=None):
         name = name.lower()
 
         cur = self.cursor()
         cur.execute("select id from ships where LOWER(Name)=? limit 1", (name,))
         result = cur.fetchone()
+        if not result and addUnknown:
+            cur.execute("insert or IGNORE into ships (Name) values (?) ", (name, ))
+            cur.execute("select id from ships where LOWER(Name)=? limit 1", (name,))
+
+            result = cur.fetchone()
+
         cur.close()
         if result:
             return result[0]
@@ -1402,82 +1408,3 @@ class db(object):
                           })
         return data
 
-
-    def getOutfittingCategoryID(self, category, addUnknown=None):
-        if not category or category == "None":
-            return
-
-        cur = self.cursor()
-        cur.execute("select id from outfitting_category where LOWER(category)=? limit 1", (category.lower(),))
-
-        result = cur.fetchone()
-
-        if not result and addUnknown:
-            cur.execute("insert or IGNORE into outfitting_category (category) values (?) ", (category, ))
-            cur.execute("select id from outfitting_category where category=? limit 1", (category, ))
-
-            result = cur.fetchone()
-
-        cur.close()
-        if result:
-            return result[0]
-
-
-    def getOutfittingNameID(self, name, addUnknown=None):
-        if not name:
-            return
-
-        cur = self.cursor()
-        cur.execute("select id from outfitting_modulename where LOWER(modulename)=? limit 1", (name.lower(),))
-
-        result = cur.fetchone()
-
-        if not result and addUnknown:
-            cur.execute("insert or IGNORE into outfitting_modulename (modulename) values (?) ", (name, ))
-            cur.execute("select id from outfitting_modulename where modulename=? limit 1", (name, ))
-
-            result = cur.fetchone()
-
-        cur.close()
-        if result:
-            return result[0]
-
-
-    def getOutfittingMountID(self, mount, addUnknown=None):
-        if not mount:
-            return
-
-        cur = self.cursor()
-        cur.execute("select id from outfitting_mount where LOWER(mount)=? limit 1", (mount.lower(),))
-
-        result = cur.fetchone()
-
-        if not result and addUnknown:
-            cur.execute("insert or IGNORE into outfitting_mount (mount) values (?) ", (mount, ))
-            cur.execute("select id from outfitting_mount where mount=? limit 1", (mount, ))
-
-            result = cur.fetchone()
-
-        cur.close()
-        if result:
-            return result[0]
-
-
-    def getOutfittingGuidanceID(self, guidance, addUnknown=None):
-        if not guidance:
-            return
-
-        cur = self.cursor()
-        cur.execute("select id from outfitting_guidance where LOWER(guidance)=? limit 1", (guidance.lower(),))
-
-        result = cur.fetchone()
-
-        if not result and addUnknown:
-            cur.execute("insert or IGNORE into outfitting_guidance (guidance) values (?) ", (guidance, ))
-            cur.execute("select id from outfitting_guidance where guidance=? limit 1", (guidance, ))
-
-            result = cur.fetchone()
-
-        cur.close()
-        if result:
-            return result[0]

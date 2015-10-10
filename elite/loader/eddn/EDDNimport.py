@@ -8,8 +8,7 @@ Created on 28.09.2015
 from dateutil.parser import parse as dateutil_parse
 import json
 from datetime import timedelta
-
-_mountList = ['Fixed', 'Gimballed', 'Turreted']
+import elite
 
 
 class EDDNimport(object):
@@ -17,6 +16,7 @@ class EDDNimport(object):
 
     def __init__(self, mydb):
         self.mydb = mydb
+        self.outfitting = elite.outfitting(self.mydb)
 
     def convertStrptimeToDatetimeUTC(self, timestr):
     
@@ -106,11 +106,7 @@ class EDDNimport(object):
         cur.execute("delete from shipyard where StationID=?", (stationID,))
 
         for ship in jsonData["message"]["ships"]:
-            shipID = self.mydb.getShiptID(ship)
-            if not shipID:
-                print("EDDN new shipname: %s " % ship)
-                cur.execute("insert or IGNORE into ships (Name) values (?) ", (ship,))
-                shipID = self.mydb.getShiptID(ship)
+            shipID = self.mydb.getShipID(ship, True)
 
             if shipID:
                 cur.execute("insert or ignore into shipyard (SystemID, StationID, ShipID, modifydate ) values (?,?,?,?) ", (systemID, stationID, shipID, timestamp))
@@ -126,22 +122,28 @@ class EDDNimport(object):
         cur = self.mydb.cursor()
 
         for modules in jsonData["message"]["modules"]:
-            categoryID = self.mydb.getOutfittingCategoryID(modules['category'], True)
-            nameID = self.mydb.getOutfittingNameID(modules['name'], True)
+            categoryID = self.outfitting.getOutfittingCategoryID(modules['category'], True)
+            nameID = self.outfitting.getOutfittingNameID(modules['name'], True)
             classID = modules['class']
 
             guidanceID = None
             if 'guidance' in modules:
-                guidanceID = self.mydb.getOutfittingGuidanceID(modules['guidance'], True)
+                guidanceID = self.outfitting.getOutfittingGuidanceID(modules['guidance'], True)
 
             mountID = None
             if 'mount' in modules:
-                mountID = self.mydb.getOutfittingMountID(modules['mount'], True)
+                mountID = self.outfitting.getOutfittingMountID(modules['mount'], True)
 
+            shipID = None
+            if 'ship' in modules:
+                shipID = self.mydb.getShipID(modules['ship'], True)
+                if not shipID:
+                    return
+                
             rating = modules['rating']
 
             if categoryID and nameID:
-                cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?) ",
-                             (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, timestamp))
+                cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?, ?) ",
+                             (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID, timestamp))
             
         cur.close()
