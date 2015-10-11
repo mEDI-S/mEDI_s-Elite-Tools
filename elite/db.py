@@ -1229,7 +1229,7 @@ class db(object):
                         logPath = mypath
                         break
     
-                if os.path.isdir(logPath):
+                if logPath and os.path.isdir(logPath):
                     self.setConfig('EliteLogDir', logPath)
                     # print("set %s" % logPath)
 
