@@ -964,7 +964,7 @@ class db(object):
 
         padsizePart = ""
         if onlyLpads:
-            padsizePart = " AND stationB.max_pad_size = 'L' "
+            padsizePart = " AND stationB.max_pad_size = 'L' AND stationA.max_pad_size = 'L'  "
 
 
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.id, priceB.id,
