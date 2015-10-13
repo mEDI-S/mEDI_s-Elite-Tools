@@ -24,7 +24,7 @@ __forceupdateFile__ = "updatetrigger.txt"
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db", "my.db")
-DBVERSION = 2
+DBVERSION = 3
 
 
 class db(object):
@@ -273,7 +273,8 @@ class db(object):
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_mount (id INTEGER PRIMARY KEY AUTOINCREMENT, mount TEXT UNIQUE)")
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_guidance (id INTEGER PRIMARY KEY AUTOINCREMENT, guidance TEXT UNIQUE)")
 
-        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT, NameID INT, Class INT, MountID INT, CategoryID INT, Rating TEXT, GuidanceID INT, shipID INT, modifydate timestamp)")
+
+        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0, modifydate timestamp)")
         self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
 
         # powers
@@ -332,6 +333,13 @@ class db(object):
     
             self.con.execute("vacuum systems;")
             self.con.execute("vacuum stations;")
+
+        if dbVersion < 3:
+            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
+            self.con.execute( "DROP TABLE `outfitting`;")
+
+            self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0, modifydate timestamp)")
+            self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
 
         self.con.commit()
 

@@ -95,6 +95,7 @@ class EDDNimport(object):
 
             cur.close()
 
+
     def importShipyard1Data(self, timestamp, jsonData):
         systemID = self.mydb.getSystemIDbyName(jsonData["message"]["systemName"])
         stationID = self.mydb.getStationID(systemID, jsonData["message"]["stationName"])
@@ -113,12 +114,14 @@ class EDDNimport(object):
 
         cur.close()
 
+
     def importOutfitting1Data(self, timestamp, jsonData):
         systemID = self.mydb.getSystemIDbyName(jsonData["message"]["systemName"])
         stationID = self.mydb.getStationID(systemID, jsonData["message"]["stationName"])
         if not stationID:
             return
 
+#        print("importOutfitting1Data", jsonData)
         cur = self.mydb.cursor()
 
         for modules in jsonData["message"]["modules"]:
@@ -142,7 +145,22 @@ class EDDNimport(object):
                 
             rating = modules['rating']
 
+            if not shipID:
+                shipID = 0
+            if not guidanceID:
+                guidanceID = 0
+            if not categoryID:
+                categoryID = 0
+            if not mountID:
+                mountID = 0
+            if not classID:
+                classID = 0
+
             if categoryID and nameID:
+                cur.execute("delete FROM outfitting where StationID=? AND NameID=? AND Class=? AND MountID=? AND CategoryID=? AND Rating=? AND GuidanceID=? AND shipID=?",
+                                                        (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID))
+#                print(cur.rowcount)
+
                 cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?, ?) ",
                              (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID, timestamp))
             

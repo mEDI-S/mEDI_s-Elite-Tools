@@ -61,6 +61,7 @@ class outfitting(object):
         cur.close()
         return result
 
+
     def getRatingList(self):
         cur = self.mydb.cursor()
 
@@ -69,6 +70,7 @@ class outfitting(object):
         result = cur.fetchall()
         cur.close()
         return result
+
 
     def getMountList(self):
         cur = self.mydb.cursor()
@@ -118,6 +120,7 @@ class outfitting(object):
         cur.close()
         if result:
             return result[0]
+
 
     def getOutfitting(self, nameID, distance, maxStarDist, maxAgeDate, systemID=None, classID=None, rating=None, mountID=None, shipID=None, allegiance=None, government=None):
 
