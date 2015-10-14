@@ -11,3 +11,5 @@ from gui import profit_calculator
 from gui import outfitting_finder
 
 from gui import dbworker
+
+from gui import statistics

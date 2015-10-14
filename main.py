@@ -115,6 +115,9 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.profit_calculator, self.profitCalculatorWidget)
         self.addTool( gui.outfitting_finder, self.outfittingFinderWidget)
 
+
+        gui.statistics.initRun(self)
+
         self.show()
 
         self.loadLastWindowsOptions()
@@ -304,6 +307,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.helpMenu.addAction(self.aboutAct)
         self.helpMenu.addAction(self.aboutQtAct)
+        self.helpMenu.addSeparator()
 
     def createTimer(self):
         self.updateDBtimer = QtCore.QTimer()
