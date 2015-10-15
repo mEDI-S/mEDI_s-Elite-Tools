@@ -9,6 +9,7 @@ from PySide import QtCore, QtGui
 import PySide
 
 import gui.guitools as guitools
+from sqlite3_functions import calcDistance
 
 __toolname__ = "Bookmarks"
 __internalName__ = "Bo"
@@ -31,6 +32,42 @@ class tool(QtGui.QWidget):
     def getWideget(self):
 
 
+        locationButton = QtGui.QToolButton()
+        locationButton.setIcon(self.guitools.getIconFromsvg("img/location.svg"))
+        locationButton.clicked.connect(self.setCurentLocation)
+        locationButton.setToolTip("Current Location")
+
+
+        locationLabel = QtGui.QLabel("Location:")
+        self.locationlineEdit = guitools.LineEdit()
+        self.locationlineEdit.setText(self.main.location.getLocation())
+        self.locationlineEdit.textChanged.connect(self.showBookmarks)
+
+
+
+        self.searchbutton = QtGui.QPushButton("Search")
+        self.searchbutton.clicked.connect(self.showBookmarks)
+
+
+        layout = QtGui.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(locationLabel)
+        layout.addWidget(locationButton)
+        
+        layout.addWidget(self.locationlineEdit)
+        
+        layout.addWidget(self.searchbutton)
+
+        locationGroupBox = QtGui.QGroupBox()
+        locationGroupBox.setFlat(True)
+        locationGroupBox.setStyleSheet("""QGroupBox {border:0;margin:0;padding:0;}  margin:0;padding:0;""")
+
+        # locationGroupBox.setFlat(True)
+        locationGroupBox.setLayout(layout)
+
+
+
         self.listView = QtGui.QTreeView()
 
         self.listView.setAlternatingRowColors(True)
@@ -44,17 +81,23 @@ class tool(QtGui.QWidget):
         self.listView.customContextMenuRequested.connect(self.myContextMenuEvent)
 
 
+
+
         vGroupBox = QtGui.QGroupBox()
         vGroupBox.setFlat(True)
 
         layout = QtGui.QVBoxLayout()
         layout.setContentsMargins(6, 6, 6, 6)
 
+        layout.addWidget(locationGroupBox)
         layout.addWidget(self.listView)
 
         vGroupBox.setLayout(layout)
 
+        self.guitools.setSystemComplete("", self.locationlineEdit)
+
         self.showBookmarks()
+
         return vGroupBox
 
 
@@ -70,6 +113,8 @@ class tool(QtGui.QWidget):
         menu.addAction(self.reloadAct)
         menu.exec_(self.listView.viewport().mapToGlobal(event))
 
+    def setCurentLocation(self):
+        self.locationlineEdit.setText(self.main.location.getLocation())
 
     def createActions(self):
         self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
@@ -101,11 +146,19 @@ class tool(QtGui.QWidget):
                 self.mydb.deleteBookmark( bockmarkID )
                 self.showBookmarks()
 
+
     def showBookmarks(self):
+
+        location = self.locationlineEdit.text()
+        systemID = self.mydb.getSystemIDbyName(location)
+        currentSystem = None
+        if systemID:
+            currentSystem = self.mydb.getSystemData(systemID)
+
 
         bookmarks = self.mydb.getBookmarks()
 
-        self.bookmarkModel = BookmarkTreeModel(bookmarks)
+        self.bookmarkModel = BookmarkTreeModel(bookmarks, currentSystem)
 
 
         self.listView.setModel(self.bookmarkModel)
@@ -220,11 +273,13 @@ class BookmarkChildTreeItem(object):
         return 0
 
 
-class BookmarkTreeModel(QtCore.QAbstractItemModel):
-    def __init__(self, data, parent=None):
-        super(BookmarkTreeModel, self).__init__(parent)
 
-        self.rootItem = BookmarkRootTreeItem(("Id.", "System", "Station", "Item", ""))
+class BookmarkTreeModel(QtCore.QAbstractItemModel):
+    def __init__(self, data, currentSystem, parent=None):
+        super(BookmarkTreeModel, self).__init__(parent)
+        self.currentSystem = currentSystem
+
+        self.rootItem = BookmarkRootTreeItem(("Id.", "Name", "System", "Distance", "Station", "Item", ""))
         self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
@@ -299,14 +354,31 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
 
         for bookmark in bookmarks:
 
-            data = [bookmark['id'], bookmark['Name'], "", ""]
+            if bookmark['childs'] and len(bookmark['childs']) >= 1:
+                distance = None
+                if self.currentSystem and self.currentSystem['posX'] and bookmark['childs'][0]['posX']:
+                    distance = calcDistance(self.currentSystem["posX"], self.currentSystem["posY"], self.currentSystem["posZ"], bookmark['childs'][0]["posX"], bookmark['childs'][0]["posY"], bookmark['childs'][0]["posZ"])
+
+            system = None
+            if bookmark['Type'] == 1:
+                system = bookmark['childs'][0]['System']
+
+            data = [bookmark['id'], bookmark['Name'], system, distance, "", ""]
+
             parents[-1].appendChild(BookmarkTreeItem(data, parents[-1]))
 
-            # follow is a child
-            parents.append(parents[-1].child(parents[-1].childCount() - 1))
-
-            for child in bookmark['childs']:
-                data = ["", child['System'], child['Station'], child['name']]
-                parents[-1].appendChild(BookmarkChildTreeItem(data, parents[-1]))
-
-            parents.pop()
+            if bookmark['Type'] != 1:
+            
+                # follow is a child
+                parents.append(parents[-1].child(parents[-1].childCount() - 1))
+    
+                for child in bookmark['childs']:
+                    distance = None
+                    if self.currentSystem and self.currentSystem['posX'] and child['posX']:
+                        distance = calcDistance(self.currentSystem["posX"], self.currentSystem["posY"], self.currentSystem["posZ"], child["posX"], child["posY"], child["posZ"])
+    
+                    data = ["", "", child['System'], distance, child['Station'], child['name']]
+    
+                    parents[-1].appendChild(BookmarkChildTreeItem(data, parents[-1]))
+    
+                parents.pop()
