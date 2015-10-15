@@ -108,6 +108,70 @@ class Window(QtGui.QDialog):
         systemsWith.append(countsystems)
         stationsWith.append(countstations)
 
+        label = "Prices last 24h:"
+        count = self.countTable('price', None, "", "where modified >= date('now','-1 day')")
+        countsystems = self.countTable('price', "SystemID", "", "where modified >= date('now','-1 day')")
+        countstations = self.countTable('price', "StationID", "", "where modified >= date('now','-1 day')")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+        label = "Prices last 14Days:"
+        count = self.countTable('price', None, "", "where modified >= date('now','-14 day')")
+        countsystems = self.countTable('price', "SystemID", "", "where modified >= date('now','-14 day')")
+        countstations = self.countTable('price', "StationID", "", "where modified >= date('now','-14 day')")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+
+        label = "Prices from MMS:"
+        count = self.countTable('price', None, "", "where source=1")
+        countsystems = self.countTable('price', "SystemID", "", "where source=1")
+        countstations = self.countTable('price', "StationID", "", "where source=1")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+
+        label = "Prices from BPC:"
+        count = self.countTable('price', None, "", "where source=2")
+        countsystems = self.countTable('price', "SystemID", "", "where source=2")
+        countstations = self.countTable('price', "StationID", "", "where source=2")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+        label = "Prices from EDMC:"
+        count = self.countTable('price', None, "", "where source=3")
+        countsystems = self.countTable('price', "SystemID", "", "where source=3")
+        countstations = self.countTable('price', "StationID", "", "where source=3")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+        label = "Prices from EDDB:"
+        count = self.countTable('price', None, "", "where source=4")
+        countsystems = self.countTable('price', "SystemID", "", "where source=4")
+        countstations = self.countTable('price', "StationID", "", "where source=4")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
+
+        label = "Prices from EDDN:"
+        count = self.countTable('price', None, "", "where source=5")
+        countsystems = self.countTable('price', "SystemID", "", "where source=5")
+        countstations = self.countTable('price', "StationID", "", "where source=5")
+        labels.append(label)
+        values.append(count)
+        systemsWith.append(countsystems)
+        stationsWith.append(countstations)
 
 
         label = "Outfittings:"
@@ -149,6 +213,9 @@ class Window(QtGui.QDialog):
         values.append(count)
         systemsWith.append(None)
         stationsWith.append(None)
+
+
+
 
 
 
@@ -195,13 +262,11 @@ class Window(QtGui.QDialog):
 
 
 
-    def countTable(self, table, DISTINCT=None, leftjoin=None):
-        if not leftjoin:
-            leftjoin = ""
+    def countTable(self, table, DISTINCT=None, leftjoin="", withstr=""):
 
         if DISTINCT:
-            result = self.mydb.con.execute("SELECT COUNT(DISTINCT %s) FROM %s %s" % (DISTINCT, table, leftjoin) )
+            result = self.mydb.con.execute("SELECT COUNT(DISTINCT %s) FROM %s %s %s" % (DISTINCT, table, leftjoin, withstr) )
         else:
-            result = self.mydb.con.execute("SELECT COUNT(*) FROM %s" % table )
+            result = self.mydb.con.execute("SELECT COUNT(*) FROM %s %s" % (table, withstr) )
         if result:
             return str(result.fetchone()[0])
