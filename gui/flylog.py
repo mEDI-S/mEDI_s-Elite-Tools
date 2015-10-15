@@ -337,7 +337,9 @@ class tool(QtGui.QWidget):
         menu.addAction(self.saveBookmarkAct)
         
         indexes = self.listView.selectionModel().selectedIndexes()
-        system = self.proxyModel.sourceModel().item(indexes[0].row(), self.headerList.index("System")).data(0)
+        item = self.proxyModel.mapToSource( indexes[0] )
+        system = self.proxyModel.sourceModel().item(item.row(), self.headerList.index("System")).data(0)
+
 
         if system and system == self.main.location.getLocation():
             ''' allow submit edsc only in same system '''
@@ -623,7 +625,6 @@ class tool(QtGui.QWidget):
 
             
 
-
     def submitDistancesEDSC(self):
         print("submitDistancesEDSC")
 
@@ -781,8 +782,8 @@ class tool(QtGui.QWidget):
     def saveBookmark(self):
 
         indexes = self.listView.selectionModel().selectedIndexes()
-
-        logID = self.proxyModel.sourceModel().item(indexes[0].row(), self.headerList.index("Id")).data(0)
+        item = self.proxyModel.mapToSource( indexes[0] )
+        logID = self.proxyModel.sourceModel().item(item.row(), self.headerList.index("Id")).data(0)
 
         logEntry = self.main.flyLogger.getLogByLogID(logID)
 
