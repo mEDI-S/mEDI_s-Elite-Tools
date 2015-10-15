@@ -75,6 +75,20 @@ class flyLogger(object):
         return result
 
 
+    def getLogByLogID(self, logID):
+        cur = self.mydb.cursor()
+        
+        cur.execute("""select * FROM flylog
+                        left join systems on flylog.SystemID=systems.id
+                        where flylog.id=?
+                     """, (logID, ))
+
+        result = cur.fetchone()
+
+        cur.close()
+        return result
+
+
     def insertSystemCoords(self, system, coords):
         if coords and system:
             self.main.lockDB()
@@ -320,6 +334,8 @@ class tool(QtGui.QWidget):
         menu = QtGui.QMenu(self)
 
         menu.addAction(self.copyAct)
+        menu.addAction(self.saveBookmarkAct)
+        
         indexes = self.listView.selectionModel().selectedIndexes()
         system = self.proxyModel.sourceModel().item(indexes[0].row(), self.headerList.index("System")).data(0)
 
@@ -337,6 +353,9 @@ class tool(QtGui.QWidget):
 
         self.openSubmitDistancesWizardAct = QtGui.QAction("SubmitDistances Wizard", self,
                 statusTip="SubmitDistances Wizard", triggered=self.openSubmitDistancesWizard)
+
+        self.saveBookmarkAct = QtGui.QAction("Bookmark System", self,
+                statusTip="save a bookmark", triggered=self.saveBookmark)
 
 
     def setCurentLocation(self):
@@ -757,3 +776,35 @@ class tool(QtGui.QWidget):
 
         if changesSaved:
             self.main.setStatusBar("changes saved")
+
+
+    def saveBookmark(self):
+
+        indexes = self.listView.selectionModel().selectedIndexes()
+
+        logID = self.proxyModel.sourceModel().item(indexes[0].row(), self.headerList.index("Id")).data(0)
+
+        logEntry = self.main.flyLogger.getLogByLogID(logID)
+
+        if not logEntry['SystemID']:
+            return
+
+
+        defName = "System:%s" % (logEntry['System'])
+        if logEntry['Comment']:
+            defName += " (%s)" % logEntry['Comment']
+
+        text, ok = QtGui.QInputDialog.getText(self, "Bockmark Name",
+                "Bockmark Name:", QtGui.QLineEdit.Normal, defName)
+
+        if ok and text != '':
+            routeData = []
+
+            routeData.append(   {
+                                'SystemID': logEntry['SystemID'],
+                                'StationID': None,
+                                'ItemID': None
+                                })
+            self.main.lockDB()
+            self.mydb.saveBookmark(text, routeData, 1)
+            self.main.unlockDB()
