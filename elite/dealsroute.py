@@ -101,6 +101,13 @@ class route(object):
         else:
             return route["backToStartDeal"]["priceAid"]
 
+    def getPriceBID(self, route, hopID):
+        if hopID < len(route["path"]):
+            return route["path"][hopID]["priceBid"]
+        else:
+            return route["backToStartDeal"]["priceBid"]
+
+
     def getItemName(self, route, hopID):
         if hopID < len(route["path"]):
             return route["path"][hopID]["itemName"]
