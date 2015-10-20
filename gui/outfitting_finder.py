@@ -390,6 +390,12 @@ class tool(QtGui.QWidget):
         self.listView.setModel(model)
 
         if firstrun:
+            sectionPos = self.mydb.getConfig('option_of.header.sectionPos')
+            if sectionPos:
+                sectionPosList = sectionPos.strip().split(',')
+                for i, pos in enumerate(sectionPosList):
+                    self.listView.header().moveSection(self.listView.header().visualIndex(int(pos)), i)
+
             self.listView.sortByColumn(self.headerList.index("Distance"), QtCore.Qt.SortOrder.AscendingOrder)
 
         for i in range(0, len(self.headerList)):
