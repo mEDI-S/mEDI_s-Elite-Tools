@@ -535,12 +535,6 @@ class tool(QtGui.QWidget):
         self.submitDistancesWizard.setWindowFlags( QtCore.Qt.Drawer )
         pos = self.submitDistancesWizard.pos()
 
-        if pos.x() < 0:
-            pos.setX(0)
-
-        if pos.y() < 0:
-            pos.setY(0)
-
         self.submitDistancesWizard.move(pos)
         self.submitDistancesWizard.show()
         self.submitDistancesWizard.activateWindow()
@@ -573,6 +567,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
             return
 
         status = self.main.flyLogger.edsm.submitDistances(self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList)
@@ -607,6 +602,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
 
             if 'coords' in status['basesystem']:
                 self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(), status['basesystem']['coords'])
@@ -622,6 +618,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
 
             
 
@@ -652,6 +649,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
             return
 
         status = self.main.flyLogger.edsc.submitDistances(self.systemNameLineEdit.text(), self.commanderNameLineEdit.text(), refList)
@@ -683,6 +681,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
 
             if 'trilat' in status['status'] and len(status['status']['trilat']) and status['status']['trilat'][0]['system'] == self.systemNameLineEdit.text() and status['status']['trilat'][0]['coord']:
                 self.main.flyLogger.insertSystemCoords(self.systemNameLineEdit.text(), status['status']['trilat'][0]['coord'])
@@ -700,6 +699,7 @@ class tool(QtGui.QWidget):
                         QtGui.QMessageBox.NoButton, self)
             msgBox.setWindowFlags(msgBox.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             msgBox.exec_()
+            self.submitDistancesWizard.activateWindow()
 
 
     def showLog(self):
