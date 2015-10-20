@@ -18,7 +18,7 @@ import elite.loader.eddb
 import elite.loader.raresimport
 import elite.loader.eddn
 
-__loaderCount__ = 6
+__loaderCount__ = 7
 __forceupdateFile__ = "updatetrigger.txt"
 
 import sqlite3_functions
@@ -164,14 +164,6 @@ class db(object):
             if self._active is not True:
                 return
 
-        if self.getConfig("plugin_bpc") is not 0:
-            myPos += 1
-            if self.sendProcessMsg:
-                self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
-            elite.loader.bpc.prices.loader(self).importData()
-            if self._active is not True:
-                return
-
 
         if self.getConfig("plugin_eddn") is not 0:
             myPos += 1
@@ -181,11 +173,30 @@ class db(object):
                 for client in self.__streamUpdater:
                     client.update()
 
+
         if self.getConfig("plugin_eddndynamoDB") is not 0:
             myPos += 1
             if self.sendProcessMsg:
                 self.sendProcessMsg("Update: EDDN dynamoDB", myPos, self.loaderCount)
             elite.loader.eddn.dynamoDB.loader(self).update()
+            if self._active is not True:
+                return
+
+
+        if self.getConfig("plugin_bpc") is not 0:
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: BPC", myPos, self.loaderCount)
+            elite.loader.bpc.prices.loader(self).importData()
+            if self._active is not True:
+                return
+
+
+        if self.getConfig("plugin_bpcServer") == 1:  # default is off
+            myPos += 1
+            if self.sendProcessMsg:
+                self.sendProcessMsg("Update: BPCServer", myPos, self.loaderCount)
+            elite.loader.bpc.server.loader(self).importData()
             if self._active is not True:
                 return
 

@@ -140,6 +140,11 @@ class ConfigurationPage_Source(QtGui.QWidget):
         if self.mydb.getConfig("plugin_bpc") is not 0:
             self.bpcOptions.setChecked(True)
 
+        self.bpcServerOptions = QtGui.QCheckBox("Slopey's BPC Market Tool Data from BPC Server")
+        if self.mydb.getConfig("plugin_bpcServer") == 1:
+            self.bpcServerOptions.setChecked(True)
+
+
         ''' coord sources '''
         self.edsmOptions = QtGui.QCheckBox("EDSM - Elite Dangerous Star Map")
         if self.mydb.getConfig("plugin_edsm") is not 0:
@@ -157,6 +162,7 @@ class ConfigurationPage_Source(QtGui.QWidget):
         tradingLayout.addWidget(self.mmsOptions)
         tradingLayout.addWidget(self.edmcOptions)
         tradingLayout.addWidget(self.bpcOptions)
+        tradingLayout.addWidget(self.bpcServerOptions)
 
         tradingDataconfigGroup = QtGui.QGroupBox("Trading Data Sources")
         tradingDataconfigGroup.setLayout(tradingLayout)
@@ -191,6 +197,7 @@ class ConfigurationPage_Source(QtGui.QWidget):
         self.mydb.setConfig('plugin_mms', self.mmsOptions.isChecked())
         self.mydb.setConfig('plugin_edmc', self.edmcOptions.isChecked())
         self.mydb.setConfig('plugin_bpc', self.bpcOptions.isChecked())
+        self.mydb.setConfig('plugin_bpcServer', self.bpcServerOptions.isChecked())
 
         self.mydb.setConfig('plugin_edsm', self.edsmOptions.isChecked())
         self.mydb.setConfig('plugin_edsc', self.edscOptions.isChecked())

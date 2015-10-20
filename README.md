@@ -30,7 +30,7 @@ Tools for Elite:Dangerous
 * [Elite: Dangerous Market Connector (EDMC) `csv files`](https://github.com/Marginal/EDMarketConnector)
 * [eddb - Elite: Dangerous Database](http://eddb.io)
 * [Maddavo's Market Share](http://www.davek.com.au/td/)
-* [Slopey's BPC Market Tool `local installation`](https://forums.frontier.co.uk/showthread.php?t=76081)
+* [Slopey's BPC Market Tool `local installation or server data`](https://forums.frontier.co.uk/showthread.php?t=76081)
 * [EDSM - Elite Dangerous Star Map](http://www.edsm.net)
 * [EDSC - EDStarCoordinator](http://edstarcoordinator.com)
 * [EDDN on DynamoDB](http://edcodex.info/?m=tools&entry=133)
@@ -63,7 +63,7 @@ Outfitting Finder
 ## Download ##
 
 Windows Installer without DB [Download](http://tmp.medi.li/mEDIs Elite Tools-latest-win32.msi)
-Windows alpa build with DB [Download](http://tmp.medi.li/mediselitetools.7z)
+Windows alpha build with DB [Download](http://tmp.medi.li/mediselitetools.7z)
 
 linux users get the sources and start it in console `python main.py`
 requiered modules: PySide, py-dateutil, pyzmq
