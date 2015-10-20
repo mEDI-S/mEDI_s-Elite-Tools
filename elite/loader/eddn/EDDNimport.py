@@ -124,6 +124,9 @@ class EDDNimport(object):
 #        print("importOutfitting1Data", jsonData)
         cur = self.mydb.cursor()
 
+        ''' Delete first all old data from this station'''
+        cur.execute("delete from outfitting where StationID=?", (stationID, ))
+
         for modules in jsonData["message"]["modules"]:
             categoryID = self.outfitting.getOutfittingCategoryID(modules['category'], True)
             nameID = self.outfitting.getOutfittingNameID(modules['name'], True)
@@ -157,9 +160,6 @@ class EDDNimport(object):
                 classID = 0
 
             if categoryID and nameID:
-                cur.execute("delete FROM outfitting where StationID=? AND NameID=? AND Class=? AND MountID=? AND CategoryID=? AND Rating=? AND GuidanceID=? AND shipID=?",
-                                                        (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID))
-#                print(cur.rowcount)
 
                 cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?, ?) ",
                              (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID, timestamp))
