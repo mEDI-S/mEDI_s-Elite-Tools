@@ -1427,3 +1427,12 @@ class db(object):
                           })
         return data
 
+
+    def updateBookmarkName(self, ID, name):
+        if not ID:
+            return
+
+        cur = self.cursor()
+        cur.execute("UPDATE bookmarks SET Name=? where id=?", (name, ID) )
+        cur.close()
+        return True

@@ -163,7 +163,20 @@ class tool(QtGui.QWidget):
 
         self.listView.setModel(self.bookmarkModel)
 
+        self.bookmarkModel.dataChanged.connect(self.saveItemEdit)
 
+
+    def saveItemEdit(self, item):
+
+        changesSaved = None
+        if isinstance(item.internalPointer(), BookmarkTreeItem) and item.column() == 1:
+            print(type(item.internalPointer()) )
+            boockmarkID = self.listView.model().index( item.row(), 0).data()
+
+            changesSaved = self.mydb.updateBookmarkName(boockmarkID, item.data(0) )
+
+        if changesSaved:
+            self.main.setStatusBar("changes saved")
 
 
 '''
@@ -229,6 +242,15 @@ class BookmarkTreeItem(object):
         except IndexError:
             return None
 
+    def setData(self, column, value):
+        if column < 0 or column >= len(self.itemData):
+            return False
+
+        self.itemData[column] = value
+
+        return True
+
+
     def parent(self):
         return self.parentItem
 
@@ -292,18 +314,43 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return None
 
-        if role != QtCore.Qt.DisplayRole:
+           
+        if role != QtCore.Qt.DisplayRole and role != QtCore.Qt.EditRole:
             return None
 
         item = index.internalPointer()
 
         return item.data(index.column())
 
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        if role != QtCore.Qt.EditRole:
+            return False
+
+        item = self.getItem(index)
+        result = item.setData(index.column(), value)
+
+        if result:
+            self.dataChanged.emit(index, index)
+
+        return result
+
     def flags(self, index):
         if not index.isValid():
             return QtCore.Qt.NoItemFlags
 
+        if index.column() == 1 and isinstance(index.internalPointer(), BookmarkTreeItem):  # Edit Name/ Comment
+            return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def getItem(self, index):
+        if index.isValid():
+            item = index.internalPointer()
+            if item:
+                return item
+
+        return self.rootItem
 
     def headerData(self, section, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -311,7 +358,7 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
 
         return None
 
-    def index(self, row, column, parent):
+    def index(self, row, column, parent=QtCore.QModelIndex()):
         if not self.hasIndex(row, column, parent):
             return QtCore.QModelIndex()
 
