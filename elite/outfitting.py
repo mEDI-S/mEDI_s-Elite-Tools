@@ -179,7 +179,8 @@ class outfitting(object):
                 AND outfitting.modifydate >= ?
                 
                 %s %s %s %s %s %s
-                limit 2000
+                order by dist ASC
+                limit 3000
                 """ % (classFilter, governmentFilter, allegianceFilter, ratingFilter, mountFilter, shipFilter),
                  (systemA["posX"], systemA["posY"], systemA["posZ"], nameID, distance, maxStarDist, maxAgeDate))
         result = cur.fetchall()

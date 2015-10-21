@@ -100,7 +100,7 @@ class tool(QtGui.QWidget):
         if self.mydb.getConfig("option_of_maxSearchRange"):
             self.searchRangeSpinBox.setValue(self.mydb.getConfig("option_of_maxSearchRange"))
         else:
-            self.searchRangeSpinBox.setValue(150)
+            self.searchRangeSpinBox.setValue(50)
             
         gridLayout.addWidget(label, 1, 10)
         gridLayout.addWidget(self.searchRangeSpinBox, 1, 11)
@@ -115,7 +115,7 @@ class tool(QtGui.QWidget):
         if self.mydb.getConfig("option_of_maxAge"):
             self.maxAgeSpinBox.setValue(self.mydb.getConfig("option_of_maxAge"))
         else:
-            self.maxAgeSpinBox.setValue(14)
+            self.maxAgeSpinBox.setValue(1)
         gridLayout.addWidget(label, 1, 13)
         gridLayout.addWidget(self.maxAgeSpinBox, 1, 14)
 
