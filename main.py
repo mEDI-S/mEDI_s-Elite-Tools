@@ -265,6 +265,11 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip="clearing the cache will slow down the search the first time, but the update speed",
                 triggered=self.deleteDistancesCache)
 
+        self.checkDistancesCacheAct = QtGui.QAction("Check Distances Cache", self,
+                statusTip="Find wrong and outdated entrys in distances cache",
+                triggered=self.checkDistancesCache)
+
+
         self.preferenceAct = QtGui.QAction("Preference", self,
                 triggered=self.openConfig)
 
@@ -286,6 +291,7 @@ class MainWindow(QtGui.QMainWindow):
         self.maintenanceMenu.addSeparator()
         self.maintenanceMenu.addAction(self.rebuildFullCacheAct)
         self.maintenanceMenu.addAction(self.deleteDistancesCacheAct)
+        self.maintenanceMenu.addAction(self.checkDistancesCacheAct)
         self.maintenanceMenu.addAction(self.forceOptimizeAct)
 
         self.editMenu.addAction(self.preferenceAct)
@@ -507,6 +513,23 @@ class MainWindow(QtGui.QMainWindow):
             self.mydb.rebuildFullDistancesCache()
             self.mydb.deleteDealsInDistancesSystems_queue()
             self.unlockDB()
+
+
+    def checkDistancesCache(self):
+        msg = "This test looks for outdated and wrong entries in the distance table and deletes them"
+
+        msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                "Check Distances Cache", msg,
+                QtGui.QMessageBox.NoButton, self)
+
+        msgBox.addButton("Start", QtGui.QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+        if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+            self.lockDB()
+            self.mydb.checkDealsInDistancesCache()
+            self.unlockDB()
+
 
     def openConfig(self):
         self.configWindows = gui.config.ConfigDialog(self)
