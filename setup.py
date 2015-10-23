@@ -251,6 +251,9 @@ if _buildZip:
         cur.execute("DROP TABLE bookmarks")
         cur.execute("DROP TABLE bookmarkChilds")
 
+        cur.execute("DELETE FROM price WHERE id IN (select priceID from blackmarketPrice)")
+        cur.execute("DELETE FROM blackmarketPrice")
+
         db.con.commit()
         cur.close()
 

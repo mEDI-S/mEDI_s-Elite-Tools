@@ -402,15 +402,37 @@ class db(object):
         self.con.commit()
         cur.close()
 
-    def setFakePrice(self, id):
-        if isinstance(id, int):
-            self.con.execute("insert or ignore into fakePrice (priceID) values(?);", (id,))
-            self.con.commit()
+    def setFakePrice(self, ID):
+        cur = self.cursor()
+        cur.execute("insert or ignore into fakePrice (priceID) values(?)", (ID,))
+        cur.close()
 
-    def setIgnorePriceTemp(self, id):
-        if isinstance(id, int):
-            self.con.execute("insert or ignore into ignorePriceTemp (priceID) values(?);", (id,))
-            self.con.commit()
+    def removeFakePrice(self, ID):
+        cur = self.cursor()
+        cur.execute("DELETE FROM fakePrice where priceID=?", (ID,))
+        cur.close()
+
+    def setIgnorePriceTemp(self, ID):
+        cur = self.cursor()
+        cur.execute("insert or ignore into ignorePriceTemp (priceID) values(?)", (ID,))
+        cur.close()
+
+    def removeIgnorePrice(self, ID):
+        cur = self.cursor()
+        cur.execute("DELETE FROM ignorePriceTemp where priceID=?", (ID,))
+        cur.close()
+
+    def setBlackmarketPrice(self, ID):
+        cur = self.cursor()
+        cur.execute("insert or ignore into blackmarketPrice (priceID) values(?)", (ID,))
+        cur.close()
+
+
+    def removeBlackmarketPrice(self, ID):
+        cur = self.cursor()
+        cur.execute("DELETE FROM blackmarketPrice where priceID=?", (ID,))
+        cur.close()
+
 
     def cleanIgnorePriceTemp(self):
         self.con.execute("DELETE FROM ignorePriceTemp")
@@ -590,6 +612,30 @@ class db(object):
         result = cur.fetchone()
         cur.close()
         return result
+
+    def getFullPriceData(self, stationID, itemID):
+        cur = self.cursor()
+        
+        cur.execute(""" select  *,
+                                fakePrice.priceID AS fake,
+                                ignorePriceTemp.priceID AS ignore,
+                                blackmarketPrice.priceID AS blackmarket
+                        from price
+
+                        left JOIN fakePrice ON price.id=fakePrice.priceID
+                        left JOIN ignorePriceTemp ON price.id=ignorePriceTemp.priceID
+                        left JOIN blackmarketPrice ON price.id=blackmarketPrice.priceID
+
+                        where
+                            StationID = ?
+                            AND ItemID = ?
+                            limit 1
+                    """, ( stationID, itemID,))
+
+        result = cur.fetchone()
+        cur.close()
+        return result
+
 
     def getItemPriceModifiedDate(self, systemID, stationID, itemID):
         cur = self.cursor()

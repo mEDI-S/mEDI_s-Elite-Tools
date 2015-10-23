@@ -101,6 +101,21 @@ def convertDateimeToAgeStr(dt=datetime.utcnow() ):
         return "%dm" % (age.seconds / 60)
 
 
+def createCenteredWidget( wg ):
+    widget = QtGui.QWidget()
+    layout = QtGui.QVBoxLayout()
+    layout.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignCenter)
+    layout.addWidget( wg )
+    widget.setLayout(layout)
+    return widget
+
+
+def getChildByType(obj, myType):
+    for child in obj.children():
+        if isinstance(child, myType):
+            return child
+
+
 def isInt(s):
     try:
         int(s)

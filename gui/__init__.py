@@ -13,3 +13,4 @@ from gui import outfitting_finder
 from gui import dbworker
 
 from gui import statistics
+from gui import add_edit_items

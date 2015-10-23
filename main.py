@@ -117,6 +117,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
         gui.statistics.initRun(self)
+        gui.add_edit_items.initRun(self)
 
         self.show()
 
