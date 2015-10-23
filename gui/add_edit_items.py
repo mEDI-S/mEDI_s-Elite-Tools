@@ -322,8 +322,10 @@ class Window(QtGui.QDialog):
                 else:
                     self.mydb.removeFakePrice(priceID)
 
-                self.mydb.addSystemToDealsInDistancesCacheQueue( [{'id': systemID}] )
+                self.mydb.addSystemsInDistanceToDealsInDistancesCacheQueue(systemID, itemID)
 
+        self.mydb.addSystemToDealsInDistancesCacheQueue( [{'id': systemID}] )
+                
         self.mydb.con.commit()
         cur.close()
         self.parent.unlockDB()

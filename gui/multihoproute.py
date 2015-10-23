@@ -337,10 +337,12 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
         
             for hopID, d in enumerate(deal["path"]):
                 # print(d.keys())
-                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
+                blackmarket = "" if not d["blackmarket"] else " (Blackmarket)"
+                
+                columnData = "%s : %s (%d ls) (%s buy:%d sell:%d%s profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
                                                                                                 before["StarDist"], self.route.getItemName(deal, hopID), d["StationSell"],
-                                                                                                d["StationBuy"], d["profit"], d["dist"],
+                                                                                                d["StationBuy"], blackmarket, d["profit"], d["dist"],
                                                                                                 self.route.getSystemB(deal, hopID),
                                                                                                 self.route.getStationB(deal, hopID))
 
@@ -348,7 +350,10 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                 parents[-1].appendChild(RouteTreeHopItem(columnData, parents[-1]))
 
 
-
+                if d["blackmarket"]:
+                    columnData = "\tWarning: %s is a Blackmarket item!?" % self.route.getItemName(deal, hopID)
+                    parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
+                    
                 if before["refuel"] != 1:
                     columnData = "\tWarning: %s have no refuel!?" % self.route.getStationA(deal, hopID)
                     parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
@@ -372,6 +377,11 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                                                                                                 self.route.getSystemB(deal, hopID),
                                                                                                 self.route.getStationB(deal, hopID))
                 parents[-1].appendChild(RouteTreeHopItem(columnData, parents[-1]))
+
+                if deal["backToStartDeal"]["blackmarket"]:
+                    columnData = "\tWarning: %s is a Blackmarket item!?" % self.route.getItemName(deal, hopID)
+                    parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
+
             else:
                 columnData = "%s : %s (%d ls) (no back deal) (%s ly) ->%s : %s" % (self.route.getSystemA(deal, hopID),
                                                                                    self.route.getStationA(deal, hopID),

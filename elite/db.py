@@ -301,6 +301,7 @@ class db(object):
         self.con.execute("create UNIQUE index IF NOT EXISTS bookmarkChilds_unique_BookmarkID on bookmarkChilds (BookmarkID, Pos)")
 
         # trigger to controll the dynamic cache
+        self.con.execute("DROP TRIGGER IF EXISTS trigger_update_price")
         self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
                             WHEN NEW.StationBuy != OLD.StationBuy OR NEW.StationSell != OLD.StationSell
                             BEGIN
@@ -358,6 +359,8 @@ class db(object):
         '''
         optimize all tables and indexes
         '''
+        self.checkDealsInDistancesCache()
+        
         cur = self.cursor()
 
         cur.execute("select * from sqlite_master where type = 'table' or type = 'index' order by type")
@@ -774,7 +777,7 @@ class db(object):
                              items.name AS itemName,
                              stationA.Station AS fromStation,
                              stationB.Station AS toStation,
-                             priceA.modified AS fromAge, priceB.modified AS toAge
+                             priceA.modified AS fromAge, priceB.modified AS toAge, blackmarketPrice.priceID AS blackmarket
                              
                     FROM price AS priceA
 
@@ -788,6 +791,7 @@ class db(object):
 
                     left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
                     left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+                    left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
                     WHERE
 
@@ -819,7 +823,7 @@ class db(object):
                              items.name AS itemName,
                              stationA.Station AS fromStation,
                              stationB.Station AS toStation,
-                             priceA.modified AS fromAge, priceB.modified AS toAge
+                             priceA.modified AS fromAge, priceB.modified AS toAge, blackmarketPrice.priceID AS blackmarket
                              
                     FROM price AS priceA
 
@@ -833,6 +837,7 @@ class db(object):
 
                     left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
                     left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+                    left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
                     WHERE
 
@@ -928,6 +933,42 @@ class db(object):
 
             self.con.commit()
 
+
+    def findReverseSystemsForRebuild(self):
+        cur = self.cursor()
+
+        cur.execute("""DELETE FROM dealsInDistancesSystems WHERE systemID IN
+                            (select priceB.SystemID from dealsInDistances
+                                LEFT JOIN price ON dealsInDistances.priceBID=price.id
+                                inner JOIN dealsInDistancesSystems_queue ON dealsInDistancesSystems_queue.systemID=price.SystemID
+                                LEFT JOIN price AS priceB ON dealsInDistances.priceAID=priceB.id
+                                group by  priceB.SystemID
+                            )""")
+        self.con.commit()
+        cur.quit()
+
+
+    def addSystemsInDistanceToDealsInDistancesCacheQueue(self, systemID, itemID, distance=51):
+        cur = self.cursor()
+
+        cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
+        systemA = cur.fetchone()
+
+        cur.execute("""select systems.id AS id, calcDistance(?, ?, ?, posX, posY, posZ ) AS distn
+                            from systems
+
+                            inner JOIN price AS price ON price.SystemID=systems.id AND price.ItemID=? AND price.modified >= date('now','-14 day')
+
+                            where  distn<=?
+
+                            group by systems.id
+
+                            """, (systemA["posX"], systemA["posY"], systemA["posZ"], itemID, distance,))
+        systemList = cur.fetchall()
+        if systemList:
+            self.addSystemToDealsInDistancesCacheQueue(systemList)
+
+
     def calcDealsInDistancesCacheQueue(self):
         cur = self.cursor()
 
@@ -941,17 +982,24 @@ class db(object):
     def checkDealsInDistancesCache(self):
         cur = self.cursor()
 
-        cur.execute("""select * from dealsInDistances
-                    left join price AS priceA ON priceA.id=dealsInDistances.priceAID
-                    left join price AS priceB ON priceB.id=dealsInDistances.priceBID
-                     where
-                       priceB.StationBuy < priceA.StationSell
-                       OR priceB.StationBuy IS NULL
-                       OR priceA.StationSell IS NULL
+        ''' delete old From Prices '''
+        cur.execute("""DELETE FROM dealsInDistances WHERE priceAID IN (
+                            select priceAID from dealsInDistances
+                            LEFT JOIN price AS priceA ON dealsInDistances.priceAID=priceA.id
+                             where priceA.modified <= date('now','-15 day')
+                        )
                      """)
 
-        result = cur.fetchone()
+        ''' delete old To Prices '''
+        cur.execute("""DELETE FROM dealsInDistances WHERE priceBID IN (
+                        select priceBID from dealsInDistances
+                        LEFT JOIN price AS priceB ON dealsInDistances.priceBID=priceB.id
+                        where priceB.modified <= date('now','-15 day')
+                        )
+                     """)
 
+        self.con.commit()
+        cur.close()
 
     def rebuildFullDistancesCache(self):
         cur = self.cursor()
@@ -1028,7 +1076,7 @@ class db(object):
                         priceA.ItemID AS ItemID , priceB.StationBuy AS StationBuy, priceA.StationSell AS StationSell,
                         systemA.System AS SystemA, priceA.id AS priceAid, priceA.SystemID AS SystemAID, priceA.StationID AS StationAID, stationA.Station AS StationA, stationA.StarDist, stationA.refuel,
                         systemB.System AS SystemB, priceB.id AS priceBid, priceB.SystemID AS SystemBID, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
-                        dist, systemA.startDist AS startDist, items.name AS itemName
+                        dist, systemA.startDist AS startDist, items.name AS itemName, blackmarketPrice.priceID AS blackmarket
 
                         from TEAMP_selectSystemA AS systemA
 
@@ -1049,6 +1097,7 @@ class db(object):
 
                         left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
                         left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+                        left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
                     where
                         priceA.modified >= ?
@@ -1111,7 +1160,7 @@ class db(object):
         cur.execute(""" select priceB.StationBuy-priceA.StationSell AS profit, priceA.ItemID, priceA.id AS priceAid, priceB.StationBuy, priceA.StationSell,
                         systemB.System AS SystemB, priceB.SystemID AS SystemBID , priceB.id AS priceBid, priceB.StationID AS StationBID, stationB.Station AS StationB, stationB.StarDist AS StarDist, stationB.refuel AS refuel,
                         systemA.System AS SystemA,
-                        dist, items.name AS itemName
+                        dist, items.name AS itemName, blackmarketPrice.priceID AS blackmarket
 
                         FROM price AS priceA
 
@@ -1129,6 +1178,7 @@ class db(object):
 
                         left JOIN ignorePriceTemp AS ignorePriceTempA ON priceA.id=ignorePriceTempA.priceID
                         left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
+                        left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
                     where
                         priceA.StationID=?
