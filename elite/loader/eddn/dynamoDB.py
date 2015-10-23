@@ -146,6 +146,34 @@ class loader(object):
                     activeDonwload = False
 
 
+            '''
+            outfitting data
+            '''
+            epochFrom = datetime2epochMicroseconds( lastUpdateTime )
+
+            activeDonwload = True
+            while activeDonwload:
+                getRequest = {"from": epochFrom, }
+                
+                apiurl = "%s/outfitting/%s" % (__APIUrl__, epochMicroseconds2datetime(epochFrom).strftime("%Y-%m-%d") )
+
+                josnData = self.sendAPIRequest(apiurl, getRequest)
+    
+                if josnData:
+                    if 'Count' in josnData and int(josnData['Count']) > 0:
+                        for item in josnData['Items']:
+                            self.EDDNimport.importData(item)
+                    else:
+                        activeDonwload = False
+
+                    if 'LastEvaluatedTimestamp' in josnData:
+                        epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
+                    else:
+                        activeDonwload = False
+                else:
+                    activeDonwload = False
+
+
             self.mydb.con.commit()
 
     def sendAPIRequest(self, apiurl, getRequest=None, postRequest=None):
