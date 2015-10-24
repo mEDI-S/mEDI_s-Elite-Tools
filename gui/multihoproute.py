@@ -338,7 +338,7 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
             for hopID, d in enumerate(deal["path"]):
                 # print(d.keys())
                 blackmarket = "" if not d["blackmarket"] else " (Blackmarket)"
-                
+
                 columnData = "%s : %s (%d ls) (%s buy:%d sell:%d%s profit:%d) (%s ly)-> %s:%s" % (self.route.getSystemA(deal, hopID),
                                                                                                 self.route.getStationA(deal, hopID),
                                                                                                 before["StarDist"], self.route.getItemName(deal, hopID), d["StationSell"],
@@ -349,6 +349,9 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
 
                 parents[-1].appendChild(RouteTreeHopItem(columnData, parents[-1]))
 
+                if d["StationSell"] < d["StationBuy"] * 0.5:
+                    columnData = "\tWarning: > 50% profit? Fake!"
+                    parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
 
                 if d["blackmarket"]:
                     columnData = "\tWarning: %s is a Blackmarket item!?" % self.route.getItemName(deal, hopID)
@@ -377,6 +380,10 @@ class RouteTreeModel(QtCore.QAbstractItemModel):
                                                                                                 self.route.getSystemB(deal, hopID),
                                                                                                 self.route.getStationB(deal, hopID))
                 parents[-1].appendChild(RouteTreeHopItem(columnData, parents[-1]))
+
+                if deal["backToStartDeal"]["StationSell"] < deal["backToStartDeal"]["StationBuy"] * 0.5:
+                    columnData = "\tWarning: > 50% profit? Fake!"
+                    parents[-1].appendChild(RouteTreeInfoItem(columnData, parents[-1]))
 
                 if deal["backToStartDeal"]["blackmarket"]:
                     columnData = "\tWarning: %s is a Blackmarket item!?" % self.route.getItemName(deal, hopID)
@@ -629,7 +636,8 @@ class tool(QtGui.QWidget):
             menu.addAction(self.markFakeItemAct)
             menu.addAction(self.markIgnorePriceTempAct)
             menu.addAction(self.markIgnorePriceBTempAct)
-
+#            self.testOfFacke()
+            
         elif isinstance(indexes[0].internalPointer(), RouteTreeItem):
             menu.addAction(self.clipbordRouteHelperAct)
             if len(self.main.dealsFromToWidget) > 1:
@@ -645,14 +653,17 @@ class tool(QtGui.QWidget):
 
         menu.exec_(self.listView.viewport().mapToGlobal(event))
 
+
     def optionsGroupBoxToggleViewAction(self):
         if self.showOptions.isChecked():
             self.optionsGroupBox.show()
         else:
             self.optionsGroupBox.hide()
-            
+
+
     def setCurentLocation(self):
         self.locationlineEdit.setText(self.main.location.getLocation())
+
 
     def initRoute(self):
         ''' init the route on start and set saved options'''
@@ -703,6 +714,7 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig('option_mhr_forceMaxHops', self.forceMaxHops.isChecked())
 
         self.mydb.setConfig('option_mhr_onlyLpadsize', self.onlyLpadsize.isChecked())
+
 
     def startRouteSearch(self):
         self.unsetActiveRoutePointer()
@@ -812,6 +824,7 @@ class tool(QtGui.QWidget):
         self.timer_setNextRouteHopToClipbord.timeout.connect(self.setNextRouteHopToClipbord)
         self.timer_setNextRouteHopToClipbord.stop()
 
+
     def updateLocation(self):
         if self.autoUpdateLocation.isChecked():
 
@@ -840,6 +853,7 @@ class tool(QtGui.QWidget):
 
         self.updateConnectedDealsFromToWindow()
         self.setLocationColors()
+
 
     def setLocationColors(self):
         if _debug:
@@ -1002,6 +1016,34 @@ class tool(QtGui.QWidget):
                 self.mydb.setFakePrice(priceID)
                 self.main.unlockDB()
 
+    def testOfFacke(self):
+
+        #status = {'newest': newstEntry, 'entrys': entrys, 'item': item, 'list': result}
+        def test(status):
+            for entry in status['list']:
+                if entry['modified'] == status['item']['modified']:
+                    print(entry['count'], status['entrys'])
+                    if entry['count'] < status['entrys'] * 0.5:  # < 50% of entrys have the same date
+                        print("warning: < 50% of entrys have the same date")
+                    break
+
+        route, hopID = self.getSelectedRouteHopID()
+        priceID = self.route.getPriceID(route, hopID)
+        statusA = self.mydb.getItemModifiedStatus(priceID)
+
+        priceBID = self.route.getPriceBID(route, hopID)
+        statusB = self.mydb.getItemModifiedStatus(priceBID)
+        if not statusA or not statusB:
+            return
+
+        test(statusA)
+        test(statusB)
+
+        print(statusA['item']['StationSell'], statusB['item']['StationBuy'])
+        if statusA['item']['StationSell'] < statusB['item']['StationBuy'] * 0.5:
+            print("warning: > 50% profit?")
+
+        
     def markIgnorePriceTemp(self):
 
         route, hopID = self.getSelectedRouteHopID()

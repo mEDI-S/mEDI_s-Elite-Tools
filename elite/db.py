@@ -649,6 +649,41 @@ class db(object):
             return result[0]
         return None
 
+    def getItemModifiedStatus(self, priceID):
+        ''' return a status to hunt fakes and wrong data'''
+
+        if not priceID:
+            return
+
+        cur = self.cursor()
+        item = None
+        stationID=None
+        
+        cur.execute("select * from price where id=? limit 1", (priceID,))
+        item = cur.fetchone()
+
+        if item:
+            stationID = item['StationID']
+        else:
+            return
+
+
+        cur.execute("select MAX(modified) AS max, count() AS count from price where StationID=?", (stationID,))
+        result = cur.fetchone()
+
+        newstEntry = result['max']
+        entrys = result['count']
+
+        
+        cur.execute("select count() AS count, modified from price where StationID=? group by modified", (stationID,))
+        result = cur.fetchall()
+
+        cur.close()
+
+        status = {'newest': newstEntry, 'entrys': entrys, 'item': item, 'list': result}
+        return status
+
+
     def getSystemsInDistance(self, system, distance):
         # system is systemid or name
 
