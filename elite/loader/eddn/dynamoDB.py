@@ -223,12 +223,6 @@ class loader(object):
                 josnData = json.loads(result.decode('utf-8', 'replace'))
             except:
                 traceback.print_exc()
-                result = result.decode('utf-8', 'replace')
-                newlist = ""
-                for line in result.split("\n"):
-                    if line.strip() != ",":
-                        newlist += line
-
-                josnData = json.loads(newlist)
+                return
 
             return josnData
