@@ -310,12 +310,13 @@ class tool(QtGui.QWidget):
         self.mydb.setConfig('option_of_allegiances', self.allegiancesComboBox.currentIndex())
         self.mydb.setConfig('option_of_governments', self.governmentsComboBox.currentIndex())
 
-        sectionPosList = []
-        for i in range(self.listView.header().count()):
-            sectionPosList.append(self.listView.header().logicalIndex(i))
-
-        sectionPos = ",".join(map(str, sectionPosList))
-        self.mydb.setConfig('option_of.header.sectionPos', sectionPos)
+        if self.listView.header().count():
+            sectionPosList = []
+            for i in range(self.listView.header().count()):
+                sectionPosList.append(self.listView.header().logicalIndex(i))
+    
+            sectionPos = ",".join(map(str, sectionPosList))
+            self.mydb.setConfig('option_of.header.sectionPos', sectionPos)
 
 
     def searchOutfitting(self):

@@ -355,12 +355,13 @@ class tool(QtGui.QWidget):
 
         self.mydb.setConfig('option_dft_showOptions', self.showOptions.isChecked())
 
-        sectionPosList = []
-        for i in range(self.listView.header().count()):
-            sectionPosList.append(self.listView.header().logicalIndex(i))
-
-        sectionPos = ",".join(map(str, sectionPosList))
-        self.mydb.setConfig('option_dft.header.sectionPos', sectionPos)
+        if self.listView.header().count():
+            sectionPosList = []
+            for i in range(self.listView.header().count()):
+                sectionPosList.append(self.listView.header().logicalIndex(i))
+    
+            sectionPos = ",".join(map(str, sectionPosList))
+            self.mydb.setConfig('option_dft.header.sectionPos', sectionPos)
 
     
     def searchDeals(self):
