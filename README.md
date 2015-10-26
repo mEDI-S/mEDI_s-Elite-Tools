@@ -54,6 +54,10 @@ Commodities Finder
 ![Outfitting Finder](screenshots/OutfittingFinder.jpg)
 Outfitting Finder
 
+![Data Status](screenshots/dataStatus.jpg)
+
+
+
 ## Usage ##
 1. Select in Tools menü ur wanted tool
 2. Set Options and play with this
