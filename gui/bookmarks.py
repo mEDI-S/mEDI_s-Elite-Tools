@@ -169,6 +169,8 @@ class tool(QtGui.QWidget):
 
         self.bookmarkModel.dataChanged.connect(self.saveItemEdit)
 
+        self.setCurrentProfit()
+
         if firstrun:
             for i in range(0, self.listView.header().count()):
                 self.listView.resizeColumnToContents(i)
@@ -186,6 +188,38 @@ class tool(QtGui.QWidget):
         if changesSaved:
             self.main.setStatusBar("changes saved")
 
+
+    def setCurrentProfit(self):
+        
+        if self.listView.model():
+            for rid in range(0, self.listView.model().rowCount(QtCore.QModelIndex())):
+                routeRoot = self.listView.model().index(rid, 0).internalPointer()
+
+                if routeRoot.childCount() > 0:
+                    routeID = routeRoot.data(0)
+                    itemData = self.mydb.getChildsFromBookarkRoute(routeID)
+
+                    if not itemData:
+                        continue
+
+                    totalProfit = 0
+                    for cid in range(0, routeRoot.childCount()):
+                        child = routeRoot.child(cid)
+
+                        if cid + 1 < routeRoot.childCount():
+                            destStation = self.mydb.getPriceOnStation( itemData[cid + 1]['StationID'], itemData[cid]['ItemID'])
+                            profit = destStation['StationBuy'] - itemData[cid]['StationSell']
+                            totalProfit += profit
+                        else:  # back deal
+                            destStation = self.mydb.getPriceOnStation( itemData[0]['StationID'], itemData[cid]['ItemID'])
+                            profit = destStation['StationBuy'] - itemData[cid]['StationSell']
+                            totalProfit += profit
+
+                        child.setData(6, profit)
+
+                    routeRoot.setData(6, totalProfit)
+
+        self.listView.dataChanged(self.listView.model().index(0, 0), self.listView.model().index(self.listView.model().rowCount(QtCore.QModelIndex()), 0))
 
 '''
 Bookmark Tree Item Model
@@ -293,6 +327,13 @@ class BookmarkChildTreeItem(object):
         except IndexError:
             return None
 
+    def setData(self, column, value):
+        try:
+            self.itemData[column] = value
+            return True
+        except IndexError:
+            return None
+
     def parent(self):
         return self.parentItem
 
@@ -309,7 +350,7 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
         super(BookmarkTreeModel, self).__init__(parent)
         self.currentSystem = currentSystem
 
-        self.rootItem = BookmarkRootTreeItem(("Id.", "Name", "System", "Distance", "Station", "Item", ""))
+        self.rootItem = BookmarkRootTreeItem(("Id.", "Name", "System", "Distance", "Station", "Item", "Profit", ""))
         self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
@@ -423,7 +464,7 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
             if bookmark['Type'] == 1:
                 system = bookmark['childs'][0]['System']
 
-            data = [bookmark['id'], bookmark['Name'], system, distance, "", ""]
+            data = [bookmark['id'], bookmark['Name'], system, distance, "", "", ""]
 
             parents[-1].appendChild(BookmarkTreeItem(data, parents[-1]))
 
@@ -441,7 +482,7 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
                         if bookmark['childs'][0] and child['posX']:
                             distance = calcDistance(bookmark['childs'][0]["posX"], bookmark['childs'][0]["posY"], bookmark['childs'][0]["posZ"], child["posX"], child["posY"], child["posZ"])
 
-                    data = ["", "", child['System'], distance, child['Station'], child['name']]
+                    data = ["", "", child['System'], distance, child['Station'], child['name'], ""]
     
                     parents[-1].appendChild(BookmarkChildTreeItem(data, parents[-1]))
     

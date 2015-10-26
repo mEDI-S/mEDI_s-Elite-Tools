@@ -1242,6 +1242,21 @@ class db(object):
         cur.close()
         return result
 
+    def getPriceOnStation(self, stationID, itemID):
+        cur = self.cursor()
+
+        cur.execute("""select * FROM price
+                    where  StationID =?
+                    AND ItemID=?
+                    limit 1
+                    """, (stationID, itemID))
+
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result
+
+
     def getPricesFrom(self, system, maxStarDist, maxAgeDate):
         # system is name, systemID or systemID list (maximal 999 systems)
 
@@ -1567,3 +1582,18 @@ class db(object):
         cur.execute("UPDATE bookmarks SET Name=? where id=?", (name, ID) )
         cur.close()
         return True
+
+
+    def getChildsFromBookarkRoute(self, bookmarkId):
+        if not bookmarkId:
+            return
+        cur = self.cursor()
+
+        cur.execute("""SELECT * FROM bookmarkChilds
+                left join price AS priceA ON priceA.SystemID=bookmarkChilds.SystemID AND priceA.StationID=bookmarkChilds.StationID AND priceA.ItemID=bookmarkChilds.ItemID
+                
+                where BookmarkID=?
+                order by BookmarkID, Pos
+                 """, (bookmarkId, ) )
+
+        return cur.fetchall()
