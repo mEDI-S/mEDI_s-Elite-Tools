@@ -149,6 +149,10 @@ class tool(QtGui.QWidget):
 
     def showBookmarks(self):
 
+        firstrun = False
+        if not self.listView.header().count():
+            firstrun = True
+
         location = self.locationlineEdit.text()
         systemID = self.mydb.getSystemIDbyName(location)
         currentSystem = None
@@ -164,6 +168,10 @@ class tool(QtGui.QWidget):
         self.listView.setModel(self.bookmarkModel)
 
         self.bookmarkModel.dataChanged.connect(self.saveItemEdit)
+
+        if firstrun:
+            for i in range(0, self.listView.header().count()):
+                self.listView.resizeColumnToContents(i)
 
 
     def saveItemEdit(self, item):
