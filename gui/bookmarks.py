@@ -314,6 +314,10 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return None
 
+        if role == QtCore.Qt.TextAlignmentRole:
+            if index.column() == 3:  # dist
+                return QtCore.Qt.AlignRight
+
            
         if role != QtCore.Qt.DisplayRole and role != QtCore.Qt.EditRole:
             return None
