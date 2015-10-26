@@ -287,6 +287,7 @@ class db(object):
 
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0, modifydate timestamp)")
         self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
+        self.con.execute("create index  IF NOT EXISTS outfitting_StationID_modifydate on outfitting (StationID, modifydate)")
 
         # powers
         self.con.execute("CREATE TABLE IF NOT EXISTS powers (id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE)")
@@ -703,6 +704,48 @@ class db(object):
 
         cur.close()
         return result
+
+
+    def getSystemDeteilsInDistance(self, systemID, distance):
+
+        cur = self.cursor()
+
+        # get pos data from systemA
+        cur.execute("select * from systems  where id = ?  limit 1", (systemID,))
+        systemA = cur.fetchone()
+
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
+                        , MAX(price.modified) AS 'priceAge [timestamp]'
+                        from systems
+                        left JOIN stations on stations.SystemID=systems.id
+                        left join price ON price.StationID=stations.id
+
+                        where  dist <= ?
+                        group by stations.id
+                        order by dist ASC
+
+                        """, (systemA["posX"], systemA["posY"], systemA["posZ"], distance,))
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+
+
+    def getOutfittingDataAge(self, stationID):
+        cur = self.cursor()
+        cur.execute("select MAX(outfitting.modifydate) AS 'age [timestamp]' from outfitting  where StationID=? ", (stationID,))
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
+
+    def getShipyardDataAge(self, stationID):
+        cur = self.cursor()
+        cur.execute("select MAX(shipyard.modifydate) AS 'age [timestamp]' from shipyard  where StationID=? ", (stationID,))
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return result[0]
 
     def getDistanceFromTo(self, systemA, systemB):
         # system is systemid or name

@@ -24,6 +24,7 @@ Tools for Elite:Dangerous
 * Rares Finder
 * Profit Calculator
 * Outfitting Finder
+* Data Status (find outdated or missing data)
 
 ## Data Sources ##
 * [Live Data from EDDN - Elite:Dangerous Data Network](https://github.com/jamesremuscat/EDDN/wiki)

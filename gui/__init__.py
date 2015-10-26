@@ -9,6 +9,7 @@ from gui import bookmarks
 from gui import rares_finder
 from gui import profit_calculator
 from gui import outfitting_finder
+from gui import data_status
 
 from gui import dbworker
 

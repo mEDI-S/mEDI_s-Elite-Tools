@@ -68,6 +68,8 @@ class MainWindow(QtGui.QMainWindow):
     raresFinderWidget = []
     profitCalculatorWidget = []
     outfittingFinderWidget = []
+    dataStatusWidget = []
+    
     
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -102,7 +104,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createTimer()
 
 
-        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks, gui.rares_finder, gui.profit_calculator, gui.outfitting_finder]
+        self.myPlugins = [gui.multihoproute, gui.deals_from_to, gui.commodities_finder, gui.shipyard_finder, gui.power_control_finder, gui.flylog, gui.bookmarks, gui.rares_finder, gui.profit_calculator, gui.outfitting_finder, gui.data_status]
         
         self.addTool( gui.multihoproute, self.multiHopRouteWidget)
         self.addTool( gui.deals_from_to, self.dealsFromToWidget)
@@ -114,6 +116,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addTool( gui.rares_finder, self.raresFinderWidget)
         self.addTool( gui.profit_calculator, self.profitCalculatorWidget)
         self.addTool( gui.outfitting_finder, self.outfittingFinderWidget)
+        self.addTool( gui.data_status, self.dataStatusWidget)
 
 
         gui.statistics.initRun(self)
@@ -413,6 +416,9 @@ class MainWindow(QtGui.QMainWindow):
 
         if len(self.outfittingFinderWidget) > 1:
             self.outfittingFinderWidget[1].saveOptions()
+
+        if len(self.dataStatusWidget) > 1:
+            self.dataStatusWidget[1].saveOptions()
 
 
 
