@@ -9,6 +9,7 @@ from PySide import QtCore, QtGui
 from datetime import datetime, timedelta
 
 import gui.guitools as guitools
+from elite.eddbweb import eddbweb
 
 
 __toolname__ = "Data Status"
@@ -29,7 +30,7 @@ class tool(QtGui.QWidget):
         self.guitools = guitools.guitools(self)
 
         self.createActions()
-
+        self.eddbweb = eddbweb()
 
     def getWideget(self):
 
@@ -99,14 +100,8 @@ class tool(QtGui.QWidget):
 
 
 
-
-
-
-
         self.optionsGroupBox = QtGui.QGroupBox("Options")
         self.optionsGroupBox.setLayout(gridLayout)
-
-
 
 
         locationButton = QtGui.QToolButton()
@@ -193,6 +188,7 @@ class tool(QtGui.QWidget):
         menu = QtGui.QMenu(self)
 
         menu.addAction(self.copyAct)
+        menu.addAction(self.editOnEDDBAct)
 
         menu.exec_(self.listView.viewport().mapToGlobal(event))
 
@@ -206,8 +202,30 @@ class tool(QtGui.QWidget):
     def createActions(self):
         self.copyAct = QtGui.QAction("Copy", self, triggered=self.guitools.copyToClipboard, shortcut=QtGui.QKeySequence.Copy)
 
+        self.editOnEDDBAct = QtGui.QAction("Edit On EDDB", self, triggered=self.editOnEDDB)
 
 
+
+    def editOnEDDB(self):
+
+        indexes = self.listView.selectionModel().selectedIndexes()
+        system = self.listView.model().item(indexes[0].row(), self.headerList.index("System")).data(0)
+        station = self.listView.model().item(indexes[0].row(), self.headerList.index("Station")).data(0)
+        url = None
+        
+        if not system:
+            print("error: station not found on eddb")
+            return
+
+        if system and station:
+            url = self.eddbweb.getEDDBEditStationUrl(system, station)
+        elif system and not station:
+            url = self.eddbweb.getEDDBEditSystemUrl(system)
+
+        if url:
+            self.main.openUrl(url)
+
+        
     def setCurentLocation(self):
         self.locationlineEdit.setText(self.main.location.getLocation())
 
