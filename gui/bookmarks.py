@@ -396,6 +396,7 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
+
     def setupModelData(self, bookmarks, parent):
         parents = [parent]
 
@@ -419,11 +420,15 @@ class BookmarkTreeModel(QtCore.QAbstractItemModel):
                 # follow is a child
                 parents.append(parents[-1].child(parents[-1].childCount() - 1))
     
-                for child in bookmark['childs']:
+                for i, child in enumerate(bookmark['childs']):
                     distance = None
-                    if self.currentSystem and self.currentSystem['posX'] and child['posX']:
-                        distance = calcDistance(self.currentSystem["posX"], self.currentSystem["posY"], self.currentSystem["posZ"], child["posX"], child["posY"], child["posZ"])
-    
+                    if i + 1 < len(bookmark['childs']):
+                        if bookmark['childs'][i + 1] and child['posX']:
+                            distance = calcDistance(bookmark['childs'][i + 1]["posX"], bookmark['childs'][i + 1]["posY"], bookmark['childs'][i + 1]["posZ"], child["posX"], child["posY"], child["posZ"])
+                    else:  # back hop
+                        if bookmark['childs'][0] and child['posX']:
+                            distance = calcDistance(bookmark['childs'][0]["posX"], bookmark['childs'][0]["posY"], bookmark['childs'][0]["posZ"], child["posX"], child["posY"], child["posZ"])
+
                     data = ["", "", child['System'], distance, child['Station'], child['name']]
     
                     parents[-1].appendChild(BookmarkChildTreeItem(data, parents[-1]))
