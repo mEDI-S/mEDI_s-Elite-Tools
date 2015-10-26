@@ -733,7 +733,7 @@ class db(object):
 
     def getOutfittingDataAge(self, stationID):
         cur = self.cursor()
-        cur.execute("select MAX(outfitting.modifydate) AS 'age [timestamp]' from outfitting  where StationID=? ", (stationID,))
+        cur.execute("select MAX(outfitting.modifydate) AS 'age [timestamp]' from outfitting  where StationID=?", (stationID,))
         result = cur.fetchone()
         cur.close()
         if result:
@@ -741,7 +741,7 @@ class db(object):
 
     def getShipyardDataAge(self, stationID):
         cur = self.cursor()
-        cur.execute("select MAX(shipyard.modifydate) AS 'age [timestamp]' from shipyard  where StationID=? ", (stationID,))
+        cur.execute("select MAX(shipyard.modifydate) AS 'age [timestamp]' from shipyard  where StationID=?", (stationID,))
         result = cur.fetchone()
         cur.close()
         if result:

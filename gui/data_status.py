@@ -310,7 +310,7 @@ class tool(QtGui.QWidget):
             ''' Outfitting '''
 
             if self.outfittingWarning.isChecked() and data["outfitting"]:
-                outfittingAge = self.mydb.getOutfittingDataAge(data["SystemID"])
+                outfittingAge = self.mydb.getOutfittingDataAge(data["StationID"])
                 if outfittingAge and outfittingAge < infoAge:
                     showEntry = True
                     if infoText:
@@ -330,7 +330,7 @@ class tool(QtGui.QWidget):
             ''' Shipyard '''
 
             if self.shipyardWarning.isChecked() and data["shipyard"]:
-                shipyardAge = self.mydb.getShipyardDataAge(data["SystemID"])
+                shipyardAge = self.mydb.getShipyardDataAge(data["StationID"])
                 if shipyardAge and shipyardAge < infoAge:
                     showEntry = True
                     if infoText:
