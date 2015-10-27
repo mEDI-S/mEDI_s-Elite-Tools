@@ -147,7 +147,7 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Distance", "Permit", ""]
+        self.headerList = ["System", "Distance", "Permit", "Min StarDist", ""]
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x, column in enumerate(self.headerList):
@@ -162,6 +162,7 @@ class tool(QtGui.QWidget):
 
 
         for system in systems:
+            
             model.insertRow(0)
             model.setData(model.index(0, self.headerList.index("System")), system["System"])
 
@@ -170,6 +171,10 @@ class tool(QtGui.QWidget):
 
             model.setData(model.index(0, self.headerList.index("Permit")), "No" if not system["permit"] else "Yes")
             model.item(0, self.headerList.index("Permit")).setTextAlignment(QtCore.Qt.AlignCenter)
+
+            model.setData(model.index(0, self.headerList.index("Min StarDist")), system["minStarDist"])
+            model.item(0, self.headerList.index("Min StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
+
 
         self.listView.setModel(model)
 

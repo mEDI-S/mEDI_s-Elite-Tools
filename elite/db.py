@@ -1495,10 +1495,13 @@ class db(object):
         else:
             systemA = {"posX": 0.0, "posY": 0.0, "posZ": 0.0}
 
-        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
-                     FROM systems
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist,
+                    min(stations.StarDist) AS minStarDist
+                    FROM systems
+                    left join stations ON stations.SystemID=systems.id
                 where
                 power_control=?
+                group by systems.id
                 """, (systemA["posX"], systemA["posY"], systemA["posZ"], powerID,))
         result = cur.fetchall()
 
