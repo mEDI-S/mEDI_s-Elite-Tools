@@ -6,7 +6,7 @@ Created on 30.08.2015
 @author: mEDI
 '''
 from PySide import QtCore, QtGui
-import PySide
+from datetime import datetime, timedelta
 
 import gui.guitools as guitools
 
@@ -45,6 +45,14 @@ class tool(QtGui.QWidget):
         self.locationlineEdit.textChanged.connect(self.searchShip)
 
 
+        maxAgelabel = QtGui.QLabel("Max Age:")
+        self.maxAgeSpinBox = QtGui.QSpinBox()
+        self.maxAgeSpinBox.setRange(1, 1000)
+        self.maxAgeSpinBox.setSuffix("Day")
+        self.maxAgeSpinBox.setAlignment(QtCore.Qt.AlignRight)
+        self.maxAgeSpinBox.setValue(1)
+
+
         ShipLabel = QtGui.QLabel("Ship:")
         self.shipComboBox = QtGui.QComboBox()
 
@@ -67,6 +75,10 @@ class tool(QtGui.QWidget):
         layout.addWidget(locationButton)
         
         layout.addWidget(self.locationlineEdit)
+        
+        layout.addWidget(maxAgelabel)
+        layout.addWidget(self.maxAgeSpinBox)
+        
         layout.addWidget(ShipLabel)
         layout.addWidget(self.shipComboBox)
         
@@ -148,7 +160,9 @@ class tool(QtGui.QWidget):
 
         shipID = self.shipList[ self.shipComboBox.currentIndex() ]
 
-        shipyards = self.mydb.getShipyardWithShip(shipID, systemID)
+        maxAgeDate = datetime.utcnow() - timedelta(days=self.maxAgeSpinBox.value())
+
+        shipyards = self.mydb.getShipyardWithShip(shipID, systemID, maxAgeDate)
 
 
         for shipyard in shipyards:
@@ -171,7 +185,7 @@ class tool(QtGui.QWidget):
         self.listView.setModel(model)
 
         if firstrun:
-            self.listView.sortByColumn(self.headerList.index("Distance"), PySide.QtCore.Qt.SortOrder.AscendingOrder)
+            self.listView.sortByColumn(self.headerList.index("Distance"), QtCore.Qt.SortOrder.AscendingOrder)
 
         for i in range(0, len(self.headerList)):
             self.listView.resizeColumnToContents(i)

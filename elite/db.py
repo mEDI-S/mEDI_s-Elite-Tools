@@ -1376,7 +1376,7 @@ class db(object):
         cur.close()
         return result
 
-    def getShipyardWithShip(self, shipID, systemID=None):
+    def getShipyardWithShip(self, shipID, systemID=None, maxAgeDate=datetime.utcnow() - timedelta(days=14)):
 
         cur = self.cursor()
 
@@ -1392,10 +1392,10 @@ class db(object):
                      FROM shipyard
                     left JOIN systems on systems.id = shipyard.SystemID
                     left JOIN stations on stations.id = shipyard.StationID
-               /*     left JOIN ships on ships.id = shipyard.ShipID */
                 where
                 ShipID=?
-                """, (systemA["posX"], systemA["posY"], systemA["posZ"], shipID, ))
+                AND shipyard.modifydate>=?
+                """, (systemA["posX"], systemA["posY"], systemA["posZ"], shipID, maxAgeDate ))
         result = cur.fetchall()
 
         cur.close()
