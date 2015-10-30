@@ -248,14 +248,14 @@ class db(object):
             self.con.execute("vacuum stations;")
 
         if dbVersion < 3:
-            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
-            self.con.execute( "DROP TABLE `outfitting`;")
+            self.con.execute( "DROP INDEX IF EXISTS `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
+            self.con.execute( "DROP TABLE IF EXISTS `outfitting`;")
 
         if dbVersion < 4:
             self.con.execute("ALTER TABLE items ADD COLUMN average_price INT;")
-            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
-            self.con.execute( "DROP INDEX `outfitting_StationID_modifydate`;")
-            self.con.execute( "DROP TABLE `outfitting`;")
+            self.con.execute( "DROP INDEX IF EXISTS `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
+            self.con.execute( "DROP INDEX IF EXISTS `outfitting_StationID_modifydate`;")
+            self.con.execute( "DROP TABLE IF EXISTS `outfitting`;")
 
             #force update
             updatetime = datetime.utcnow() - timedelta(hours=24)
