@@ -293,7 +293,7 @@ class loader(object):
             guidanceID = 0
             if 'missile_type' in modul and modul['missile_type']:
                 guidance = _guidance_[ modul['missile_type'] ]
-                guidanceID = self.outfitting.getOutfittingGuidanceID(guidance, False)
+                guidanceID = self.outfitting.getOutfittingGuidanceID(guidance, True)
 
             classID = modul['class']
 
@@ -366,7 +366,8 @@ class loader(object):
         for station in jsonData:
             totalCount += 1
             modified = datetime.fromtimestamp(station["updated_at"]) - self.utcOffeset
-
+            systemID = None
+            stationID = None
             if station["system_id"] in self.translateSystemID:
                 systemID = self.translateSystemID[station["system_id"]]
             else:
