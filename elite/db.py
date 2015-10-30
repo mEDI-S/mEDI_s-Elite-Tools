@@ -24,7 +24,7 @@ __forceupdateFile__ = "updatetrigger.txt"
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db", "my.db")
-DBVERSION = 3
+DBVERSION = 4
 
 
 class db(object):
@@ -228,6 +228,45 @@ class db(object):
         self.con.execute("create UNIQUE index  IF NOT EXISTS config_unique_var on config (var)")
 
 
+
+        ''' update db version'''
+        dbVersion = self.getConfig('dbVersion')
+        if dbVersion:
+            dbVersion = int(dbVersion)
+        else:
+            dbVersion = DBVERSION
+        ''' 01 to 02 '''
+        if dbVersion < 2:
+            print("update database from %s to 2" % dbVersion)
+            self.con.execute("ALTER TABLE systems ADD COLUMN government INT;")
+            self.con.execute("ALTER TABLE systems ADD COLUMN allegiance INT;")
+    
+            self.con.execute("ALTER TABLE stations ADD COLUMN government INT;")
+            self.con.execute("ALTER TABLE stations ADD COLUMN allegiance INT;")
+    
+            self.con.execute("vacuum systems;")
+            self.con.execute("vacuum stations;")
+
+        if dbVersion < 3:
+            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
+            self.con.execute( "DROP TABLE `outfitting`;")
+
+        if dbVersion < 4:
+            self.con.execute("ALTER TABLE items ADD COLUMN average_price INT;")
+            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
+            self.con.execute( "DROP INDEX `outfitting_StationID_modifydate`;")
+            self.con.execute( "DROP TABLE `outfitting`;")
+
+            #force update
+            updatetime = datetime.utcnow() - timedelta(hours=24)
+            self.setConfig( 'lastEDDBimport', updatetime.strftime("%Y-%m-%d %H:%M:%S") )
+            self.setConfig( 'last_EDDN_DynamoDB_Update', updatetime.strftime("%Y-%m-%d %H:%M:%S") )
+            #force optimize
+            self.setConfig("lastOptimizeDatabase", None)
+
+
+
+
         # systems
         self.con.execute("CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, government INT, allegiance INT, modified timestamp)")
 
@@ -284,9 +323,12 @@ class db(object):
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_mount (id INTEGER PRIMARY KEY AUTOINCREMENT, mount TEXT UNIQUE)")
         self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_guidance (id INTEGER PRIMARY KEY AUTOINCREMENT, guidance TEXT UNIQUE)")
 
+        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting_modul (id INTEGER PRIMARY KEY AUTOINCREMENT, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_modul_unique on outfitting_modul (NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID)")
 
-        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0, modifydate timestamp)")
-        self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
+
+        self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, modulID, modifydate timestamp)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique on outfitting (StationID, modulID)")
         self.con.execute("create index  IF NOT EXISTS outfitting_StationID_modifydate on outfitting (StationID, modifydate)")
 
         # powers
@@ -329,30 +371,7 @@ class db(object):
                             END; """)
 
 
-        ''' update db version'''
-        dbVersion = self.getConfig('dbVersion')
-        if dbVersion:
-            dbVersion = int(dbVersion)
-        else:
-            dbVersion = DBVERSION
-        ''' 01 to 02 '''
-        if dbVersion < 2:
-            print("update database from %s to 2" % dbVersion)
-            self.con.execute("ALTER TABLE systems ADD COLUMN government INT;")
-            self.con.execute("ALTER TABLE systems ADD COLUMN allegiance INT;")
-    
-            self.con.execute("ALTER TABLE stations ADD COLUMN government INT;")
-            self.con.execute("ALTER TABLE stations ADD COLUMN allegiance INT;")
-    
-            self.con.execute("vacuum systems;")
-            self.con.execute("vacuum stations;")
 
-        if dbVersion < 3:
-            self.con.execute( "DROP INDEX `outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID`;")
-            self.con.execute( "DROP TABLE `outfitting`;")
-
-            self.con.execute("CREATE TABLE IF NOT EXISTS outfitting (StationID INT NOT NULL, NameID INT NOT NULL, Class INT NOT NULL DEFAULT 0, MountID INT NOT NULL DEFAULT 0, CategoryID INT NOT NULL DEFAULT 0, Rating TEXT NOT NULL, GuidanceID INT NOT NULL DEFAULT 0, shipID INT NOT NULL DEFAULT 0, modifydate timestamp)")
-            self.con.execute("create UNIQUE index  IF NOT EXISTS outfitting_unique_StationID_NameID_Class_Mount_Rating_shipID on outfitting (StationID, NameID, Class, MountID, Rating, shipID)")
 
         self.con.commit()
 
@@ -1466,15 +1485,27 @@ class db(object):
     def close(self):
         self.con.close()
 
-    def getPowerID(self, power):
-        power = power.lower()
 
+    def getPowerID(self, power, addUnknown=None):
+        if not power:
+            return
+        
         cur = self.cursor()
-        cur.execute("select id from powers where LOWER(Name)=? limit 1", (power,))
+
+        cur.execute("select id from powers where LOWER(Name)=? limit 1", (power.lower(),))
+
         result = cur.fetchone()
+
+        if not result and addUnknown:
+            cur.execute("insert or IGNORE into powers (Name) values (?)", (power,))
+            cur.execute("select id from powers where Name=? limit 1", (power,))
+
+            result = cur.fetchone()
+        
         cur.close()
         if result:
             return result[0]
+
 
     def getAllPowers(self):
         cur = self.cursor()
@@ -1485,6 +1516,7 @@ class db(object):
 
         cur.close()
         return result
+
 
     def getSystemsWithPower(self, powerID, systemID=None):
         cur = self.cursor()

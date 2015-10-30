@@ -121,6 +121,8 @@ class EDDNimport(object):
         if not stationID:
             return
 
+        insertList = []
+
 #        print("importOutfitting1Data", jsonData)
         cur = self.mydb.cursor()
 
@@ -159,9 +161,13 @@ class EDDNimport(object):
             if not classID:
                 classID = 0
 
-            if categoryID and nameID:
 
-                cur.execute("insert or ignore into outfitting (StationID, NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID, modifydate ) values (?, ?, ?, ?, ?, ?, ?, ?, ?) ",
-                             (stationID, nameID, classID, mountID, categoryID, rating, guidanceID, shipID, timestamp))
+            if nameID:
+                modulID = self.outfitting.getOutfittingModulID(nameID, classID, mountID, categoryID, rating, guidanceID, shipID, True)
+                insertList.append([stationID, modulID, timestamp])
+
+
+        if insertList:
+            cur.executemany("insert or ignore into outfitting (StationID, modulID, modifydate ) values (?, ?, ?) ", insertList)
             
         cur.close()
