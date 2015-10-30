@@ -1,8 +1,6 @@
 # -*- coding: UTF8
 
-from elite.loader.eddb import items
-from elite.loader.eddb import systems
-from elite.loader.eddb import stations
+from elite.loader.eddb import apiv4
 
 from datetime import datetime, timedelta
 import random
@@ -25,16 +23,8 @@ def updateAll(mydb):
 
     print("update from eddb")
 
-    eddb_commodities = items.loader(mydb)
-    eddb_commodities.update()
-    del eddb_commodities
-    
-    eddb_systems = systems.loader(mydb)
-    eddb_systems.update()
-    del eddb_systems
-
-    eddb_stations = stations.loader(mydb)
-    eddb_stations.update()
-    del eddb_stations
+    myapiv4 = apiv4.loader(mydb)
+    myapiv4.importData()
+    del myapiv4
 
     mydb.setConfig( 'lastEDDBimport', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") )
