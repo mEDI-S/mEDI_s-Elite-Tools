@@ -81,7 +81,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("mEDI's Elite Tools")
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks | QtGui.QMainWindow.AllowTabbedDocks)
 
-        self.setStatusBar("Welcome to mEDI's Elite Tools")
+        self.setStatusBar("Welcome to mEDI's Elite Tools (Version: %s, %s)" % (__version__, __builddate__))
         self.setMinimumSize(600, 400)
 
         self.setWindowIcon(QtGui.QIcon(QtGui.QPixmap("img/logo.png")))
