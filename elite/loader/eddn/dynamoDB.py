@@ -17,6 +17,7 @@ import io
 import sys
 import traceback
 from elite.loader.eddn.EDDNimport import EDDNimport
+import time
 
 
 try:
@@ -62,6 +63,11 @@ class loader(object):
 
     
     def update(self):
+        self.updateCommoditie()
+        self.updateShipyard()
+        self.updateOutfitting()
+    
+    def updateCommoditie(self):
         lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Update' )
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
@@ -104,6 +110,7 @@ class loader(object):
 
                     if 'LastEvaluatedTimestamp' in josnData:
                         epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
+                        time.sleep(5)
                     else:
                         activeDonwload = False
 
@@ -117,6 +124,22 @@ class loader(object):
             '''
             if correntUpdateTime:
                 self.mydb.setConfig('last_EDDN_DynamoDB_Update', correntUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
+
+            self.mydb.con.commit()
+
+
+    def updateShipyard(self):
+
+        lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Shipyard' )
+        if lastUpdateTime:
+            lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
+        else:
+            lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
+
+        correntUpdateTime = datetime.now()
+
+
+        if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
 
             '''
             shipyard data
@@ -140,11 +163,32 @@ class loader(object):
 
                     if 'LastEvaluatedTimestamp' in josnData:
                         epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
+                        time.sleep(5)
                     else:
                         activeDonwload = False
                 else:
+                    if epochFrom:
+                        correntUpdateTime = epochMicroseconds2datetime(epochFrom)
                     activeDonwload = False
 
+
+            if correntUpdateTime:
+                self.mydb.setConfig('last_EDDN_DynamoDB_Shipyard', correntUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
+            self.mydb.con.commit()
+
+
+    def updateOutfitting(self):
+
+        lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Outfitting' )
+        if lastUpdateTime:
+            lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
+        else:
+            lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
+
+        correntUpdateTime = datetime.now()
+
+
+        if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
 
             '''
             outfitting data
@@ -168,11 +212,16 @@ class loader(object):
 
                     if 'LastEvaluatedTimestamp' in josnData:
                         epochFrom = int(josnData['LastEvaluatedTimestamp']) + 1
+                        time.sleep(5)
                     else:
                         activeDonwload = False
                 else:
+                    if epochFrom:
+                        correntUpdateTime = epochMicroseconds2datetime(epochFrom)
                     activeDonwload = False
 
+            if correntUpdateTime:
+                self.mydb.setConfig('last_EDDN_DynamoDB_Outfitting', correntUpdateTime.strftime("%Y-%m-%d %H:%M:%S") )
 
             self.mydb.con.commit()
 

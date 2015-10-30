@@ -65,7 +65,7 @@ class outfitting(object):
     def getRatingList(self):
         cur = self.mydb.cursor()
 
-        cur.execute("select Rating from outfitting group by Rating order by Rating")
+        cur.execute("select Rating from outfitting_modul group by Rating order by Rating")
 
         result = cur.fetchall()
         cur.close()
@@ -162,18 +162,21 @@ class outfitting(object):
         cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
                      FROM outfitting
 
-                    left JOIN outfitting_category ON outfitting_category.id=outfitting.CategoryID
-                    left JOIN outfitting_modulename ON outfitting_modulename.id=outfitting.NameID
-                    left JOIN outfitting_mount ON outfitting_mount.id=outfitting.MountID
-                    left JOIN outfitting_guidance ON outfitting_guidance.id=outfitting.GuidanceID
+                    left JOIN outfitting_modul ON outfitting_modul.id=outfitting.modulID
+
+
+                    left JOIN outfitting_category ON outfitting_category.id=outfitting_modul.CategoryID
+                    left JOIN outfitting_modulename ON outfitting_modulename.id=outfitting_modul.NameID
+                    left JOIN outfitting_mount ON outfitting_mount.id=outfitting_modul.MountID
+                    left JOIN outfitting_guidance ON outfitting_guidance.id=outfitting_modul.GuidanceID
 
                     left JOIN stations on stations.id = outfitting.StationID
                     left JOIN systems on systems.id = stations.SystemID
 
-                    left JOIN ships on ships.id=outfitting.ShipID
+                    left JOIN ships on ships.id=outfitting_modul.ShipID
 
                 where
-                outfitting.NameID=?
+                outfitting_modul.NameID=?
                 AND dist <=?
                 AND stations.StarDist <= ?
                 AND outfitting.modifydate >= ?
@@ -188,3 +191,27 @@ class outfitting(object):
         cur.close()
         return result
 
+
+    def getOutfittingModulID(self, nameID, classID, mountID, categoryID, rating, guidanceID, shipID, addUnknown=None):
+        cur = self.mydb.cursor()
+
+        cur.execute("""select id FROM outfitting_modul
+                            where
+                            NameID=?
+                            AND Class=?
+                            AND MountID=?
+                            AND CategoryID=?
+                            AND Rating=?
+                            AND GuidanceID=?
+                            AND shipID=? limit 1""",
+                    ( nameID, classID, mountID, categoryID, rating, guidanceID, shipID))
+
+        result = cur.fetchone()
+        if result:
+            return result[0]
+
+        if not result and addUnknown:
+            cur.execute("insert  into outfitting_modul (NameID, Class, MountID, CategoryID, Rating, GuidanceID, shipID ) values (?, ?, ?, ?, ?, ?, ?)",
+                        (nameID, classID, mountID, categoryID, rating, guidanceID, shipID) )
+            newID = cur.lastrowid
+            return newID
