@@ -24,7 +24,7 @@ __forceupdateFile__ = "updatetrigger.txt"
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db", "my.db")
-DBVERSION = 4
+DBVERSION = 5
 
 
 class db(object):
@@ -264,11 +264,13 @@ class db(object):
             #force optimize
             self.setConfig("lastOptimizeDatabase", None)
 
+        if dbVersion < 5:
+            self.con.execute("ALTER TABLE systems ADD COLUMN power_state INT;")
 
 
 
         # systems
-        self.con.execute("CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, government INT, allegiance INT, modified timestamp)")
+        self.con.execute("CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, power_state INT, government INT, allegiance INT, modified timestamp)")
 
         # stations
         self.con.execute("CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, government INT, allegiance INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)")

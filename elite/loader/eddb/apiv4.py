@@ -438,8 +438,12 @@ class loader(object):
 
 
             powerID = None
+            powerState = None
             if system["power"]:
                 powerID = self.mydb.getPowerID(system["power"], True)
+                _powerState_ = {'Control': 1, 'Exploited': 2}
+                powerState = _powerState_.get(system["power_state"])
+            #power_state
 
             allegianceID = self.mydb.getAllegianceID(system["allegiance"], True)
 
@@ -448,12 +452,12 @@ class loader(object):
 
             if system["name"].lower() not in systemCache:
                 insertCount += 1
-                cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, government, allegiance, modified) values (?, ?, ?, ?, ?, ?, ?, ?, ?) ",
-                                        (system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified))
+                cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, power_state, government, allegiance, modified) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ",
+                                        (system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, powerState, governmentID, allegianceID, modified))
 
             elif system["name"].lower() in systemCache and (not systemCache[ system["name"].lower() ][1] or systemCache[ system["name"].lower() ][1] < modified):
                 updateCount += 1
-                updateSystem.append([system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ])
+                updateSystem.append([system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, powerState, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ])
 
             ''' fill translator cache '''
             if system["name"].lower() in systemCache:
@@ -462,7 +466,7 @@ class loader(object):
                 self.translateSystemID[system["id"]] = self.mydb.getSystemIDbyName(system["name"])
                 
         if updateSystem:
-            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, power_control=?, government=?, allegiance=?, modified=? where id=?", updateSystem)
+            cur.executemany("update systems SET System=?, posX=?, posY=?, posZ=?, permit=?, power_control=?, power_state=?, government=?, allegiance=?, modified=? where id=?", updateSystem)
 
         if updateCount or insertCount:
             print("update", updateCount, "insert", insertCount, "from", totalCount, "systems")
