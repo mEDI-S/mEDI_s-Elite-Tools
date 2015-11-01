@@ -266,6 +266,7 @@ class db(object):
 
         if dbVersion < 5:
             self.con.execute("ALTER TABLE systems ADD COLUMN power_state INT;")
+            self.con.execute("vacuum systems;")
 
 
 

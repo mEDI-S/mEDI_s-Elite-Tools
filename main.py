@@ -280,6 +280,11 @@ class MainWindow(QtGui.QMainWindow):
                 statusTip="Force Optimize DB after next Update",
                 triggered=self.forceOptimize)
 
+        self.forceEDDBimportAct = QtGui.QAction("Force EDDB System Update", self,
+                statusTip="",
+                triggered=self.forceEDDBimport)
+
+
        
     def createMenus(self):
         self.menuBar().clear()
@@ -296,6 +301,7 @@ class MainWindow(QtGui.QMainWindow):
         self.maintenanceMenu.addAction(self.deleteDistancesCacheAct)
         self.maintenanceMenu.addAction(self.checkDistancesCacheAct)
         self.maintenanceMenu.addAction(self.forceOptimizeAct)
+        self.maintenanceMenu.addAction(self.forceEDDBimportAct)
 
         self.editMenu.addAction(self.preferenceAct)
 
@@ -558,6 +564,27 @@ class MainWindow(QtGui.QMainWindow):
             self.lockDB()
             self.mydb.setConfig("lastOptimizeDatabase", None)
             self.unlockDB()
+
+    def forceEDDBimport(self):
+        msg = "Are you sure that you want to update the system data forced?"
+        msg += "\n\nThe update is performed directly and not in the background! Please do not close the application, it might take a moment."
+        msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information,
+                "Force EDDB import", msg,
+                QtGui.QMessageBox.NoButton, self)
+
+        msgBox.addButton("Import", QtGui.QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+
+        if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
+            from elite.loader.eddb import apiv4
+
+            self.lockDB()
+            myapiv4 = apiv4.loader(self.mydb)
+            myapiv4.importData(forceImport=True)
+            del myapiv4
+
+            self.unlockDB()
+
         
 if __name__ == '__main__':
 

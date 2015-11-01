@@ -69,6 +69,8 @@ _mount_ = {'Fixed': 'Fixed', 'Gimbal': 'Gimballed', 'Turret': 'Turreted'}
 
 _guidance_ = {32: 'Seeker', 16: 'Dumbfire' }
 
+_powerState_ = {'Control': 1, 'Exploited': 2, 'Expansion': 3}
+
 
 class loader(object):
 
@@ -77,6 +79,7 @@ class loader(object):
     translateStationID = {}
     translatorShipsID = {}
     translatorModulID = {}
+    forceImport = None
     
     def __init__(self, mydb):
         self.mydb = mydb
@@ -85,9 +88,9 @@ class loader(object):
         self.utcOffeset = datetime.now() - datetime.utcnow()
 
 
-    def importData(self):
+    def importData(self, forceImport=None):
 
-
+        self.forceImport = forceImport
 
         commodities = self.downloadJson("https://eddb.io/archive/v4/commodities.json")
         if not commodities:
@@ -396,7 +399,7 @@ class loader(object):
                 stationID = self.mydb.getStationID(systemID, station["name"])
                 self.translateStationID[int(station["id"])] = stationID
 
-            elif stationCache[stationCacheKey][1] < modified:
+            elif stationCache[stationCacheKey][1] < modified or self.forceImport:
                 updateCount += 1
                 updateStation.append([station["name"], station["distance_to_star"], governmentID, allegianceID, station["has_blackmarket"], station["max_landing_pad_size"], station["has_commodities"], station["has_shipyard"], station["has_outfitting"], station["has_rearm"], station["has_refuel"], station["has_repair"], modified, stationID])
 
@@ -441,8 +444,9 @@ class loader(object):
             powerState = None
             if system["power"]:
                 powerID = self.mydb.getPowerID(system["power"], True)
-                _powerState_ = {'Control': 1, 'Exploited': 2}
                 powerState = _powerState_.get(system["power_state"])
+                if not powerState:
+                    print(system["power_state"])
             #power_state
 
             allegianceID = self.mydb.getAllegianceID(system["allegiance"], True)
@@ -455,7 +459,7 @@ class loader(object):
                 cur.execute("insert or IGNORE into systems (System, posX, posY, posZ, permit, power_control, power_state, government, allegiance, modified) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ",
                                         (system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, powerState, governmentID, allegianceID, modified))
 
-            elif system["name"].lower() in systemCache and (not systemCache[ system["name"].lower() ][1] or systemCache[ system["name"].lower() ][1] < modified):
+            elif system["name"].lower() in systemCache and (not systemCache[ system["name"].lower() ][1] or systemCache[ system["name"].lower() ][1] < modified or self.forceImport):
                 updateCount += 1
                 updateSystem.append([system["name"], float(system["x"]), float(system["y"]), float(system["z"]), system["needs_permit"], powerID, powerState, governmentID, allegianceID, modified, systemCache[ system["name"].lower() ][0] ])
 
