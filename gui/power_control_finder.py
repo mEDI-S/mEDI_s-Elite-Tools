@@ -49,7 +49,16 @@ class tool(QtGui.QWidget):
         self.locationlineEdit.textChanged.connect(self.searchPower)
 
 
-        ShipLabel = QtGui.QLabel("Power:")
+        self.controlCheckBox = QtGui.QCheckBox("Show Controlled")
+        self.controlCheckBox.setChecked(True)
+
+        self.exploitedCheckBox = QtGui.QCheckBox("Show Exploited")
+        self.exploitedCheckBox.setChecked(False)
+
+        self.expansionCheckBox = QtGui.QCheckBox("Show Expansion")
+        self.expansionCheckBox.setChecked(False)
+
+        powerLabel = QtGui.QLabel("Power:")
         self.powerComboBox = QtGui.QComboBox()
 
         powers = self.mydb.getAllPowers()
@@ -75,7 +84,12 @@ class tool(QtGui.QWidget):
         layout.addWidget(locationButton)
         
         layout.addWidget(self.locationlineEdit)
-        layout.addWidget(ShipLabel)
+
+        layout.addWidget(self.controlCheckBox)
+        layout.addWidget(self.exploitedCheckBox)
+        layout.addWidget(self.expansionCheckBox)
+
+        layout.addWidget(powerLabel)
         layout.addWidget(self.powerComboBox)
         
         layout.addWidget(self.searchbutton)
@@ -147,7 +161,8 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Distance", "Permit", "Min StarDist", ""]
+        self.headerList = ["System", "Distance", "Permit", "State", "Min StarDist", ""]
+        powerStateList = {1: 'Control', 2: 'Exploited', 3: 'Expansion'}
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
         for x, column in enumerate(self.headerList):
@@ -162,6 +177,17 @@ class tool(QtGui.QWidget):
 
 
         for system in systems:
+
+            if system["power_state"]:
+
+                if system["power_state"] == 1 and not self.controlCheckBox.isChecked():
+                    continue
+                if system["power_state"] == 2 and not self.exploitedCheckBox.isChecked():
+                    continue
+                if system["power_state"] == 3 and not self.expansionCheckBox.isChecked():
+                    continue
+
+
             
             model.insertRow(0)
             model.setData(model.index(0, self.headerList.index("System")), system["System"])
@@ -171,6 +197,9 @@ class tool(QtGui.QWidget):
 
             model.setData(model.index(0, self.headerList.index("Permit")), "No" if not system["permit"] else "Yes")
             model.item(0, self.headerList.index("Permit")).setTextAlignment(QtCore.Qt.AlignCenter)
+
+            if system["power_state"]:
+                model.setData(model.index(0, self.headerList.index("State")), powerStateList.get(system["power_state"]))
 
             model.setData(model.index(0, self.headerList.index("Min StarDist")), system["minStarDist"])
             model.item(0, self.headerList.index("Min StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
