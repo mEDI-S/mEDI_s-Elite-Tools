@@ -15,3 +15,4 @@ from gui import dbworker
 
 from gui import statistics
 from gui import add_edit_items
+from gui import edit_permit

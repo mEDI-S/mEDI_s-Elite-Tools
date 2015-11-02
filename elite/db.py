@@ -346,6 +346,10 @@ class db(object):
         self.con.execute("CREATE TABLE IF NOT EXISTS bookmarkChilds (BookmarkID INT, Pos INT,  SystemID INT, StationID INT, ItemID INT)")  # Type 0 = Deals/Multi Hop Route
         self.con.execute("create UNIQUE index IF NOT EXISTS bookmarkChilds_unique_BookmarkID on bookmarkChilds (BookmarkID, Pos)")
 
+        # Permit
+        self.con.execute("CREATE TABLE IF NOT EXISTS permit (authorizationSystem INT UNIQUE)")
+        
+
         # trigger to controll the dynamic cache
         self.con.execute("DROP TRIGGER IF EXISTS trigger_update_price")
         self.con.execute("""CREATE TRIGGER IF NOT EXISTS trigger_update_price AFTER UPDATE  OF StationBuy, StationSell ON  price
@@ -916,7 +920,6 @@ class db(object):
 
 
         cur = self.cursor()
-
         cur.execute('''select priceA.ItemID AS ItemID, priceB.StationBuy-priceA.StationSell AS profit,
                              priceB.StationBuy AS StationBuy,  priceA.StationSell AS StationSell,
                             priceA.id AS priceAid, priceB.id AS priceBid, priceA.Stock AS Stock,
@@ -954,7 +957,7 @@ class db(object):
         
         result = cur.fetchall()
         cur.close()
-           
+
         return result
 
 
@@ -1140,11 +1143,13 @@ class db(object):
 
                         left JOIN stations AS stationA on stationA.id = priceA.StationID
 
+                        left join permit ON permit.authorizationSystem=systemA.id
+
                     where
                         priceA.modified >= ?
                         AND priceA.StationSell>0
                         AND priceA.Stock>=?
-                        AND systemA.permit != 1
+                        AND ( systemA.permit != 1 OR permit.authorizationSystem is NOT NULL)
                         AND stationA.StarDist <= ?
                         %s
                     group by systemA.id
@@ -1199,6 +1204,8 @@ class db(object):
                         left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
                         left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
+                        left join permit ON permit.authorizationSystem=systemB.id
+
                     where
                         priceA.modified >= ?
                         AND priceA.StationSell>0
@@ -1207,7 +1214,7 @@ class db(object):
 
                         AND priceB.modified >= ?
                         AND priceB.StationBuy>0
-                        AND systemB.permit != 1
+                        AND (systemB.permit != 1 OR permit.authorizationSystem is NOT NULL)
                         AND stationB.StarDist <= ?
 
                         AND  priceB.StationBuy > priceA.StationSell
@@ -1280,13 +1287,15 @@ class db(object):
                         left JOIN ignorePriceTemp AS ignorePriceTempB ON priceB.id=ignorePriceTempB.priceID
                         left JOIN blackmarketPrice ON priceB.id=blackmarketPrice.priceID
 
+                        left join permit ON permit.authorizationSystem=systemB.id
+
                     where
                         priceA.StationID=?
                         AND priceA.Stock>=?
                         AND dealsInDistances.dist <= ?
                         AND priceA.modified >= ?
                         AND priceB.modified >= ?
-                        AND systemB.permit != 1
+                        AND (systemB.permit != 1 OR permit.authorizationSystem is NOT NULL)
                         
                         AND priceA.StationSell>0
                         AND stationB.StarDist <= ?
@@ -1678,3 +1687,32 @@ class db(object):
                  """, (bookmarkId, ) )
 
         return cur.fetchall()
+
+
+    def getPermitSystems(self):
+        cur = self.cursor()
+
+
+        cur.execute("""select *
+                    FROM systems
+                    left join permit ON permit.authorizationSystem=systems.id
+                where
+                    systems.permit = 1
+
+                """)
+        result = cur.fetchall()
+
+        cur.close()
+        return result
+
+    def addPermitSystem(self, systemID):
+        cur = self.cursor()
+        cur.execute("insert or ignore into permit (authorizationSystem) values (?) ", (systemID,))
+        self.con.commit()
+        cur.close()
+
+    def removePermitSystem(self, systemID):
+        cur = self.cursor()
+        cur.execute("DELETE from permit where authorizationSystem=?", (systemID,))
+        self.con.commit()
+        cur.close()

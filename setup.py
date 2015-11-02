@@ -254,6 +254,9 @@ if _buildZip:
         cur.execute("DELETE FROM price WHERE id IN (select priceID from blackmarketPrice)")
         cur.execute("DELETE FROM blackmarketPrice")
 
+        cur.execute("DELETE from permit")
+
+
         db.con.commit()
         cur.close()
 
