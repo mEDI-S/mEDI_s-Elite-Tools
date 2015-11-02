@@ -215,7 +215,10 @@ class loader(object):
                 self.translatorShipsID[ship] = self.mydb.getShipID(_ships_[ship], True)
 
         for station in stationsData:
-            modified = datetime.fromtimestamp(station["updated_at"]) - self.utcOffeset
+            if station.get("shipyard_updated_at"):
+                modified = datetime.fromtimestamp(station["shipyard_updated_at"]) - self.utcOffeset
+            else:
+                continue
             stationID = self.translateStationID[int(station["id"])]
             if not stationID:
                 print("bug stationID", station["id"], "not found")
@@ -306,7 +309,10 @@ class loader(object):
 
 
         for station in stationsData:
-            modified = datetime.fromtimestamp(station["updated_at"]) - self.utcOffeset
+            if station.get("outfitting_updated_at"):
+                modified = datetime.fromtimestamp(station["outfitting_updated_at"]) - self.utcOffeset
+            else:
+                continue
             stationID = self.translateStationID[int(station["id"])]
             if not stationID:
                 print("bug stationID", station["id"], "not found")
