@@ -55,7 +55,7 @@ class outfitting(object):
     def getOutfittingNameList(self):
         cur = self.mydb.cursor()
 
-        cur.execute("select * from outfitting_modulename ")
+        cur.execute("select * from outfitting_modulename order by modulname")
 
         result = cur.fetchall()
         cur.close()
