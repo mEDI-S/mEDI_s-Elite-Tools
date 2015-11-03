@@ -164,7 +164,7 @@ class tool(QtGui.QWidget):
         if not self.listView.header().count():
             firstrun = True
 
-        self.headerList = ["System", "Distance", "Permit", "State", "Min StarDist", ""]
+        self.headerList = ["System", "Distance", "Permit", "State", "Min StarDist", "Allegiance", "Government", ""]
         powerStateList = {1: 'Control', 2: 'Exploited', 3: 'Expansion'}
 
         model = QtGui.QStandardItemModel(0, len(self.headerList), self)
@@ -206,6 +206,11 @@ class tool(QtGui.QWidget):
 
             model.setData(model.index(0, self.headerList.index("Min StarDist")), system["minStarDist"])
             model.item(0, self.headerList.index("Min StarDist")).setTextAlignment(QtCore.Qt.AlignRight)
+
+            model.setData(model.index(0, self.headerList.index("Allegiance")), system["allegianceName"])
+
+            model.setData(model.index(0, self.headerList.index("Government")), system["governmentName"])
+
 
 
         self.listView.setModel(model)

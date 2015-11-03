@@ -48,15 +48,17 @@ Tools for Elite:Dangerous
 ![Multi Window screenshot](screenshots/dockwidgetexample.jpg)
 multiple open tools
 
+###Commodities Finder
 ![Commodities Finder](screenshots/CommoditiesFinder.jpg)
-Commodities Finder
 
+###Outfitting Finder
 ![Outfitting Finder](screenshots/OutfittingFinder.jpg)
-Outfitting Finder
 
+###Data Status
 ![Data Status](screenshots/dataStatus.jpg)
 
-
+###Power Control Finder
+![Power Control Finder](screenshots/powerControlFinder.jpg)
 
 ## Usage ##
 1. Select in Tools menü ur wanted tool

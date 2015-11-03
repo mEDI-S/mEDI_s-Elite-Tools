@@ -1539,10 +1539,14 @@ class db(object):
         else:
             systemA = {"posX": 0.0, "posY": 0.0, "posZ": 0.0}
 
-        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist,
-                    min(stations.StarDist) AS minStarDist
+        cur.execute("""select *, calcDistance(?, ?, ?, posX, posY, posZ ) AS dist
+                    , min(stations.StarDist) AS minStarDist
+                    , governments.Name as governmentName
+                    , allegiances.Name as allegianceName
                     FROM systems
                     left join stations ON stations.SystemID=systems.id
+                    left join governments ON governments.id=systems.government
+                    left join allegiances ON allegiances.id=systems.allegiance
                 where
                 power_control=?
                 group by systems.id
