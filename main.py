@@ -51,6 +51,7 @@ import elite
 import gui
 from PySide import QtCore, QtGui
 import base64
+from datetime import datetime
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -585,7 +586,7 @@ class MainWindow(QtGui.QMainWindow):
             del myapiv4
 
             self.unlockDB()
-            mydb.setConfig( 'lastEDDBimport', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") )
+            self.mydb.setConfig( 'lastEDDBimport', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") )
 
         
 if __name__ == '__main__':
