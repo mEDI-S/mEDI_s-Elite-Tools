@@ -51,12 +51,15 @@ class tool(QtGui.QWidget):
 
         self.controlCheckBox = QtGui.QCheckBox("Show Controlled")
         self.controlCheckBox.setChecked(True)
+        self.controlCheckBox.stateChanged.connect(self.searchPower)
 
         self.exploitedCheckBox = QtGui.QCheckBox("Show Exploited")
         self.exploitedCheckBox.setChecked(False)
+        self.exploitedCheckBox.stateChanged.connect(self.searchPower)
 
         self.expansionCheckBox = QtGui.QCheckBox("Show Expansion")
         self.expansionCheckBox.setChecked(False)
+        self.expansionCheckBox.stateChanged.connect(self.searchPower)
 
         powerLabel = QtGui.QLabel("Power:")
         self.powerComboBox = QtGui.QComboBox()
