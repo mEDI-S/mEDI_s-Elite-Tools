@@ -296,7 +296,7 @@ class tool(QtGui.QWidget):
                     showEntry = True
                     if infoText:
                         infoText += ", "
-                    infoText = "Old price data"
+                    infoText += "Old price data"
                     if age:
                         age += ", "
                     age = guitools.convertDateimeToAgeStr(data["priceAge"])
