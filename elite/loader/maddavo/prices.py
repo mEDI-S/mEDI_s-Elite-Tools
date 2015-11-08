@@ -128,6 +128,9 @@ class loader(object):
                 for item in self.__dataCache[system][station]:
 
                     itemID = self.mydb.getItemID(item)
+                    if not itemID:
+                        print("unknown item? %s" % item)
+                        continue
                     cacheKey = "%d_%d" % (stationID, itemID)
 
                     if not itemCache.get(cacheKey):
