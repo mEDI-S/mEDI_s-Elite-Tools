@@ -65,14 +65,16 @@ class flyLogger(object):
         
         cur.execute("""select flylog.id, System, optionalSystemName, DateTime, systems.posX, systems.posY, systems.posZ, Comment FROM flylog
                         left join systems on flylog.SystemID=systems.id
-                        order by flylog.id ASC
+                        order by flylog.id DESC
                         limit 1000
                      """)
 
         result = cur.fetchall()
 
         cur.close()
-        return result
+        if result:
+            result.reverse()
+            return result
 
 
     def getLogByLogID(self, logID):
@@ -716,6 +718,8 @@ class tool(QtGui.QWidget):
 
 
         lastLog = self.main.flyLogger.getLastLog()
+        if not lastLog:
+            return
 
         lastSystem = None
 
