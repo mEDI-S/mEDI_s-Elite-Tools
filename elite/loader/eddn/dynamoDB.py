@@ -69,12 +69,15 @@ class loader(object):
     
     def updateCommoditie(self):
         lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Update' )
+        correntUpdateTime = datetime.now()
+
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
+            if lastUpdateTime < correntUpdateTime - timedelta(hours=24):
+                lastUpdateTime = correntUpdateTime - timedelta(hours=24)
         else:
             lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
 
-        correntUpdateTime = datetime.now()
 
 
         if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
@@ -131,12 +134,15 @@ class loader(object):
     def updateShipyard(self):
 
         lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Shipyard' )
+        correntUpdateTime = datetime.now()
+
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
+
+            if lastUpdateTime < correntUpdateTime - timedelta(hours=24):
+                lastUpdateTime = correntUpdateTime - timedelta(hours=24)
         else:
             lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
-
-        correntUpdateTime = datetime.now()
 
 
         if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
@@ -180,12 +186,16 @@ class loader(object):
     def updateOutfitting(self):
 
         lastUpdateTime = self.mydb.getConfig( 'last_EDDN_DynamoDB_Outfitting' )
+        correntUpdateTime = datetime.now()
+
         if lastUpdateTime:
             lastUpdateTime = datetime.strptime(lastUpdateTime, "%Y-%m-%d %H:%M:%S")
+
+            if lastUpdateTime < correntUpdateTime - timedelta(hours=24):
+                lastUpdateTime = correntUpdateTime - timedelta(hours=24)
         else:
             lastUpdateTime = datetime.now().replace(hour=0, minute=0, second=0)
 
-        correntUpdateTime = datetime.now()
 
 
         if lastUpdateTime < correntUpdateTime - timedelta(minutes=10):
