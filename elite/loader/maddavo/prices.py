@@ -11,18 +11,19 @@ import io
 import sys
 
 try:
-    from _version import __buildid__ , __version__, __builddate__, __toolname__, __useragent__
+    from _version import __buildid__, __version__, __builddate__, __toolname__, __useragent__
 except ImportError:
     __buildid__ = "UNKNOWN"
     __version__ = "UNKNOWN"
     __builddate__ = "NONE"
     __toolname__ = "mEDI s Elite Tools"
-    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") ) 
+    __useragent__ = '%s/%s (%s) %s(%s)' % (__toolname__.replace(" ", ""), __version__, sys.platform, __buildid__, __builddate__.replace(" ", "").replace("-", "").replace(":", "") )
 
 try:
     import urllib2
 except ImportError:
     import urllib.request as urllib2
+
 
 class loader(object):
 
@@ -33,7 +34,8 @@ class loader(object):
 
         self.mydb = mydb
 
-    def load(self,filename):
+
+    def load(self, filename):
 
         f = open(filename, 'r')
         #self.__dataCache = {}
@@ -68,7 +70,7 @@ class loader(object):
                     #    6. datetime
                     #####################
                     #print(ma.group(1),ma.group(2),ma.group(3),ma.group(4),ma.group(5),ma.group(6))
-                    itemName= ma.group(1).lower()
+                    itemName = ma.group(1).lower()
                     if not self.__dataCache.get(systemName) : self.__dataCache[systemName] = {}
                     if not self.__dataCache[systemName].get(stationName) : self.__dataCache[systemName][stationName] = {}
                     if not self.__dataCache[systemName][stationName].get(itemName) : self.__dataCache[systemName][stationName][itemName] = []
@@ -164,7 +166,7 @@ class loader(object):
             if lastUpdateTime < datetime.now() - timedelta(days=2):
                 print("download full")
                 currentUpdateTime = datetime.now()
-                self.updateFromUrl(url_fullData)
+#                self.updateFromUrl(url_fullData)
                 self.updateFromUrl(url_twoDayData)
                 self.updateFromUrl(url_threeHorsData)
 
@@ -185,7 +187,7 @@ class loader(object):
         else:
             print("download full fallback")
             currentUpdateTime = datetime.now()
-            self.updateFromUrl(url_fullData)
+#            self.updateFromUrl(url_fullData)
             self.updateFromUrl(url_twoDayData)
             self.updateFromUrl(url_threeHorsData)
 
