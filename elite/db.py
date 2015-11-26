@@ -1072,10 +1072,10 @@ class db(object):
             self.addSystemToDealsInDistancesCacheQueue(systemList)
 
 
-    def calcDealsInDistancesCacheQueue(self):
+    def calcDealsInDistancesCacheQueue(self, limit=50):
         cur = self.cursor()
 
-        cur.execute("select systemID AS id  from dealsInDistancesSystems_queue")
+        cur.execute("select systemID AS id  from dealsInDistancesSystems_queue limit ?", (limit,))
         systemList = cur.fetchall()
         if systemList:
             maxAgeDate = datetime.utcnow() - timedelta(days=14)  # TODO: save max age and use the max?
