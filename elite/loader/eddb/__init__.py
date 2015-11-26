@@ -16,7 +16,7 @@ def updateAll(mydb):
             "not all clients start update at same time
             hope it work ;)" '''
         updatetime = datetime.utcnow().replace(hour=3, minute=30)
-        if lastImport < updatetime and datetime.utcnow() > updatetime and (datetime.utcnow().hour > 5 or random.randint(1, 10) == 1  ):
+        if lastImport < updatetime and datetime.utcnow() > updatetime and random.randint(1, 10) == 1:
             pass
         else:
             return
