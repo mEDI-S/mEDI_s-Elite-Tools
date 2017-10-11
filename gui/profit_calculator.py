@@ -10,7 +10,7 @@ from PySide import QtCore, QtGui
 from datetime import datetime, timedelta
 
 import gui.guitools as guitools
-from builtins import isinstance
+#from builtins import isinstance
 
 __toolname__ = "Profit Calculator"
 __internalName__ = "PrCa"
