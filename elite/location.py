@@ -75,7 +75,7 @@ class location(object):
             self._lastFile = logfile
 
         for line in fh:
-            locationma = re.search("^\{\d{2}:\d{2}:\d{2}\} System\:\d+\((.*?)\) .*", line.decode(encoding='ascii', errors='replace'))
+            locationma = re.search("^\{\d{2}:\d{2}:\d{2}.*?\} System\:\"(.*?)\" .*", line.decode(encoding='ascii', errors='replace'))
 
 
             if locationma:
