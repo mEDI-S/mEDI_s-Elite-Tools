@@ -208,12 +208,14 @@ class tool(QtGui.QWidget):
 
                         if cid + 1 < routeRoot.childCount():
                             destStation = self.mydb.getPriceOnStation( itemData[cid + 1]['StationID'], itemData[cid]['ItemID'])
-                            profit = destStation['StationBuy'] - itemData[cid]['StationSell']
-                            totalProfit += profit
+                            if destStation:
+                                profit = destStation['StationBuy'] - itemData[cid]['StationSell']
+                                totalProfit += profit
                         else:  # back deal
                             destStation = self.mydb.getPriceOnStation( itemData[0]['StationID'], itemData[cid]['ItemID'])
-                            profit = destStation['StationBuy'] - itemData[cid]['StationSell']
-                            totalProfit += profit
+                            if destStation:
+                                profit = destStation['StationBuy'] - itemData[cid]['StationSell']
+                                totalProfit += profit
 
                         child.setData(6, profit)
 
