@@ -578,12 +578,12 @@ class MainWindow(QtGui.QMainWindow):
         msgBox.addButton("Cancel", QtGui.QMessageBox.RejectRole)
 
         if msgBox.exec_() == QtGui.QMessageBox.AcceptRole:
-            from elite.loader.eddb import apiv4
+            from elite.loader.eddb import apiv5
 
             self.lockDB()
-            myapiv4 = apiv4.loader(self.mydb)
-            myapiv4.importData(forceImport=True)
-            del myapiv4
+            myapiv5 = apiv5.loader(self.mydb)
+            myapiv5.importData(forceImport=True)
+            del myapiv5
 
             self.unlockDB()
             self.mydb.setConfig( 'lastEDDBimport', datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") )

@@ -1,6 +1,6 @@
 # -*- coding: UTF8
 
-from elite.loader.eddb import apiv4
+from elite.loader.eddb import apiv5
 
 from datetime import datetime, timedelta
 import random
@@ -25,9 +25,9 @@ def updateAll(mydb):
     print("update from eddb")
 
     try:
-        myapiv4 = apiv4.loader(mydb)
-        myapiv4.importData()
-        del myapiv4
+        myapiv5 = apiv5.loader(mydb)
+        myapiv5.importData()
+        del myapiv5
     except:
         traceback.print_exc()
         mydb.setConfig('plugin_eddb', 0)
