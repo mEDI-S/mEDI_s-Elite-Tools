@@ -24,7 +24,7 @@ __forceupdateFile__ = "updatetrigger.txt"
 import sqlite3_functions
 
 __DBPATH__ = os.path.join("db", "my.db")
-DBVERSION = 5
+DBVERSION = 6
 
 
 class db(object):
@@ -210,6 +210,7 @@ class db(object):
         else:
             optimize = True
 
+        optimize = None #disbale auto optimize
         if optimize:
             myPos += 1
             if self.sendProcessMsg:
@@ -268,10 +269,22 @@ class db(object):
             self.con.execute("ALTER TABLE systems ADD COLUMN power_state INT;")
             self.con.execute("vacuum systems;")
 
+        if dbVersion < 6:
+            self.con.execute("ALTER TABLE systems ADD COLUMN edsm_id INT;")
+            self.con.execute("ALTER TABLE systems ADD COLUMN eddb_id INT;")
+
+            self.con.execute("ALTER TABLE stations ADD COLUMN eddb_id INT;")
+            self.con.execute("ALTER TABLE stations ADD COLUMN eddb_system_id INT;")
+
+
+            self.con.execute("vacuum systems;")
+            self.con.execute("vacuum stations;")
+
 
 
         # systems
         self.con.execute("CREATE TABLE IF NOT EXISTS systems (id INTEGER PRIMARY KEY AUTOINCREMENT, System TEXT COLLATE NOCASE UNIQUE , posX FLOAT, posY FLOAT, posZ FLOAT, permit BOOLEAN DEFAULT 0, power_control INT, power_state INT, government INT, allegiance INT, modified timestamp)")
+        self.con.execute("create UNIQUE index  IF NOT EXISTS systems_unique_eddb_id on systems (eddb_id)")
 
         # stations
         self.con.execute("CREATE TABLE IF NOT EXISTS stations (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, SystemID INT NOT NULL, Station TEXT COLLATE NOCASE, StarDist INT, government INT, allegiance INT, blackmarket BOOLEAN, max_pad_size CHARACTER, market BOOLEAN, shipyard BOOLEAN,outfitting BOOLEAN,rearm BOOLEAN,refuel BOOLEAN,repair BOOLEAN, modified timestamp)")
